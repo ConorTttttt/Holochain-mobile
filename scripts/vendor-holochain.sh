@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Recreate vendor/holochain-0.7.1: the published crate plus
-# patches/holochain-0.7.1-p2p-factory.patch, which adds
-# ConductorBuilder::with_p2p_factory.
+# Recreate vendor/holochain-0.7.1: the published crate plus every
+# patches/holochain-0.7.1-*.patch:
+# - p2p-factory: ConductorBuilder::with_p2p_factory
+# - embedder-access: app signals and DHT store reads without test_utils
 set -euo pipefail
 
 VERSION=0.7.1
@@ -24,5 +25,7 @@ echo "$SHA256  $CRATE" | sha256sum -c --quiet -
 rm -rf "$DEST"
 mkdir -p "$ROOT/vendor"
 tar -xzf "$CRATE" -C "$ROOT/vendor"
-patch -s -d "$DEST" -p1 < "$ROOT/patches/holochain-$VERSION-p2p-factory.patch"
-echo "vendored holochain $VERSION with the p2p factory patch at $DEST"
+for p in "$ROOT"/patches/holochain-$VERSION-*.patch; do
+  patch -s -d "$DEST" -p1 < "$p"
+done
+echo "vendored holochain $VERSION with $(ls "$ROOT"/patches/holochain-$VERSION-*.patch | wc -l) patches at $DEST"

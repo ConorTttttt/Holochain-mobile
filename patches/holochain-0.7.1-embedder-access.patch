@@ -1,0 +1,53 @@
+--- a/src/conductor/conductor.rs
++++ b/src/conductor/conductor.rs
+@@ -4094,19 +4094,14 @@
+     }
+ }
+ 
+-/// Methods only available with feature "test_utils"
+-#[cfg(any(test, feature = "test_utils"))]
+-#[allow(missing_docs)]
+-mod test_utils_impls {
++/// Access for applications that embed the conductor in-process and so have
++/// no app WebSocket to receive signals or inspect state through.
++mod embedder_impls {
+     use super::*;
+-    use crate::core::ribosome::Ribosome;
+     use tokio::sync::broadcast;
+ 
+     impl Conductor {
+-        pub async fn get_state_from_handle(&self) -> ConductorResult<ConductorState> {
+-            self.get_state().await
+-        }
+-
++        /// Receive the signals an app's cells emit.
+         pub fn subscribe_to_app_signals(
+             &self,
+             installed_app_id: InstalledAppId,
+@@ -4114,9 +4109,26 @@
+             self.app_broadcast.subscribe(installed_app_id)
+         }
+ 
++        /// The DHT store for a DNA, for read-only inspection such as
++        /// validation receipts.
+         pub fn get_dht_store(&self, dna_hash: &DnaHash) -> ConductorApiResult<DhtStore> {
+             Ok(self.get_or_create_dht_store(dna_hash)?)
+         }
++    }
++}
++
++/// Methods only available with feature "test_utils"
++#[cfg(any(test, feature = "test_utils"))]
++#[allow(missing_docs)]
++mod test_utils_impls {
++    use super::*;
++    use crate::core::ribosome::Ribosome;
++    use tokio::sync::broadcast;
++
++    impl Conductor {
++        pub async fn get_state_from_handle(&self) -> ConductorResult<ConductorState> {
++            self.get_state().await
++        }
+ 
+         pub fn get_spaces(&self) -> Spaces {
+             self.spaces.clone()
