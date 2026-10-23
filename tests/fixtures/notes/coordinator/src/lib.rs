@@ -74,10 +74,10 @@ pub fn ping(input: PingInput) -> ExternResult<()> {
     send_remote_signal(Ping::Ping { id: input.id }, vec![input.agent])
 }
 
-/// Answer pings with a pong, and pass both to the local client.
+/// Answer pings with a pong, and pass both to the local client. The
+/// payload arrives as whatever `send_remote_signal` was given.
 #[hdk_extern]
-pub fn recv_remote_signal(signal: ExternIO) -> ExternResult<()> {
-    let msg: Ping = signal.decode().map_err(|e| wasm_error!(e))?;
+pub fn recv_remote_signal(msg: Ping) -> ExternResult<()> {
     if let Ping::Ping { id } = msg {
         send_remote_signal(Ping::Pong { id }, vec![call_info()?.provenance])?;
     }
