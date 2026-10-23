@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUST_TOOLCHAIN: "1.88.0"
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            asset_name: h2hc-linker-linux-x86_64
+
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-latest
+            asset_name: h2hc-linker-linux-aarch64
+            cross_compile: true
+
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+            asset_name: h2hc-linker-macos-aarch64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev cmake
+
+      - name: Install aarch64 cross-compilation toolchain
+        if: matrix.cross_compile
+        run: |
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu \
+            binutils-aarch64-linux-gnu
+
+      - name: Set cross-compiler env vars
+        if: matrix.cross_compile
+        run: |
+          echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> "$GITHUB_ENV"
+          echo "CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++" >> "$GITHUB_ENV"
+          echo "AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar" >> "$GITHUB_ENV"
+
+      - name: Install macOS LLVM
+        if: runner.os == 'macOS'
+        run: brew install llvm
+
+      - name: Set LIBCLANG_PATH (Linux)
+        if: runner.os == 'Linux'
+        run: echo "LIBCLANG_PATH=$(llvm-config --libdir)" >> "$GITHUB_ENV"
+
+      - name: Set LIBCLANG_PATH (macOS)
+        if: runner.os == 'macOS'
+        run: echo "LIBCLANG_PATH=$(brew --prefix llvm)/lib" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Collect binary
+        run: cp target/${{ matrix.target }}/release/h2hc-linker ${{ matrix.asset_name }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that at least one build succeeded
+        run: |
+          if [ "${{ needs.build.result }}" = "failure" ]; then
+            echo "All build jobs failed"
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Flatten artifacts
+        run: find artifacts/ -type f -exec mv {} . \;
+
+      - name: List available artifacts
+        run: ls -la h2hc-linker-* || echo "No artifacts found"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: h2hc-linker-*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-exclude = ["tests/fixtures"]
+exclude = ["tests/fixtures", "prototypes/h2hc-linker"]
 members = [
     "prototypes/h2hc-protocol",
     "prototypes/h2hc-p2p",

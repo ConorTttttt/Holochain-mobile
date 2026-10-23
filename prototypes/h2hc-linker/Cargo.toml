@@ -1,0 +1,63 @@
+[package]
+name = "h2hc-linker"
+version = "0.2.0"
+description = "Holo-to-Holochain Linker - Network edge gateway providing DHT access for lightweight clients"
+authors = ["Holochain Community"]
+license = "CAL-1.0"
+repository = "https://github.com/Holo-Host/h2hc-linker"
+edition = "2021"
+
+[[bin]]
+name = "h2hc-linker"
+path = "./src/bin/h2hc-linker.rs"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+axum = { version = "0.8", features = ["ws"] }
+base64 = "0.22.1"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+clap = { version = "4", features = ["derive", "env"] }
+ed25519-dalek = "2"
+futures = "0.3"
+hex = "0.4"
+holo_hash = { version = "0.7.0", features = ["hashing", "encoding", "kitsune2"] }
+holochain_client = "0.9.0"
+holochain_conductor_api = "0.7.0"
+holochain_serialized_bytes = "=0.0.57"
+holochain_types = "0.7.0"
+holochain_zome_types = "0.7.0"
+holochain_websocket = "0.7.0"
+holochain_p2p = "0.7.0"
+kitsune2 = { version = "0.5.0", default-features = false, features = ["transport-iroh"] }
+kitsune2_api = "0.5.0"
+kitsune2_core = "0.5.0"
+kitsune2_gossip = "0.5.0"
+kitsune2_transport_iroh = { version = "0.5.0", default-features = false }
+bytes = "1"
+rmp-serde = "1"
+rand = "0.9"
+serde = { version = "1", features = ["derive"] }
+serde_json = { package = "hc_serde_json", version = "1" }
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+tower-http = { version = "0.6", features = ["cors"] }
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "registry"] }
+url = "2"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+rusqlite = { version = "0.37", features = ["bundled"] }
+rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs"] }
+
+[dev-dependencies]
+assert2 = "0.3"
+http-body-util = "0.1"
+mockall = "0.13"
+reqwest = { version = "0.12", default-features = false }
+tempfile = "3"
+tower = "0.5"
+
+[features]
+default = []
+test-utils = []

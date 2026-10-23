@@ -3,3 +3,4 @@ vendor/
 tests/fixtures/*/target
 tests/fixtures/*/workdir/*.dna
 tests/fixtures/*/workdir/*.happ
+prototypes/h2hc-linker/target

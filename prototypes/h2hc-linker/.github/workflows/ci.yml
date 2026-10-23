@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  LIBCLANG_PATH: /usr/lib/llvm-18/lib
+
+jobs:
+  check:
+    name: Check, Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev
+
+      # Keep in sync with rust-toolchain.toml. This action exports
+      # RUSTUP_TOOLCHAIN, which overrides that file, so a stale pin here
+      # silently builds the project on the wrong compiler. Holochain 0.7's
+      # dependency tree (sqlx 0.9 and friends) does not build below 1.96.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.96.1
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo fmt --check
+      - run: cargo clippy -- -D warnings -A dead_code -A clippy::too_many_arguments -A clippy::type_complexity -A clippy::needless_update
+      - run: cargo test
