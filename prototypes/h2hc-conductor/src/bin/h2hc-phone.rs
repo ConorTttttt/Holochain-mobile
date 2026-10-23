@@ -312,9 +312,14 @@ impl Phone {
         let mut usage: libc::rusage = unsafe { std::mem::zeroed() };
         unsafe { libc::getrusage(libc::RUSAGE_SELF, &mut usage) };
         let tv_ms = |tv: libc::timeval| tv.tv_sec as u64 * 1000 + tv.tv_usec as u64 / 1000;
+        let (heap_in_use_kb, heap_free_kb) = heap_kb();
         Stats {
             rss_kb: field("VmRSS:"),
             peak_rss_kb: field("VmHWM:"),
+            rss_anon_kb: field("RssAnon:"),
+            rss_file_kb: field("RssFile:"),
+            heap_in_use_kb,
+            heap_free_kb,
             cpu_user_ms: tv_ms(usage.ru_utime),
             cpu_sys_ms: tv_ms(usage.ru_stime),
             threads: field("Threads:"),
@@ -324,6 +329,27 @@ impl Phone {
             link_connects: self.counters.connects.load(Relaxed),
         }
     }
+}
+
+/// The allocator's live and free bytes, in KiB. Rust allocates through the
+/// system allocator here, so this covers Rust allocations, wasmi's linear
+/// memories and SQLite's heap.
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn heap_kb() -> (u64, u64) {
+    // Large blocks are mmapped (hblkhd) rather than taken from an arena.
+    let m = unsafe { libc::mallinfo2() };
+    (((m.uordblks + m.hblkhd) / 1024) as u64, (m.fordblks / 1024) as u64)
+}
+
+#[cfg(target_os = "android")]
+fn heap_kb() -> (u64, u64) {
+    let m = unsafe { libc::mallinfo() };
+    (((m.uordblks + m.hblkhd) / 1024) as u64, (m.fordblks / 1024) as u64)
+}
+
+#[cfg(not(any(all(target_os = "linux", target_env = "gnu"), target_os = "android")))]
+fn heap_kb() -> (u64, u64) {
+    (0, 0)
 }
 
 /// Every thread's CPU time and voluntary context switches. CPU time comes

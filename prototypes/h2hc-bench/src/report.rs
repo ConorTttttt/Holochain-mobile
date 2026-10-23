@@ -75,6 +75,8 @@ pub struct ConfigResult {
     /// From the app being enabled until the phone could read an authority's note.
     pub network_ready_ms: Option<f64>,
     pub latency: BTreeMap<String, Summary>,
+    /// Memory after each workload iteration.
+    pub memory: Vec<MemorySample>,
     pub stats_ready: Stats,
     pub stats_after_workload: Stats,
     /// After the workload and the settle period.
@@ -117,6 +119,25 @@ impl ConfigResult {
         let before = self.stats_idle_start.link_sent + self.stats_idle_start.link_received;
         let after = self.stats_after_idle.link_sent + self.stats_after_idle.link_received;
         per_min(after.saturating_sub(before), self.idle_secs)
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct MemorySample {
+    pub rss_kb: u64,
+    pub rss_anon_kb: u64,
+    pub heap_in_use_kb: u64,
+    pub heap_free_kb: u64,
+}
+
+impl From<&Stats> for MemorySample {
+    fn from(s: &Stats) -> Self {
+        Self {
+            rss_kb: s.rss_kb,
+            rss_anon_kb: s.rss_anon_kb,
+            heap_in_use_kb: s.heap_in_use_kb,
+            heap_free_kb: s.heap_free_kb,
+        }
     }
 }
 
@@ -296,6 +317,31 @@ impl Report {
                 republish,
                 c.stats_after_idle.data_bytes as f64 / 1_048_576.0
             );
+        }
+
+        let grown: Vec<&ConfigResult> = self.configs.iter().filter(|c| c.memory.len() >= 2).collect();
+        if !grown.is_empty() {
+            let _ = writeln!(md, "\n## Memory per iteration\n");
+            let _ = writeln!(md, "Live heap is what the allocator has handed out and not had back; RSS also counts memory it keeps after a free.\n");
+            let _ = writeln!(md, "| Configuration | Iterations | RSS first → last | Live heap first → last | Live heap growth per iteration, second half |");
+            let _ = writeln!(md, "|---|---|---|---|---|");
+            for c in &grown {
+                let (first, last) = (&c.memory[0], &c.memory[c.memory.len() - 1]);
+                let mid = &c.memory[c.memory.len() / 2];
+                let per_iter = (last.heap_in_use_kb as f64 - mid.heap_in_use_kb as f64)
+                    / (c.memory.len() - 1 - c.memory.len() / 2).max(1) as f64;
+                let _ = writeln!(
+                    md,
+                    "| {} | {} | {} → {} | {} → {} | {:.0} KB |",
+                    c.label(),
+                    c.memory.len(),
+                    mb(first.rss_kb),
+                    mb(last.rss_kb),
+                    mb(first.heap_in_use_kb),
+                    mb(last.heap_in_use_kb),
+                    per_iter
+                );
+            }
         }
 
         let idle: Vec<&ConfigResult> = self.configs.iter().filter(|c| !c.idle_threads.is_empty()).collect();

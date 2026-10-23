@@ -344,6 +344,8 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
         let s = series.entry("signal round trip authority to phone").or_default();
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
         s.record(net.authority(i).ping(&me, id, Duration::from_secs(30)).await);
+
+        r.memory.push(report::MemorySample::from(&phone.stats().await?));
     }
 
     for k in 0..opts.receipt_samples {

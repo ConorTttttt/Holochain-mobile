@@ -48,6 +48,18 @@ pub struct Ready {
 pub struct Stats {
     pub rss_kb: u64,
     pub peak_rss_kb: u64,
+    /// Anonymous and file-backed parts of `rss_kb`.
+    #[serde(default)]
+    pub rss_anon_kb: u64,
+    #[serde(default)]
+    pub rss_file_kb: u64,
+    /// Bytes the allocator has handed out and not had back: live heap,
+    /// unlike RSS, which also counts freed memory the allocator kept.
+    #[serde(default)]
+    pub heap_in_use_kb: u64,
+    /// Freed memory the allocator holds for reuse.
+    #[serde(default)]
+    pub heap_free_kb: u64,
     pub cpu_user_ms: u64,
     pub cpu_sys_ms: u64,
     pub threads: u64,
