@@ -306,6 +306,16 @@ impl LinkerService {
             let _ = shutdown_rx.wait_for(|v| *v).await;
         };
 
+        // Conductor links exchange small request and response frames;
+        // without TCP_NODELAY, Nagle's algorithm and delayed ACKs can hold
+        // a frame back for 40 ms.
+        use axum::serve::ListenerExt;
+        let listener = listener.tap_io(|tcp| {
+            if let Err(err) = tcp.set_nodelay(true) {
+                tracing::debug!(%err, "could not set TCP_NODELAY");
+            }
+        });
+
         axum::serve(listener, router)
             .with_graceful_shutdown(shutdown_signal)
             .await

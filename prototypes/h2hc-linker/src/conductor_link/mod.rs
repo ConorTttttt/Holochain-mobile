@@ -23,7 +23,7 @@ use h2hc_protocol::*;
 use holochain_p2p::WireMessage;
 use holochain_types::prelude::*;
 use kitsune2_api::{AgentInfo, DynSpace, Url};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
@@ -33,6 +33,7 @@ use tracing::{debug, info, warn};
 
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(10);
 const CALL_TIMEOUT: Duration = Duration::from_secs(30);
+const RECENT_ACTIONS: usize = 500;
 
 type AgentKey = (DnaHash, AgentPubKey);
 
@@ -101,6 +102,9 @@ struct Inner {
     /// traffic for them is handled here, even while their phone is offline.
     known: RwLock<HashSet<AgentKey>>,
     blocked: RwLock<HashSet<BlockTargetId>>,
+    /// Actions whose ops were most recently accepted, newest last, so tests
+    /// can tell when a specific write is in the linker's custody.
+    recent_actions: Mutex<VecDeque<ActionHash>>,
     next_conn: AtomicU64,
 }
 
@@ -135,6 +139,7 @@ impl ConductorLinks {
                 routes: Default::default(),
                 known: Default::default(),
                 blocked: Default::default(),
+                recent_actions: Default::default(),
                 next_conn: AtomicU64::new(1),
             }),
         }
@@ -549,6 +554,20 @@ impl ConductorLinks {
                 Err(e) => warn!(%e, "publishing accepted ops failed"),
             }
         });
+        {
+            let mut recent = self.inner.recent_actions.lock().unwrap();
+            for op in &req.ops {
+                if let DhtOp::ChainOp(op) = op {
+                    let action = ActionHash::with_data_sync(op.signed_action().data());
+                    if !recent.contains(&action) {
+                        recent.push_back(action);
+                    }
+                }
+            }
+            while recent.len() > RECENT_ACTIONS {
+                recent.pop_front();
+            }
+        }
         Ok(Response::PublishAccepted(receipt))
     }
 
@@ -817,6 +836,14 @@ impl ConductorLinks {
             "known_agents": self.inner.known.read().unwrap().len(),
             "acceptances": self.inner.store.acceptance_count().unwrap_or(0),
             "inbox": self.inner.store.inbox_len().unwrap_or(0),
+            "recent_actions": self
+                .inner
+                .recent_actions
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|h| h.to_string())
+                .collect::<Vec<_>>(),
         })
     }
 }
