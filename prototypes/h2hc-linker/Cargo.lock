@@ -1844,6 +1844,7 @@ dependencies = [
  "clap",
  "ed25519-dalek 2.2.0",
  "futures",
+ "h2hc-protocol",
  "hc_serde_json",
  "hex",
  "holo_hash",
@@ -1876,6 +1877,19 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "url",
+]
+
+[[package]]
+name = "h2hc-protocol"
+version = "0.1.0"
+dependencies = [
+ "ed25519-dalek 2.2.0",
+ "holochain_types",
+ "kitsune2_api",
+ "rmp-serde",
+ "serde",
+ "serde_bytes",
+ "thiserror 2.0.20",
 ]
 
 [[package]]

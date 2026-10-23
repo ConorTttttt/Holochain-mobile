@@ -19,6 +19,7 @@ base64 = "0.22.1"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 clap = { version = "4", features = ["derive", "env"] }
 ed25519-dalek = "2"
+h2hc-protocol = { path = "../h2hc-protocol" }
 futures = "0.3"
 hex = "0.4"
 holo_hash = { version = "0.7.0", features = ["hashing", "encoding", "kitsune2"] }

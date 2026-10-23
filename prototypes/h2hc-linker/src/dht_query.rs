@@ -44,6 +44,8 @@ use tracing::{debug, info, warn};
 use crate::error::{LinkerError, LinkerResult};
 use crate::gateway_kitsune::GatewayKitsune;
 
+mod sourced;
+
 /// Number of peers to query in parallel (same as holochain_p2p)
 const PARALLEL_GET_AGENTS_COUNT: usize = 3;
 

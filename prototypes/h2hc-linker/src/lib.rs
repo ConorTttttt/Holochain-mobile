@@ -19,6 +19,7 @@
 pub(crate) mod agent_proxy;
 pub mod auth;
 pub mod conductor;
+pub(crate) mod conductor_link;
 mod config;
 pub(crate) mod dht_query;
 mod error;

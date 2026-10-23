@@ -59,6 +59,14 @@ fn create_open_router(app_state: AppState, cors: CorsLayer, body_limit: usize) -
         .route("/health", get(health_check))
         // WebSocket for browser extension connections
         .route("/ws", get(ws_handler))
+        .route(
+            "/conductor/v1",
+            get(crate::conductor_link::conductor_ws_handler),
+        )
+        .route(
+            "/conductor/status",
+            get(crate::conductor_link::conductor_status_handler),
+        )
         // Test endpoint for signal forwarding (development only)
         .route("/test/signal", post(test_signal))
         // DHT read endpoints
@@ -124,6 +132,14 @@ fn create_authenticated_router(app_state: AppState, cors: CorsLayer, body_limit:
         // Always open
         .route("/health", get(health_check))
         .route("/ws", get(ws_handler))
+        .route(
+            "/conductor/v1",
+            get(crate::conductor_link::conductor_ws_handler),
+        )
+        .route(
+            "/conductor/status",
+            get(crate::conductor_link::conductor_status_handler),
+        )
         .route("/test/signal", post(test_signal))
         // Protected routes
         .merge(dht_read_routes)

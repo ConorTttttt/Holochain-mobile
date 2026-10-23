@@ -183,6 +183,7 @@ mod tests {
             temp_op_store: None,
             dht_query: None,
             auth_store: Some(auth_store),
+            conductor_links: None,
         }
     }
 

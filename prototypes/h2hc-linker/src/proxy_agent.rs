@@ -25,6 +25,15 @@ use kitsune2_api::{AgentId, AgentInfo, BoxFut, DhtArc, K2Error, K2Result, LocalA
 use std::sync::{Arc, Mutex};
 use tracing::{debug, warn};
 
+/// Who holds the private key a proxy agent's agent infos are signed with.
+#[derive(Clone)]
+pub(crate) enum AgentSigner {
+    /// A browser extension, over the browser WebSocket API.
+    Browser(AgentProxyManager),
+    /// A Holochain conductor, over the conductor-facing protocol.
+    Conductor(crate::conductor_link::ConductorLinks),
+}
+
 /// Inner mutable state for ProxyAgent.
 struct ProxyAgentInner {
     /// Callback registered by kitsune2 for state changes.
@@ -50,8 +59,8 @@ pub struct ProxyAgent {
     agent_id: AgentId,
     /// The agent's public key (Holochain type for type-safe lookups).
     agent_pubkey: AgentPubKey,
-    /// Reference to the agent proxy manager for remote signing.
-    agent_proxy: AgentProxyManager,
+    /// Where signing requests go.
+    signer: AgentSigner,
     /// Mutable state.
     inner: Mutex<ProxyAgentInner>,
 }
@@ -69,13 +78,19 @@ impl ProxyAgent {
     /// Create a new ProxyAgent with the given agent public key.
     ///
     /// Uses the proper Holochain AgentPubKey type for type-safe registration lookups.
+    #[cfg(test)]
     pub fn new(agent_pubkey: AgentPubKey, agent_proxy: AgentProxyManager) -> Self {
+        Self::with_signer(agent_pubkey, AgentSigner::Browser(agent_proxy))
+    }
+
+    /// Create a ProxyAgent whose agent infos are signed by `signer`.
+    pub(crate) fn with_signer(agent_pubkey: AgentPubKey, signer: AgentSigner) -> Self {
         // Convert to kitsune2 AgentId using the 32-byte key
         let agent_id = AgentId::from(Bytes::copy_from_slice(agent_pubkey.get_raw_32()));
         Self {
             agent_id,
             agent_pubkey,
-            agent_proxy,
+            signer,
             inner: Mutex::new(ProxyAgentInner {
                 cb: None,
                 cur_arc: DhtArc::Empty,
@@ -95,20 +110,27 @@ impl Signer for ProxyAgent {
         // Send structured agent info so the browser can validate and
         // construct the canonical JSON to sign (transparent signing protocol).
         // The browser will sign with its local Lair keystore and return the signature.
-        let agent_proxy = self.agent_proxy.clone();
+        let signer = self.signer.clone();
         let agent_pubkey = self.agent_pubkey.clone();
         let agent_info = agent_info.clone();
 
         Box::pin(async move {
             debug!(
                 agent = %agent_pubkey,
-                "Requesting remote agent info signature from browser"
+                "Requesting remote agent info signature"
             );
 
-            match agent_proxy
-                .request_agent_info_signature(&agent_pubkey, &agent_info)
-                .await
-            {
+            let result = match signer {
+                AgentSigner::Browser(agent_proxy) => agent_proxy
+                    .request_agent_info_signature(&agent_pubkey, &agent_info)
+                    .await
+                    .map_err(|e| e.to_string()),
+                AgentSigner::Conductor(links) => links
+                    .sign_agent_info(&agent_pubkey, &agent_info)
+                    .await
+                    .map_err(|e| e.to_string()),
+            };
+            match result {
                 Ok(signature) => {
                     debug!(
                         agent = %agent_pubkey,

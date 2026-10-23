@@ -60,8 +60,8 @@ struct StoredOpRecord {
     _op_id: OpId,
     /// The raw op data (msgpack-encoded DhtOp).
     op_data: Bytes,
-    /// When this op was stored.
-    stored_at: Instant,
+    /// When this op may be dropped.
+    expires_at: Instant,
     /// Creation timestamp from the op.
     _created_at: Timestamp,
 }
@@ -156,6 +156,16 @@ impl TempOpStoreHandle {
     ///
     /// The computed OpId on success.
     pub async fn store_op(&self, op_bytes: Bytes) -> Result<OpId, String> {
+        self.insert(op_bytes, OP_TTL).await
+    }
+
+    /// Keep an op the linker has durably accepted fetchable for `keep_for`,
+    /// rather than the publish buffer's usual TTL.
+    pub async fn retain_op(&self, op_bytes: Bytes, keep_for: Duration) -> Result<OpId, String> {
+        self.insert(op_bytes, keep_for).await
+    }
+
+    async fn insert(&self, op_bytes: Bytes, keep_for: Duration) -> Result<OpId, String> {
         // Decode the DhtOp to get its hash and basis
         let op: DhtOp = decode(&op_bytes).map_err(|e| format!("Failed to decode DhtOp: {e}"))?;
 
@@ -183,16 +193,28 @@ impl TempOpStoreHandle {
         let record = StoredOpRecord {
             _op_id: op_id.clone(),
             op_data: op_bytes,
-            stored_at: Instant::now(),
+            expires_at: Instant::now() + keep_for,
             _created_at: created_at,
         };
 
         let mut lock = self.inner.write().await;
-        lock.ops.insert(op_id.clone(), record);
-        lock.by_basis
-            .entry(basis.clone())
-            .or_default()
-            .push(op_id.clone());
+        // Storing an op again only ever extends how long it is kept.
+        let is_new = match lock.ops.get_mut(&op_id) {
+            Some(existing) => {
+                existing.expires_at = existing.expires_at.max(record.expires_at);
+                false
+            }
+            None => {
+                lock.ops.insert(op_id.clone(), record);
+                true
+            }
+        };
+        if is_new {
+            lock.by_basis
+                .entry(basis.clone())
+                .or_default()
+                .push(op_id.clone());
+        }
 
         debug!(
             op_id = %op_id,
@@ -252,8 +274,7 @@ impl TempOpStoreInner {
     /// Remove expired ops (and their by-basis index entries).
     fn cleanup_expired(&mut self) {
         let now = Instant::now();
-        self.ops
-            .retain(|_, record| now.duration_since(record.stored_at) < OP_TTL);
+        self.ops.retain(|_, record| record.expires_at > now);
 
         let ops = &self.ops;
         self.by_basis.retain(|_, op_ids| {
@@ -491,7 +512,7 @@ mod tests {
             StoredOpRecord {
                 _op_id: expired_op_id.clone(),
                 op_data: Bytes::from_static(&[1, 2, 3]),
-                stored_at: Instant::now() - Duration::from_secs(120), // 2 minutes ago
+                expires_at: Instant::now() - Duration::from_secs(60), // expired a minute ago
                 _created_at: K2Timestamp::from_micros(0),
             },
         );
@@ -503,7 +524,7 @@ mod tests {
             StoredOpRecord {
                 _op_id: fresh_op_id.clone(),
                 op_data: Bytes::from_static(&[4, 5, 6]),
-                stored_at: Instant::now(),
+                expires_at: Instant::now() + Duration::from_secs(60),
                 _created_at: K2Timestamp::from_micros(0),
             },
         );

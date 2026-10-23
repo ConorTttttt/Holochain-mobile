@@ -25,8 +25,9 @@
 //! ```
 
 use crate::agent_proxy::AgentProxyManager;
+use crate::conductor_link::ConductorLinks;
 use crate::dht_query::PendingDhtResponses;
-use crate::proxy_agent::ProxyAgent;
+use crate::proxy_agent::{AgentSigner, ProxyAgent};
 use crate::routes::websocket::ServerMessage;
 use crate::wire_preflight::{BootstrapWrapperFactory, PreflightCache, WirePreflightMessage};
 use base64::Engine;
@@ -58,7 +59,13 @@ pub struct KitsuneProxy {
     pending_dht_responses: PendingDhtResponses,
     /// Cached preflight data updated by bootstrap wrapper when agents are published
     preflight_cache: PreflightCache,
+    /// Handles traffic for agents served over the conductor-facing protocol.
+    conductor_links: ConductorLinksSlot,
 }
+
+/// Set once the linker has built its conductor links, which need the
+/// Kitsune2 instance this handler is created for.
+pub(crate) type ConductorLinksSlot = Arc<std::sync::OnceLock<ConductorLinks>>;
 
 impl KitsuneProxy {
     /// Create a new KitsuneProxy with the given agent proxy manager.
@@ -68,6 +75,7 @@ impl KitsuneProxy {
             agent_proxy,
             pending_dht_responses: PendingDhtResponses::new(),
             preflight_cache: PreflightCache::new(),
+            conductor_links: Default::default(),
         }
     }
 
@@ -83,7 +91,14 @@ impl KitsuneProxy {
             agent_proxy,
             pending_dht_responses,
             preflight_cache: PreflightCache::new(),
+            conductor_links: Default::default(),
         }
+    }
+
+    /// Route traffic for conductor-linked agents to `slot` once it is set.
+    pub(crate) fn with_conductor_links(mut self, slot: ConductorLinksSlot) -> Self {
+        self.conductor_links = slot;
+        self
     }
 
     /// Get the preflight cache (for sharing with BootstrapWrapperFactory).
@@ -100,12 +115,14 @@ impl KitsuneHandler for KitsuneProxy {
     ) -> BoxFut<'_, K2Result<DynSpaceHandler>> {
         let agent_proxy = self.agent_proxy.clone();
         let pending_dht_responses = self.pending_dht_responses.clone();
+        let conductor_links = self.conductor_links.clone();
         Box::pin(async move {
             info!(?space_id, "Creating proxy space handler");
             let handler: DynSpaceHandler = Arc::new(ProxySpaceHandler {
                 space_id,
                 agent_proxy,
                 pending_dht_responses,
+                conductor_links,
             });
             Ok(handler)
         })
@@ -177,6 +194,7 @@ struct ProxySpaceHandler {
     agent_proxy: AgentProxyManager,
     /// Shared pending DHT responses for routing responses to DhtQuery requests
     pending_dht_responses: PendingDhtResponses,
+    conductor_links: ConductorLinksSlot,
 }
 
 impl SpaceHandler for ProxySpaceHandler {
@@ -238,6 +256,14 @@ impl SpaceHandler for ProxySpaceHandler {
 
 impl ProxySpaceHandler {
     fn handle_wire_message(&self, msg: WireMessage, from_peer: &Url) {
+        if let Some(links) = self.conductor_links.get() {
+            let dna_hash = DnaHash::from_k2_space(&self.space_id);
+            if links.claims(&dna_hash, &msg) {
+                let (links, from_peer) = (links.clone(), from_peer.clone());
+                tokio::spawn(async move { links.on_incoming(dna_hash, from_peer, msg).await });
+                return;
+            }
+        }
         match msg {
             WireMessage::RemoteSignalEvt {
                 to_agent,
@@ -291,6 +317,9 @@ impl ProxySpaceHandler {
             | msg @ WireMessage::CountLinksRes { .. }
             | msg @ WireMessage::GetAgentActivityRes { .. }
             | msg @ WireMessage::MustGetAgentActivityRes { .. }
+            | msg @ WireMessage::CallRemoteRes { .. }
+            | msg @ WireMessage::SendValidationReceiptsRes { .. }
+            | msg @ WireMessage::PingRes { .. }
             | msg @ WireMessage::ErrorRes { .. } => {
                 let msg_id = msg.get_msg_id();
                 info!(?msg_id, "Routing DHT response to pending request handler");
@@ -562,6 +591,21 @@ impl GatewayKitsune {
         dna_hash: &DnaHash,
         agent_pubkey: &AgentPubKey,
     ) -> Result<(), String> {
+        self.agent_join_with_signer(
+            dna_hash,
+            agent_pubkey,
+            AgentSigner::Browser(self.agent_proxy.clone()),
+        )
+        .await
+    }
+
+    /// Join an agent whose agent infos are signed by `signer`.
+    pub(crate) async fn agent_join_with_signer(
+        &self,
+        dna_hash: &DnaHash,
+        agent_pubkey: &AgentPubKey,
+        signer: AgentSigner,
+    ) -> Result<(), String> {
         let key = (dna_hash.clone(), agent_pubkey.clone());
 
         // Check if already registered
@@ -580,11 +624,8 @@ impl GatewayKitsune {
         // Get or create space
         let space = self.get_or_create_space(dna_hash).await?;
 
-        // Create proxy agent with access to agent_proxy for remote signing
-        let proxy_agent = Arc::new(ProxyAgent::new(
-            agent_pubkey.clone(),
-            self.agent_proxy.clone(),
-        ));
+        // Create proxy agent that asks `signer` to sign its agent infos
+        let proxy_agent = Arc::new(ProxyAgent::with_signer(agent_pubkey.clone(), signer));
 
         // Join space
         space
@@ -807,8 +848,11 @@ impl GatewayKitsune {
 
             // Create wire message
             let extern_io = ExternIO(signal.zome_call_params);
-            let signature = Signature::try_from(signal.signature.as_slice())
-                .unwrap_or_else(|_| Signature::from([0u8; 64]));
+            let Ok(signature) = Signature::try_from(signal.signature.as_slice()) else {
+                warn!(%target_agent, "Dropping signal with an invalid signature");
+                fail_count += 1;
+                continue;
+            };
             let wire_msg =
                 WireMessage::remote_signal_evt(target_agent.clone(), extern_io, signature);
 
@@ -1016,6 +1060,7 @@ mod tests {
             space_id: dna.to_k2_space(),
             agent_proxy,
             pending_dht_responses: PendingDhtResponses::new(),
+            conductor_links: Default::default(),
         };
         assert!(format!("{handler:?}").contains("ProxySpaceHandler"));
     }
@@ -1064,6 +1109,7 @@ mod tests {
             space_id: dna.to_k2_space(),
             agent_proxy,
             pending_dht_responses: PendingDhtResponses::new(),
+            conductor_links: Default::default(),
         };
 
         // Create a RemoteSignalEvt
@@ -1109,6 +1155,7 @@ mod tests {
             space_id: space_id.clone(),
             agent_proxy: agent_proxy.clone(),
             pending_dht_responses: PendingDhtResponses::new(),
+            conductor_links: Default::default(),
         };
 
         // Create a RemoteSignalEvt
@@ -1165,6 +1212,7 @@ mod tests {
             space_id: dna.to_k2_space(),
             agent_proxy: agent_proxy.clone(),
             pending_dht_responses: PendingDhtResponses::new(),
+            conductor_links: Default::default(),
         };
 
         // Create a RemoteSignalEvt for an unregistered agent
@@ -1200,6 +1248,7 @@ mod tests {
             space_id: dna.to_k2_space(),
             agent_proxy,
             pending_dht_responses: pending.clone(),
+            conductor_links: Default::default(),
         };
 
         // Register a pending request with a known msg_id
@@ -1248,6 +1297,7 @@ mod tests {
             space_id: dna.to_k2_space(),
             agent_proxy,
             pending_dht_responses: pending.clone(),
+            conductor_links: Default::default(),
         };
 
         let msg_id = 223;
@@ -1287,6 +1337,7 @@ mod tests {
             space_id: dna.to_k2_space(),
             agent_proxy,
             pending_dht_responses: pending.clone(),
+            conductor_links: Default::default(),
         };
 
         let msg_id = 55;
@@ -1325,6 +1376,7 @@ mod tests {
             space_id: dna.to_k2_space(),
             agent_proxy,
             pending_dht_responses: pending,
+            conductor_links: Default::default(),
         };
 
         // Send a GetRes with no matching pending request

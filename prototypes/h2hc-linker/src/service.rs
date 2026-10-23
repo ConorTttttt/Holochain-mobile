@@ -7,6 +7,7 @@ use tokio::net::TcpListener;
 use crate::agent_proxy::AgentProxyManager;
 use crate::auth::AuthStore;
 use crate::conductor::{AdminConn, AppConn};
+use crate::conductor_link::{store::AcceptanceStore, ConductorLinks};
 use crate::config::Configuration;
 use crate::dht_query::{DhtQuery, PendingDhtResponses};
 use crate::error::{LinkerError, LinkerResult};
@@ -36,6 +37,8 @@ pub struct AppState {
     pub dht_query: Option<DhtQuery>,
     /// Auth store (if auth enabled via H2HC_LINKER_ADMIN_SECRET)
     pub auth_store: Option<AuthStore>,
+    /// Conductors connected over `/conductor/v1`.
+    pub conductor_links: Option<ConductorLinks>,
 }
 
 /// The main h2hc-linker service
@@ -71,6 +74,7 @@ impl LinkerService {
         let pending_dht_responses = PendingDhtResponses::new();
 
         // Create Kitsune2 instance (always enabled - bootstrap_url is required)
+        let conductor_links_slot: crate::gateway_kitsune::ConductorLinksSlot = Default::default();
         let (kitsune, gateway_kitsune, temp_op_store, dht_query) = if config.kitsune_enabled() {
             tracing::info!("Initializing Kitsune2 instance with agent registration support and direct DHT queries");
 
@@ -82,7 +86,8 @@ impl LinkerService {
             let kitsune_proxy = KitsuneProxy::with_pending_responses(
                 agent_proxy.clone(),
                 pending_dht_responses.clone(),
-            );
+            )
+            .with_conductor_links(conductor_links_slot.clone());
 
             let mut builder =
                 KitsuneProxyBuilder::new(kitsune_proxy).with_op_store(op_store_factory.into_dyn());
@@ -197,6 +202,39 @@ impl LinkerService {
             None
         };
 
+        let conductor_links = match (&gateway_kitsune, &dht_query, &temp_op_store) {
+            (Some(gateway), Some(query), Some(temp_ops)) => {
+                let link_config = &config.conductor_link;
+                let store = AcceptanceStore::open(
+                    &link_config.data_dir,
+                    identity.signing_key().clone(),
+                    link_config.retention,
+                )
+                .map_err(|e| {
+                    LinkerError::Internal(format!("Failed to open acceptance store: {e}"))
+                })?;
+                let links = ConductorLinks::new(
+                    Arc::new(store),
+                    gateway.clone(),
+                    query.clone(),
+                    pending_dht_responses.clone(),
+                    temp_ops.clone(),
+                    link_config.leave_on_disconnect,
+                );
+                let reloaded = links.reload_retained_ops().await.map_err(|e| {
+                    LinkerError::Internal(format!("Failed to reload retained ops: {e}"))
+                })?;
+                tracing::info!(
+                    reloaded,
+                    data_dir = %link_config.data_dir.display(),
+                    "Conductor links enabled at /conductor/v1"
+                );
+                let _ = conductor_links_slot.set(links.clone());
+                Some(links)
+            }
+            _ => None,
+        };
+
         let app_state = AppState {
             configuration: config,
             agent_proxy,
@@ -206,6 +244,7 @@ impl LinkerService {
             temp_op_store,
             dht_query,
             auth_store,
+            conductor_links,
         };
 
         Ok(Self {

@@ -153,6 +153,42 @@ pub struct Configuration {
     /// an operator-facing kill switch for that code path in case it needs to
     /// be turned off in the field without a rebuild.
     pub local_authority_fallback_enabled: bool,
+
+    /// Conductor-facing protocol (`/conductor/v1`) settings.
+    pub conductor_link: ConductorLinkConfig,
+}
+
+/// Settings for conductors connected over the conductor-facing protocol.
+#[derive(Debug, Clone)]
+pub struct ConductorLinkConfig {
+    /// Directory for the acceptance store (`H2HC_LINKER_DATA_DIR`).
+    pub data_dir: PathBuf,
+    /// How long accepted ops are kept (`H2HC_LINKER_RETENTION_S`).
+    pub retention: Duration,
+    /// Leave Kitsune2 when a conductor disconnects
+    /// (`H2HC_LINKER_LEAVE_ON_DISCONNECT`). Off by default, so a phone that
+    /// drops briefly stays routable until its agent info expires.
+    pub leave_on_disconnect: bool,
+}
+
+impl Default for ConductorLinkConfig {
+    fn default() -> Self {
+        Self {
+            data_dir: PathBuf::from("/tmp/h2hc-linker-data"),
+            retention: Duration::from_secs(7 * 24 * 60 * 60),
+            leave_on_disconnect: false,
+        }
+    }
+}
+
+fn parse_bool(name: &str, val: &str) -> anyhow::Result<bool> {
+    match val.to_lowercase().as_str() {
+        "true" | "1" | "yes" | "on" | "enabled" => Ok(true),
+        "false" | "0" | "no" | "off" | "disabled" => Ok(false),
+        other => Err(anyhow::anyhow!(
+            "Unknown {name} value: '{other}'. Use 'true' or 'false'."
+        )),
+    }
 }
 
 impl Default for Configuration {
@@ -171,6 +207,7 @@ impl Default for Configuration {
             identity: IdentityConfig::default(),
             registration: None,
             local_authority_fallback_enabled: true,
+            conductor_link: ConductorLinkConfig::default(),
         }
     }
 }
@@ -342,6 +379,17 @@ impl Configuration {
                     ));
                 }
             };
+        }
+
+        if let Ok(dir) = std::env::var("H2HC_LINKER_DATA_DIR") {
+            config.conductor_link.data_dir = PathBuf::from(dir);
+        }
+        if let Ok(secs) = std::env::var("H2HC_LINKER_RETENTION_S") {
+            config.conductor_link.retention = Duration::from_secs(secs.parse()?);
+        }
+        if let Ok(val) = std::env::var("H2HC_LINKER_LEAVE_ON_DISCONNECT") {
+            config.conductor_link.leave_on_disconnect =
+                parse_bool("H2HC_LINKER_LEAVE_ON_DISCONNECT", &val)?;
         }
 
         Ok(config)
