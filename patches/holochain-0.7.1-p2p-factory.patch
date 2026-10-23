@@ -1,0 +1,76 @@
+--- a/src/conductor/conductor/builder.rs
++++ b/src/conductor/conductor/builder.rs
+@@ -10,6 +10,32 @@
+ use lair_keystore_api::types::SharedLockedArray;
+ use std::sync::Mutex;
+ 
++/// Builds the conductor's network layer from its p2p config and keystore.
++///
++/// The default is [`holochain_p2p::spawn_holochain_p2p`]. Another factory lets
++/// an embedder supply a different [`holochain_p2p::actor::HcP2p`], such as one
++/// that reaches the network through a proxy instead of a local Kitsune2.
++pub type P2pFactory = Box<
++    dyn FnOnce(
++            holochain_p2p::HolochainP2pConfig,
++            MetaLairClient,
++        ) -> futures::future::BoxFuture<
++            'static,
++            holochain_p2p::HolochainP2pResult<holochain_p2p::actor::DynHcP2p>,
++        > + Send,
++>;
++
++async fn spawn_p2p(
++    factory: Option<P2pFactory>,
++    config: holochain_p2p::HolochainP2pConfig,
++    keystore: MetaLairClient,
++) -> holochain_p2p::HolochainP2pResult<holochain_p2p::actor::DynHcP2p> {
++    match factory {
++        Some(factory) => factory(config, keystore).await,
++        None => holochain_p2p::spawn_holochain_p2p(config, keystore).await,
++    }
++}
++
+ /// A configurable Builder for Conductor and sometimes ConductorHandle
+ #[derive(Default)]
+ pub struct ConductorBuilder {
+@@ -34,6 +60,9 @@
+     /// directly to manipulate holochain databases.
+     pub danger_print_db_secrets: bool,
+ 
++    /// Network factory override. `None` spawns the default Kitsune2 network.
++    pub p2p_factory: Option<P2pFactory>,
++
+     /// An [`InlineZomeStore`] to use, permitting a new conductor startup to use inline zomes that
+     /// were installed on a previous run.
+     #[cfg(feature = "test_utils")]
+@@ -75,6 +104,12 @@
+         self
+     }
+ 
++    /// Use `factory` instead of the default Kitsune2 network.
++    pub fn with_p2p_factory(mut self, factory: P2pFactory) -> Self {
++        self.p2p_factory = Some(factory);
++        self
++    }
++
+     /// Set the data root path for the conductor that will be built.
+     pub fn with_data_root_path(mut self, data_root_path: DataRootPath) -> Self {
+         self.config.data_root_path = Some(data_root_path);
+@@ -256,7 +291,7 @@
+         };
+ 
+         let holochain_p2p =
+-            match holochain_p2p::spawn_holochain_p2p(p2p_config, keystore.clone()).await {
++            match spawn_p2p(builder.p2p_factory, p2p_config, keystore.clone()).await {
+                 Ok(r) => r,
+                 Err(err) => {
+                     tracing::error!(?err, "Error spawning networking");
+@@ -496,7 +531,7 @@
+         };
+ 
+         let holochain_p2p =
+-            holochain_p2p::spawn_holochain_p2p(p2p_config, keystore.clone()).await?;
++            spawn_p2p(builder.p2p_factory, p2p_config, keystore.clone()).await?;
+ 
+         let (post_commit_sender, post_commit_receiver) =
+             tokio::sync::mpsc::channel(POST_COMMIT_CHANNEL_BOUND);
