@@ -4,7 +4,7 @@ Working repo for the v4 plan: https://claude.ai/artifact/QzfGayyLzmZmhPsGc4zKtS.
 
 | Step | Deliverable | Status |
 |---|---|---|
-| 1 | Physical arm64 baseline, Cranelift and wasmi | Desktop results in [benchmarks/](benchmarks/README.md); arm64 run waiting for the Android tools and a phone |
+| 1 | Physical arm64 baseline, Cranelift and wasmi | Desktop and Galaxy S23+ results in [benchmarks/](benchmarks/README.md); idle CPU fixed on the desktop, phone re-run pending |
 | 2 | HcP2p and HcP2pHandler compatibility matrix; injectable network factory | Done: [matrix](research/hcp2p-compat-matrix.md), [factory patch](patches/holochain-0.7.1-p2p-factory.patch) |
 | 3 | Durable linker acceptance, truthful status, receipt inbox | Done in the local linker fork |
 | 4 | End-to-end H2HC conductor | Runs against a real local network: reads, writes, receipts, remote calls and signals both ways |
@@ -23,7 +23,7 @@ Pinned sources: Holochain 0.7.1 (HDK 0.7.1, HDI 0.8.1) for conductors, 0.7.0 for
 | [prototypes/h2hc-linker](prototypes/h2hc-linker) | Local fork of h2hc-linker (CAL-1.0) with `/conductor/v1`: admission checks, SQLite acceptance store and inbox, sourced queries, remote calls and signals both ways |
 | [prototypes/h2hc-conductor](prototypes/h2hc-conductor/src/lib.rs) | `build_phone_conductor`, and the `h2hc-phone` binary the benchmarks drive |
 | [prototypes/h2hc-bench](prototypes/h2hc-bench/src/main.rs) | Starts a local network (bootstrap and relay, full-arc authorities, linker), runs `h2hc-phone` in each configuration, writes a report |
-| [patches/](patches) | Holochain 0.7.1 changes: `ConductorBuilder::with_p2p_factory`, and app signals and DHT store reads without `test_utils` for in-process embedding |
+| [patches/](patches) | Holochain 0.7.1 changes: `ConductorBuilder::with_p2p_factory`; app signals and DHT store reads without `test_utils`, for in-process embedding; a scheduler that sleeps until a function is due instead of polling SQLite every 100 ms |
 | [tests/fixtures/notes](tests/fixtures/notes) | Test-only DNA with deliberately restrictive validation, links, remote calls and signals |
 
 ## Run the benchmarks
@@ -56,6 +56,26 @@ Scenarios (H2HC with Cranelift):
 - the linker crashes and restarts, keeping its acceptance log, and the phone reconnects and publishes what it wrote during the outage.
 
 `--long` adds a phone sleep longer than the 20-minute agent-info lifetime.
+
+### Idle CPU
+
+`--settle-secs` waits after the workload before idle is measured. The report then gives idle CPU for each minute, and CPU and wakeups for each thread. `--profile-secs` profiles the phone after the idle period, and `--wake-samples` times the first operations after a quiet spell. To compare another revision's phones on the same network, build them with `scripts/build-phones-at.sh` and pass `--phone-dir`:
+
+```sh
+./scripts/bench.sh --iterations 20 --wasmi-iterations 10 --settle-secs 60 --idle-secs 300 --no-scenarios
+./scripts/build-phones-at.sh 711db75 target/before          # the last revision before the scheduler fix
+target/release/h2hc-bench --phone-dir target/before --iterations 20 --wasmi-iterations 10 --settle-secs 60 --idle-secs 300 --no-scenarios
+```
+
+On the phone, the same comparison:
+
+```sh
+./scripts/build-phones-at.sh 711db75 target/before --android
+./scripts/bench-android.sh --settle-secs 60 --idle-secs 300 --wake-samples 4
+./scripts/bench-android.sh --phone-dir target/before --settle-secs 60 --idle-secs 300 --wake-samples 4
+```
+
+`network:wasm@NAME=value` gives one phone its own environment variables; this is how the scheduler experiments ran.
 
 ## Tests
 

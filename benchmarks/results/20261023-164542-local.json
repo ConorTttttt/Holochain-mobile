@@ -1,0 +1,239 @@
+{
+  "started": "20261023-164542",
+  "baseline": {
+    "authority note visible at another authority": {
+      "n": 3,
+      "failures": 0,
+      "p50": 30.379382,
+      "p95": 30.647536,
+      "min": 3.122416,
+      "max": 30.647536,
+      "mean": 21.383111333333332
+    },
+    "remote call": {
+      "n": 3,
+      "failures": 0,
+      "p50": 6.63485,
+      "p95": 10.377352,
+      "min": 5.09567,
+      "max": 10.377352,
+      "mean": 7.369290666666667
+    },
+    "signal round trip": {
+      "n": 3,
+      "failures": 0,
+      "p50": 7.20903,
+      "p95": 8.478448,
+      "min": 5.485416,
+      "max": 8.478448,
+      "mean": 7.057631333333333
+    }
+  },
+  "target": "local",
+  "phone_builds": "target",
+  "host": "Linux 7.0.0-38-generic x86_64",
+  "authorities": 3,
+  "iterations": 3,
+  "configs": [
+    {
+      "network": "h2hc",
+      "wasm": "cranelift",
+      "env": [],
+      "keystore": "lair",
+      "iterations": 3,
+      "startup_ms": 1583.511963,
+      "install_ms": 580.729525,
+      "enable_ms": 58.555303,
+      "first_call_ms": 809.241899,
+      "network_ready_ms": 890.322196,
+      "latency": {
+        "create note (local commit)": {
+          "n": 3,
+          "failures": 0,
+          "p50": 18.096449,
+          "p95": 19.510498,
+          "min": 15.316191,
+          "max": 19.510498,
+          "mean": 17.641046
+        },
+        "create note after 40 s quiet": {
+          "n": 8,
+          "failures": 0,
+          "p50": 16.650568,
+          "p95": 17.954007,
+          "min": 15.873721,
+          "max": 17.954007,
+          "mean": 16.734408874999996
+        },
+        "get authority's note (first fetch)": {
+          "n": 3,
+          "failures": 0,
+          "p50": 3.910346,
+          "p95": 4.138841,
+          "min": 3.810989,
+          "max": 4.138841,
+          "mean": 3.9533919999999996
+        },
+        "get links (authority's notes)": {
+          "n": 3,
+          "failures": 0,
+          "p50": 5.247871,
+          "p95": 47.714215,
+          "min": 4.682847000000001,
+          "max": 47.714215,
+          "mean": 19.214977666666666
+        },
+        "get own note": {
+          "n": 3,
+          "failures": 0,
+          "p50": 2.3910009999999997,
+          "p95": 2.628684,
+          "min": 2.357141,
+          "max": 2.628684,
+          "mean": 2.458942
+        },
+        "get own note after 40 s quiet": {
+          "n": 8,
+          "failures": 0,
+          "p50": 4.931501,
+          "p95": 36.515997,
+          "min": 2.922901,
+          "max": 36.515997,
+          "mean": 8.28326425
+        },
+        "phone note visible at an authority": {
+          "n": 5,
+          "failures": 0,
+          "p50": 46.074886,
+          "p95": 115.967025,
+          "min": 31.338749999999997,
+          "max": 115.967025,
+          "mean": 66.54800279999999
+        },
+        "remote call authority to phone": {
+          "n": 3,
+          "failures": 0,
+          "p50": 6.308052,
+          "p95": 6.954681,
+          "min": 5.965749000000001,
+          "max": 6.954681,
+          "mean": 6.409494
+        },
+        "remote call phone to authority": {
+          "n": 3,
+          "failures": 0,
+          "p50": 6.660541,
+          "p95": 14.151021,
+          "min": 5.940075,
+          "max": 14.151021,
+          "mean": 8.917212333333334
+        },
+        "signal round trip authority to phone": {
+          "n": 3,
+          "failures": 0,
+          "p50": 8.379242999999999,
+          "p95": 10.085014,
+          "min": 7.990308999999999,
+          "max": 10.085014,
+          "mean": 8.818188666666666
+        },
+        "signal round trip phone to authority": {
+          "n": 3,
+          "failures": 0,
+          "p50": 8.763592000000001,
+          "p95": 12.935375,
+          "min": 7.402312,
+          "max": 12.935375,
+          "mean": 9.700426333333334
+        },
+        "validation receipts for every op": {
+          "n": 5,
+          "failures": 0,
+          "p50": 142.761157,
+          "p95": 327.004046,
+          "min": 50.790729,
+          "max": 327.004046,
+          "mean": 191.327045
+        }
+      },
+      "stats_ready": {
+        "rss_kb": 379260,
+        "peak_rss_kb": 417044,
+        "cpu_user_ms": 9461,
+        "cpu_sys_ms": 534,
+        "threads": 52,
+        "data_bytes": 75651588,
+        "link_sent": 7105,
+        "link_received": 8253,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 382700,
+        "peak_rss_kb": 417044,
+        "cpu_user_ms": 9725,
+        "cpu_sys_ms": 666,
+        "threads": 52,
+        "data_bytes": 78815748,
+        "link_sent": 40376,
+        "link_received": 74942,
+        "link_connects": 1
+      },
+      "stats_idle_start": {
+        "rss_kb": 382824,
+        "peak_rss_kb": 417044,
+        "cpu_user_ms": 9758,
+        "cpu_sys_ms": 678,
+        "threads": 51,
+        "data_bytes": 79409028,
+        "link_sent": 40409,
+        "link_received": 86260,
+        "link_connects": 1
+      },
+      "stats_after_idle": {
+        "rss_kb": 382824,
+        "peak_rss_kb": 417044,
+        "cpu_user_ms": 9758,
+        "cpu_sys_ms": 678,
+        "threads": 51,
+        "data_bytes": 79409028,
+        "link_sent": 40409,
+        "link_received": 86260,
+        "link_connects": 1
+      },
+      "settle_secs": 30,
+      "idle_secs": 0,
+      "idle_cpu_samples": [],
+      "idle_threads": [
+        {
+          "name": "h2hc-phone",
+          "threads": 1,
+          "cpu_ms_per_min": 169.02,
+          "wakeups_per_min": 0.0
+        },
+        {
+          "name": "tokio-rt-worker",
+          "threads": 25,
+          "cpu_ms_per_min": 2.5799999999999996,
+          "wakeups_per_min": 0.0
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 12,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        },
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 13,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": 0,
+      "idle_frames": {},
+      "errors": []
+    }
+  ],
+  "scenarios": []
+}

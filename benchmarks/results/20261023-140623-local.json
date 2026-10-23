@@ -1,0 +1,291 @@
+{
+  "started": "20261023-140623",
+  "baseline": {
+    "authority note visible at another authority": {
+      "n": 3,
+      "failures": 0,
+      "p50": 2.272608,
+      "p95": 2.340016,
+      "min": 2.2435,
+      "max": 2.340016,
+      "mean": 2.2853746666666663
+    },
+    "remote call": {
+      "n": 3,
+      "failures": 0,
+      "p50": 5.275252999999999,
+      "p95": 5.3635790000000005,
+      "min": 5.064148,
+      "max": 5.3635790000000005,
+      "mean": 5.234326666666667
+    },
+    "signal round trip": {
+      "n": 3,
+      "failures": 0,
+      "p50": 6.544292,
+      "p95": 6.616289,
+      "min": 6.257221,
+      "max": 6.616289,
+      "mean": 6.472600666666668
+    }
+  },
+  "target": "local",
+  "host": "Linux 7.0.0-38-generic x86_64",
+  "authorities": 3,
+  "iterations": 3,
+  "configs": [
+    {
+      "network": "h2hc",
+      "wasm": "cranelift",
+      "keystore": "lair",
+      "iterations": 3,
+      "startup_ms": 1410.24622,
+      "install_ms": 501.600052,
+      "enable_ms": 59.531671,
+      "first_call_ms": 777.725349,
+      "network_ready_ms": 822.730311,
+      "latency": {},
+      "stats_ready": {
+        "rss_kb": 440888,
+        "peak_rss_kb": 447492,
+        "cpu_user_ms": 9290,
+        "cpu_sys_ms": 487,
+        "threads": 51,
+        "data_bytes": 74739516,
+        "link_sent": 7830,
+        "link_received": 5107,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 0,
+        "peak_rss_kb": 0,
+        "cpu_user_ms": 0,
+        "cpu_sys_ms": 0,
+        "threads": 0,
+        "data_bytes": 0,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_idle_start": {
+        "rss_kb": 0,
+        "peak_rss_kb": 0,
+        "cpu_user_ms": 0,
+        "cpu_sys_ms": 0,
+        "threads": 0,
+        "data_bytes": 0,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_after_idle": {
+        "rss_kb": 0,
+        "peak_rss_kb": 0,
+        "cpu_user_ms": 0,
+        "cpu_sys_ms": 0,
+        "threads": 0,
+        "data_bytes": 0,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "settle_secs": 60,
+      "idle_secs": 300,
+      "idle_cpu_samples": [],
+      "idle_threads": [],
+      "profile": null,
+      "idle_linker_acceptances": null,
+      "idle_frames": {},
+      "errors": [
+        "note not readable after 60s"
+      ]
+    },
+    {
+      "network": "kitsune2",
+      "wasm": "cranelift",
+      "keystore": "lair",
+      "iterations": 3,
+      "startup_ms": 1412.377931,
+      "install_ms": 515.375197,
+      "enable_ms": 79.187753,
+      "first_call_ms": 753.714384,
+      "network_ready_ms": 2452.669048,
+      "latency": {
+        "create note (local commit)": {
+          "n": 3,
+          "failures": 0,
+          "p50": 15.452572,
+          "p95": 15.660508,
+          "min": 14.404635,
+          "max": 15.660508,
+          "mean": 15.172571666666668
+        },
+        "get authority's note (first fetch)": {
+          "n": 3,
+          "failures": 0,
+          "p50": 3.706703,
+          "p95": 4.329802,
+          "min": 3.659091,
+          "max": 4.329802,
+          "mean": 3.898532
+        },
+        "get links (authority's notes)": {
+          "n": 3,
+          "failures": 0,
+          "p50": 4.740374,
+          "p95": 5.589777,
+          "min": 4.32076,
+          "max": 5.589777,
+          "mean": 4.883636999999999
+        },
+        "get own note": {
+          "n": 3,
+          "failures": 0,
+          "p50": 2.290744,
+          "p95": 2.4992159999999997,
+          "min": 2.142266,
+          "max": 2.4992159999999997,
+          "mean": 2.310742
+        },
+        "phone note visible at an authority": {
+          "n": 5,
+          "failures": 0,
+          "p50": 3.203979,
+          "p95": 31.835246999999995,
+          "min": 2.920039,
+          "max": 31.835246999999995,
+          "mean": 14.509285799999997
+        },
+        "remote call authority to phone": {
+          "n": 3,
+          "failures": 0,
+          "p50": 5.091941,
+          "p95": 5.831300000000001,
+          "min": 5.031843,
+          "max": 5.831300000000001,
+          "mean": 5.318361333333334
+        },
+        "remote call phone to authority": {
+          "n": 3,
+          "failures": 0,
+          "p50": 5.471533,
+          "p95": 5.595993,
+          "min": 5.361937,
+          "max": 5.595993,
+          "mean": 5.476487666666666
+        },
+        "signal round trip authority to phone": {
+          "n": 3,
+          "failures": 0,
+          "p50": 6.441527,
+          "p95": 6.8173770000000005,
+          "min": 5.8476170000000005,
+          "max": 6.8173770000000005,
+          "mean": 6.368840333333334
+        },
+        "signal round trip phone to authority": {
+          "n": 3,
+          "failures": 0,
+          "p50": 6.416257,
+          "p95": 6.7064569999999994,
+          "min": 6.376867,
+          "max": 6.7064569999999994,
+          "mean": 6.499860333333333
+        },
+        "validation receipts for every op": {
+          "n": 5,
+          "failures": 0,
+          "p50": 9957.277371,
+          "p95": 9991.940367,
+          "min": 9952.986202,
+          "max": 9991.940367,
+          "mean": 9968.818856400001
+        }
+      },
+      "stats_ready": {
+        "rss_kb": 475568,
+        "peak_rss_kb": 481056,
+        "cpu_user_ms": 9565,
+        "cpu_sys_ms": 564,
+        "threads": 53,
+        "data_bytes": 74834288,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_after_workload": {
+        "rss_kb": 478484,
+        "peak_rss_kb": 481056,
+        "cpu_user_ms": 10049,
+        "cpu_sys_ms": 834,
+        "threads": 54,
+        "data_bytes": 77788328,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_idle_start": {
+        "rss_kb": 478676,
+        "peak_rss_kb": 481056,
+        "cpu_user_ms": 10268,
+        "cpu_sys_ms": 933,
+        "threads": 50,
+        "data_bytes": 51511320,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_after_idle": {
+        "rss_kb": 479140,
+        "peak_rss_kb": 481056,
+        "cpu_user_ms": 11391,
+        "cpu_sys_ms": 1427,
+        "threads": 47,
+        "data_bytes": 51160584,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "settle_secs": 60,
+      "idle_secs": 300,
+      "idle_cpu_samples": [
+        310.0,
+        313.0,
+        320.0,
+        339.0,
+        335.0
+      ],
+      "idle_threads": [
+        {
+          "name": "tokio-rt-worker",
+          "threads": 25,
+          "cpu_ms_per_min": 216.2468,
+          "wakeups_per_min": 10715.199999999999
+        },
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 9,
+          "cpu_ms_per_min": 106.09800000000001,
+          "wakeups_per_min": 5449.799999999998
+        },
+        {
+          "name": "h2hc-phone",
+          "threads": 1,
+          "cpu_ms_per_min": 0.37820000000000004,
+          "wakeups_per_min": 1.4
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 12,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-140623/phone-kitsune2-cranelift-profile.folded",
+      "idle_linker_acceptances": null,
+      "idle_frames": {},
+      "errors": []
+    }
+  ],
+  "scenarios": []
+}
