@@ -3,8 +3,8 @@
 
 use ed25519_dalek::{SigningKey, Verifier};
 use h2hc_p2p::*;
-use h2hc_protocol::*;
 use h2hc_protocol::Call;
+use h2hc_protocol::*;
 use holochain_keystore::{spawn_test_keystore, MetaLairClient};
 use holochain_p2p::actor::*;
 use holochain_p2p::event::{
@@ -37,7 +37,10 @@ impl Linker {
     }
 
     async fn next_from_phone(&mut self) -> Option<Frame> {
-        tokio::time::timeout(WAIT, self.from_phone.recv()).await.ok().flatten()
+        tokio::time::timeout(WAIT, self.from_phone.recv())
+            .await
+            .ok()
+            .flatten()
     }
 }
 
@@ -218,9 +221,14 @@ async fn phone_with(responder: Responder, policy: SourcePolicy) -> Phone {
         source_policy: policy,
         ..Default::default()
     };
-    let p2p = H2hcP2p::connect(HolochainP2pConfig::default(), keystore.clone(), once(chan), options)
-        .await
-        .unwrap();
+    let p2p = H2hcP2p::connect(
+        HolochainP2pConfig::default(),
+        keystore.clone(),
+        once(chan),
+        options,
+    )
+    .await
+    .unwrap();
     Phone {
         p2p,
         linker,
@@ -286,16 +294,28 @@ async fn a_linker_with_an_unexpected_key_is_refused() {
         .await
         .unwrap();
     let hash: AnyDhtHash = ActionHash::from_raw_32(vec![5; 32]).into();
-    let err = p2p.get(dna(), hash, Default::default(), None).await.unwrap_err();
-    assert_eq!(protocol_error(&err).unwrap().kind, ErrorKind::ConnectionClosed);
+    let err = p2p
+        .get(dna(), hash, Default::default(), None)
+        .await
+        .unwrap_err();
+    assert_eq!(
+        protocol_error(&err).unwrap().kind,
+        ErrorKind::ConnectionClosed
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn get_drops_buffered_answers_unless_the_policy_accepts_them() {
     let responder: Responder = Arc::new(|_| {
         Ok(Response::Get(vec![
-            Sourced { source: authority(2), data: record() },
-            Sourced { source: DataSource::LinkerBuffer, data: record() },
+            Sourced {
+                source: authority(2),
+                data: record(),
+            },
+            Sourced {
+                source: DataSource::LinkerBuffer,
+                data: record(),
+            },
             Sourced {
                 source: DataSource::LinkerCache {
                     responder: agent(3),
@@ -323,7 +343,11 @@ async fn get_drops_buffered_answers_unless_the_policy_accepts_them() {
         },
     )
     .await;
-    let got = trusting.p2p.get(dna(), hash, Default::default(), None).await.unwrap();
+    let got = trusting
+        .p2p
+        .get(dna(), hash, Default::default(), None)
+        .await
+        .unwrap();
     assert_eq!(got.len(), 3);
 }
 
@@ -369,9 +393,18 @@ async fn must_get_agent_activity_accepts_only_authority_answers() {
 async fn activity_multi_counts_each_authority_once() {
     let responder: Responder = Arc::new(|_| {
         Ok(Response::AgentActivity(vec![
-            Sourced { source: authority(2), data: activity() },
-            Sourced { source: authority(2), data: activity() },
-            Sourced { source: DataSource::LinkerBuffer, data: activity() },
+            Sourced {
+                source: authority(2),
+                data: activity(),
+            },
+            Sourced {
+                source: authority(2),
+                data: activity(),
+            },
+            Sourced {
+                source: DataSource::LinkerBuffer,
+                data: activity(),
+            },
         ]))
     });
     let phone = phone(responder).await;
@@ -382,13 +415,23 @@ async fn activity_multi_counts_each_authority_once() {
         .unwrap_err();
     assert!(matches!(
         err,
-        HolochainP2pError::InsufficientResponses { received: 1, required: 2, .. }
+        HolochainP2pError::InsufficientResponses {
+            received: 1,
+            required: 2,
+            ..
+        }
     ));
 
     let responder: Responder = Arc::new(|_| {
         Ok(Response::AgentActivity(vec![
-            Sourced { source: authority(2), data: activity() },
-            Sourced { source: authority(3), data: activity() },
+            Sourced {
+                source: authority(2),
+                data: activity(),
+            },
+            Sourced {
+                source: authority(3),
+                data: activity(),
+            },
         ]))
     });
     let phone = self::phone(responder).await;
@@ -424,11 +467,18 @@ async fn zero_arc_answers_are_local() {
     let basis: OpBasis = ActionHash::from_raw_32(vec![5; 32]).into();
 
     assert!(!p2p.authority_for_hash(dna(), basis.clone()).await.unwrap());
-    assert!(!p2p.was_agent_recently_online(dna(), agent(2)).await.unwrap());
-    p2p.new_integrated_data(dna().to_k2_space(), vec![]).await.unwrap();
+    assert!(!p2p
+        .was_agent_recently_online(dna(), agent(2))
+        .await
+        .unwrap());
+    p2p.new_integrated_data(dna().to_k2_space(), vec![])
+        .await
+        .unwrap();
     // The default config's DHT store panics if touched, so this also shows an
     // empty publish never reads the store or contacts the linker.
-    p2p.publish(dna(), basis, agent(2), vec![], None).await.unwrap();
+    p2p.publish(dna(), basis, agent(2), vec![], None)
+        .await
+        .unwrap();
 
     let err = p2p
         .send_validation_receipts(dna(), agent(2), Vec::new().into())
@@ -457,7 +507,10 @@ async fn joined_agents_have_empty_arcs() {
     let phone = phone(done()).await;
     assert!(phone.p2p.target_arcs(dna()).await.unwrap().is_empty());
     phone.p2p.join(dna(), agent(2), None, None).await.unwrap();
-    assert_eq!(phone.p2p.target_arcs(dna()).await.unwrap(), vec![DhtArc::Empty]);
+    assert_eq!(
+        phone.p2p.target_arcs(dna()).await.unwrap(),
+        vec![DhtArc::Empty]
+    );
     phone.p2p.leave(dna(), agent(2)).await.unwrap();
     assert!(phone.p2p.target_arcs(dna()).await.unwrap().is_empty());
 }
@@ -475,10 +528,17 @@ fn agent_info(agent: &AgentPubKey, lifetime: Duration, arc: DhtArc) -> kitsune2_
     }
 }
 
-async fn ask_signature(linker: &mut Linker, id: u64, info: kitsune2_api::AgentInfo) -> Result<Reply, ProtocolError> {
+async fn ask_signature(
+    linker: &mut Linker,
+    id: u64,
+    info: kitsune2_api::AgentInfo,
+) -> Result<Reply, ProtocolError> {
     linker
         .to_phone
-        .send(Frame::Call { id, body: Call::SignAgentInfo { agent_info: info } })
+        .send(Frame::Call {
+            id,
+            body: Call::SignAgentInfo { agent_info: info },
+        })
         .await
         .unwrap();
     match linker.next_from_phone().await {
@@ -493,9 +553,13 @@ async fn agent_infos_are_signed_only_for_joined_zero_arc_short_lived_agents() {
     let me = phone.keystore.new_sign_keypair_random().await.unwrap();
     let twenty_min = Duration::from_secs(20 * 60);
 
-    let err = ask_signature(&mut phone.linker, 1, agent_info(&me, twenty_min, DhtArc::Empty))
-        .await
-        .unwrap_err();
+    let err = ask_signature(
+        &mut phone.linker,
+        1,
+        agent_info(&me, twenty_min, DhtArc::Empty),
+    )
+    .await
+    .unwrap_err();
     assert_eq!(err.kind, ErrorKind::NotJoined);
 
     phone.p2p.join(dna(), me.clone(), None, None).await.unwrap();
@@ -510,12 +574,19 @@ async fn agent_infos_are_signed_only_for_joined_zero_arc_short_lived_agents() {
     // Kitsune2 signs exactly serde_json::to_string(&agent_info).
     let message = serde_json::to_string(&info).unwrap();
     let key = ed25519_dalek::VerifyingKey::from_bytes(me.get_raw_32().try_into().unwrap()).unwrap();
-    key.verify(message.as_bytes(), &ed25519_dalek::Signature::from_bytes(&sig.0))
-        .unwrap();
+    key.verify(
+        message.as_bytes(),
+        &ed25519_dalek::Signature::from_bytes(&sig.0),
+    )
+    .unwrap();
 
-    let err = ask_signature(&mut phone.linker, 3, agent_info(&me, twenty_min, DhtArc::FULL))
-        .await
-        .unwrap_err();
+    let err = ask_signature(
+        &mut phone.linker,
+        3,
+        agent_info(&me, twenty_min, DhtArc::FULL),
+    )
+    .await
+    .unwrap_err();
     assert_eq!(err.kind, ErrorKind::Rejected, "a phone never claims an arc");
 
     let err = ask_signature(
@@ -549,16 +620,27 @@ async fn receipts_are_acknowledged_only_after_the_conductor_takes_them() {
         "no Ack before a handler is registered"
     );
 
-    phone.p2p.register_handler(phone.handler.clone()).await.unwrap();
+    phone
+        .p2p
+        .register_handler(phone.handler.clone())
+        .await
+        .unwrap();
     phone.linker.to_phone.send(deliver(1)).await.unwrap();
-    assert!(matches!(phone.linker.next_from_phone().await, Some(Frame::Ack { seq: 1 })));
+    assert!(matches!(
+        phone.linker.next_from_phone().await,
+        Some(Frame::Ack { seq: 1 })
+    ));
     assert_eq!(*phone.handler.receipts.lock().unwrap(), vec![agent(2)]);
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn remote_signals_reach_the_conductor_as_signed_calls() {
     let phone = phone(done()).await;
-    phone.p2p.register_handler(phone.handler.clone()).await.unwrap();
+    phone
+        .p2p
+        .register_handler(phone.handler.clone())
+        .await
+        .unwrap();
     let signature = Signature::from([7; 64]);
     phone
         .linker
@@ -572,13 +654,20 @@ async fn remote_signals_reach_the_conductor_as_signed_calls() {
         .await
         .unwrap();
     tokio::time::sleep(Duration::from_millis(200)).await;
-    assert_eq!(*phone.handler.calls.lock().unwrap(), vec![(agent(2), signature)]);
+    assert_eq!(
+        *phone.handler.calls.lock().unwrap(),
+        vec![(agent(2), signature)]
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn incoming_remote_calls_return_the_conductor_answer() {
     let mut phone = phone(done()).await;
-    phone.p2p.register_handler(phone.handler.clone()).await.unwrap();
+    phone
+        .p2p
+        .register_handler(phone.handler.clone())
+        .await
+        .unwrap();
     phone
         .linker
         .to_phone
@@ -594,7 +683,10 @@ async fn incoming_remote_calls_return_the_conductor_answer() {
         .await
         .unwrap();
     match phone.linker.next_from_phone().await {
-        Some(Frame::Reply { id: 5, body: Ok(Reply::CallRemote(bytes)) }) => {
+        Some(Frame::Reply {
+            id: 5,
+            body: Ok(Reply::CallRemote(bytes)),
+        }) => {
             assert_eq!(bytes.bytes(), &vec![42]);
         }
         other => panic!("unexpected {other:?}"),
@@ -607,15 +699,25 @@ async fn requests_fail_when_the_linker_goes_away() {
     phone.linker.close.take().unwrap().send(()).unwrap();
     tokio::time::sleep(Duration::from_millis(100)).await;
     let hash: AnyDhtHash = ActionHash::from_raw_32(vec![5; 32]).into();
-    let err = phone.p2p.get(dna(), hash, Default::default(), None).await.unwrap_err();
-    assert_eq!(protocol_error(&err).unwrap().kind, ErrorKind::ConnectionClosed);
+    let err = phone
+        .p2p
+        .get(dna(), hash, Default::default(), None)
+        .await
+        .unwrap_err();
+    assert_eq!(
+        protocol_error(&err).unwrap().kind,
+        ErrorKind::ConnectionClosed
+    );
 }
 
 #[test]
 fn acceptance_receipts_must_be_signed_and_complete() {
     let key = SigningKey::generate(&mut rand::rngs::OsRng);
     let linker = LinkerId::from_signing_key(&key);
-    let ops = vec![DhtOpHash::from_raw_32(vec![3; 32]), DhtOpHash::from_raw_32(vec![4; 32])];
+    let ops = vec![
+        DhtOpHash::from_raw_32(vec![3; 32]),
+        DhtOpHash::from_raw_32(vec![4; 32]),
+    ];
     let body = AcceptanceBody {
         protocol_version: PROTOCOL_VERSION,
         linker,
@@ -678,7 +780,10 @@ async fn reconnects_and_rejoins_after_the_linker_drops() {
         if rejoined {
             break;
         }
-        assert!(tokio::time::Instant::now() < deadline, "agent re-joined on the new connection");
+        assert!(
+            tokio::time::Instant::now() < deadline,
+            "agent re-joined on the new connection"
+        );
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
     p2p.leave(dna(), agent(2)).await.unwrap();

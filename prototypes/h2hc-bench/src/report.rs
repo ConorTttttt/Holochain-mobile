@@ -75,6 +75,9 @@ pub struct ConfigResult {
     pub stats_after_workload: Stats,
     pub stats_after_idle: Stats,
     pub idle_secs: u64,
+    /// Publish batches the linker accepted while the phone sat idle (H2HC):
+    /// the conductor republishing ops that lack enough receipts.
+    pub idle_linker_acceptances: Option<u64>,
     pub errors: Vec<String>,
 }
 
@@ -210,17 +213,21 @@ impl Report {
         }
 
         let _ = writeln!(md, "\n## Resources (phone process)\n");
-        let _ = writeln!(md, "| Configuration | RSS ready | RSS after workload | Peak RSS | Threads | Idle CPU | Idle link traffic | Data on disk |");
-        let _ = writeln!(md, "|---|---|---|---|---|---|---|---|");
+        let _ = writeln!(md, "| Configuration | RSS ready | RSS after workload | Peak RSS | Threads | Idle CPU | Idle link traffic | Republish batches while idle | Data on disk |");
+        let _ = writeln!(md, "|---|---|---|---|---|---|---|---|---|");
         for c in &self.configs {
             let link = if c.network == "h2hc" {
                 format!("{:.1} KB/min", c.idle_link_bytes_per_min() / 1024.0)
             } else {
                 "not measured".into()
             };
+            let republish = c
+                .idle_linker_acceptances
+                .map(|n| format!("{n} in {} s", c.idle_secs))
+                .unwrap_or_else(|| "not measured".into());
             let _ = writeln!(
                 md,
-                "| {} | {} | {} | {} | {} | {:.0} ms/min | {} | {:.1} MB |",
+                "| {} | {} | {} | {} | {} | {:.0} ms/min | {} | {} | {:.1} MB |",
                 c.label(),
                 mb(c.stats_ready.rss_kb),
                 mb(c.stats_after_workload.rss_kb),
@@ -228,6 +235,7 @@ impl Report {
                 c.stats_after_idle.threads,
                 c.idle_cpu_ms_per_min(),
                 link,
+                republish,
                 c.stats_after_idle.data_bytes as f64 / 1_048_576.0
             );
         }

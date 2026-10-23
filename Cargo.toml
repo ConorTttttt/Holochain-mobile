@@ -18,7 +18,9 @@ h2hc-protocol = { path = "prototypes/h2hc-protocol" }
 h2hc-p2p = { path = "prototypes/h2hc-p2p" }
 
 # Holochain is pinned to the release the compatibility matrix was checked against.
-holochain = "=0.7.1"
+# Engine features are chosen per package: Holochain 0.7.1 cannot run wasmi
+# when wasmer-sys is also compiled in (it reads wasmer's metering global).
+holochain = { version = "=0.7.1", default-features = false, features = ["encryption"] }
 holochain_types = "=0.7.1"
 holochain_p2p = "=0.7.1"
 holochain_state = "=0.7.1"

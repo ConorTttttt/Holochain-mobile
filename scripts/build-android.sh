@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Cross-compile h2hc-phone for arm64 Android with the NDK's clang.
-# Output: target/aarch64-linux-android/release/h2hc-phone
+# Outputs: target/aarch64-linux-android/release/h2hc-phone (Cranelift) and
+# target/wasmi/aarch64-linux-android/release/h2hc-phone (wasmi).
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
@@ -22,3 +23,5 @@ export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$CC_aarch64_linux_android"
 
 [ -d vendor/holochain-0.7.1 ] || ./scripts/vendor-holochain.sh
 cargo build --release --target aarch64-linux-android --bin h2hc-phone
+cargo build --release --target aarch64-linux-android -p h2hc-conductor --bin h2hc-phone \
+  --no-default-features --features wasmi --target-dir target/wasmi

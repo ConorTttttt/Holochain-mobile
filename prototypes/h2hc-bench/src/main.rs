@@ -170,7 +170,7 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
     let name = format!("phone-{}-{}", r.network, r.wasm);
     target.wipe(&name).await?;
     let args = net.phone_args(&r.network, &r.wasm);
-    let mut phone = Phone::spawn(target, &name, &args, &run_dir.join(format!("{name}.log"))).await?;
+    let mut phone = Phone::spawn(target, &name, &r.wasm, &args, &run_dir.join(format!("{name}.log"))).await?;
     r.startup_ms = phone.ready.startup_ms;
 
     let installed = phone.cmd(&Cmd::Install).await?;
@@ -307,8 +307,18 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
     }
     r.stats_after_workload = phone.stats().await?;
     progress(format!("{}: workload done; idling {} s", r.label(), opts.idle_secs));
+    let idle_from = match r.network.as_str() {
+        "h2hc" => linker_number(&net.linker, "acceptances").await.ok(),
+        _ => None,
+    };
     tokio::time::sleep(Duration::from_secs(opts.idle_secs)).await;
     r.stats_after_idle = phone.stats().await?;
+    if let Some(from) = idle_from {
+        r.idle_linker_acceptances = linker_number(&net.linker, "acceptances")
+            .await
+            .ok()
+            .map(|to| to.saturating_sub(from));
+    }
     phone.quit().await?;
     Ok(())
 }
@@ -362,60 +372,73 @@ async fn linker_number(linker: &Linker, field: &str) -> anyhow::Result<u64> {
     linker.status().await?[field].as_u64().context("missing status field")
 }
 
-/// Correctness scenarios, on H2HC with Cranelift.
-async fn run_scenarios(net: &mut Net, target: &Target, run_dir: &Path, opts: &Opts) -> Vec<ScenarioResult> {
-    let mut out = Vec::new();
-    let name = "phone-scenarios";
-    let args = net.phone_args("h2hc", "cranelift");
-    let log = run_dir.join(format!("{name}.log"));
-    let _ = target.wipe(name).await;
-    let mut phone = match Phone::spawn(target, name, &args, &log).await {
-        Ok(p) => p,
-        Err(e) => return vec![scenario("start scenario phone", Err(e))],
-    };
-    if let Err(e) = phone.cmd(&Cmd::Install).await {
-        return vec![scenario("install on scenario phone", Err(e))];
+/// Whether the linker has durably accepted ops of this action.
+async fn linker_accepted(linker: &Linker, action: &str) -> anyhow::Result<bool> {
+    Ok(linker.status().await?["recent_actions"]
+        .as_array()
+        .is_some_and(|a| a.iter().any(|v| v.as_str() == Some(action))))
+}
+
+const SCENARIO_PHONE: &str = "phone-scenarios";
+
+/// Start the scenario phone, fresh or on the data an earlier run left.
+async fn scenario_phone(target: &Target, args: &[String], log: &Path, fresh: bool) -> anyhow::Result<Phone> {
+    if fresh {
+        target.wipe(SCENARIO_PHONE).await?;
     }
+    let mut phone = Phone::spawn(target, SCENARIO_PHONE, "cranelift", args, log).await?;
+    phone.cmd(if fresh { &Cmd::Install } else { &Cmd::Resume }).await?;
+    Ok(phone)
+}
 
-    out.push(scenario(
-        "invalid note is rejected on the phone",
-        async {
-            match phone.cmd(&Cmd::CreateNote { text: "   ".into() }).await {
-                Ok(_) => anyhow::bail!("an empty note was accepted"),
-                Err(e) if e.to_string().contains("cannot be empty") => {
-                    Ok(("rejected by the phone's own validation before publishing".into(), BTreeMap::new()))
-                }
-                Err(e) => anyhow::bail!("unexpected error: {e}"),
-            }
-        }
-        .await,
-    ));
+type Outcome = anyhow::Result<(String, BTreeMap<String, f64>)>;
 
-    // Receipts that arrive while the phone is offline wait in the linker.
-    let offline = async {
-        let before = linker_number(&net.linker, "acceptances").await?;
-        let created = phone.cmd(&Cmd::CreateNote { text: "written before going offline".into() }).await?;
-        let hash = created["hash"].as_str().context("no hash")?.to_string();
-        poll(Duration::from_secs(30), Duration::from_millis(5), async || {
-            Ok(linker_number(&net.linker, "acceptances").await? > before)
-        })
-        .await
-        .context("linker never accepted the note")?;
-        phone.kill().await?;
-        let killed_at = Instant::now();
+async fn rejection(phone: &mut Phone) -> Outcome {
+    match phone.cmd(&Cmd::CreateNote { text: "   ".into() }).await {
+        Ok(_) => anyhow::bail!("an empty note was accepted"),
+        Err(e) if e.to_string().contains("cannot be empty") => Ok((
+            "rejected by the phone's own validation before publishing".into(),
+            BTreeMap::new(),
+        )),
+        Err(e) => anyhow::bail!("unexpected error: {e}"),
+    }
+}
+
+/// Kill the phone the moment the linker holds a new note, so the
+/// authorities' receipts arrive while it is gone; restart it and check they
+/// are delivered. Returns the phone if it is still running.
+async fn offline_receipts(net: &Net, target: &Target, args: &[String], log: &Path, mut phone: Phone) -> (Outcome, Option<Phone>) {
+    let created = match phone.cmd(&Cmd::CreateNote { text: "written before going offline".into() }).await {
+        Ok(v) => v,
+        Err(e) => return (Err(e), Some(phone)),
+    };
+    let Some(hash) = created["hash"].as_str().map(str::to_string) else {
+        return (Err(anyhow::anyhow!("no hash")), Some(phone));
+    };
+    let accepted = poll(Duration::from_secs(30), Duration::from_millis(2), async || {
+        linker_accepted(&net.linker, &hash).await
+    })
+    .await;
+    if let Err(e) = accepted {
+        return (Err(e.context("linker never accepted the note")), Some(phone));
+    }
+    let _ = phone.kill().await;
+    let killed_at = Instant::now();
+
+    let result = async {
         let h = hash_from(&hash)?;
         let mut metrics = BTreeMap::new();
         metrics.insert(
-            "authority read with phone offline".into(),
+            "authority read with phone killed".to_string(),
             net.authority(0).wait_for_note(&h, Duration::from_secs(60)).await?,
         );
-        let held = poll(Duration::from_secs(60), Duration::from_millis(50), async || {
+        let held = poll(Duration::from_secs(30), Duration::from_millis(50), async || {
             Ok(linker_number(&net.linker, "inbox").await? > 0)
         })
-        .await;
-        let buffered = held.is_ok();
-        let offline_for = killed_at.elapsed().as_secs_f64() * 1000.0;
-        let mut back = Phone::spawn(target, name, &args, &log).await?;
+        .await
+        .is_ok();
+        metrics.insert("phone offline for".into(), killed_at.elapsed().as_secs_f64() * 1000.0);
+        let mut back = Phone::spawn(target, SCENARIO_PHONE, "cranelift", args, log).await?;
         back.cmd(&Cmd::Resume).await?;
         let restarted = Instant::now();
         poll(Duration::from_secs(120), Duration::from_millis(100), async || {
@@ -424,93 +447,109 @@ async fn run_scenarios(net: &mut Net, target: &Target, run_dir: &Path, opts: &Op
         .await
         .context("receipts never reached the restarted phone")?;
         metrics.insert("receipts complete after restart".into(), restarted.elapsed().as_secs_f64() * 1000.0);
-        metrics.insert("offline for".into(), offline_for);
-        poll(Duration::from_secs(30), Duration::from_millis(100), async || {
+        poll(Duration::from_secs(60), Duration::from_millis(100), async || {
             Ok(linker_number(&net.linker, "inbox").await? == 0)
         })
         .await
         .context("linker inbox not drained after acknowledgement")?;
-        let detail = if buffered {
-            "authorities fetched the note from the linker with the phone killed; receipts were held in the inbox and delivered after restart"
-        } else {
-            "authorities fetched the note from the linker with the phone killed; receipts arrived before the kill, so the inbox was not exercised"
-        };
-        anyhow::Ok((back, (detail.to_string(), metrics)))
-    }
-    .await;
-    match offline {
-        Ok((back, result)) => {
-            phone = back;
-            out.push(scenario("receipts survive the phone being killed", Ok(result)));
-        }
-        Err(e) => {
-            out.push(scenario("receipts survive the phone being killed", Err(e)));
-            return out;
-        }
-    }
-
-    // A linker crash loses nothing it acknowledged, and the phone recovers.
-    let restart = async {
-        let acceptances = linker_number(&net.linker, "acceptances").await?;
-        let connects = phone.stats().await?.link_connects;
-        net.linker.kill().await?;
-        let during = phone.cmd(&Cmd::CreateNote { text: "written during a linker outage".into() }).await?;
-        let hash = hash_from(during["hash"].as_str().context("no hash")?)?;
-        tokio::time::sleep(Duration::from_secs(3)).await;
-        net.linker.restart().await?;
-        let restarted = Instant::now();
-        anyhow::ensure!(
-            linker_number(&net.linker, "acceptances").await? == acceptances,
-            "acceptance log changed across the restart"
-        );
-        let mut metrics = BTreeMap::new();
-        metrics.insert(
-            "phone reconnected".into(),
-            poll(Duration::from_secs(60), Duration::from_millis(50), async || {
-                Ok(phone.stats().await?.link_connects > connects)
-            })
-            .await
-            .context("phone did not reconnect")?,
-        );
-        metrics.insert(
-            "outage note visible after restart".into(),
-            net.authority(1).wait_for_note(&hash, Duration::from_secs(600)).await?,
-        );
-        let _ = restarted;
+        anyhow::ensure!(held, "receipts arrived before the kill, so the inbox was not exercised");
         anyhow::Ok((
-            format!("{acceptances} acceptances kept across the crash; the note written during the outage was published after reconnecting"),
+            "authorities fetched the note from the linker with the phone killed; their receipts waited in the linker's inbox and were delivered after restart".to_string(),
             metrics,
+            back,
         ))
     }
     .await;
-    out.push(scenario("linker crash and restart", restart));
+    match result {
+        Ok((detail, metrics, back)) => (Ok((detail, metrics)), Some(back)),
+        Err(e) => (Err(e), None),
+    }
+}
+
+/// Crash the linker, write during the outage, restart it on the same data.
+async fn linker_crash(net: &mut Net, phone: &mut Phone) -> Outcome {
+    let acceptances = linker_number(&net.linker, "acceptances").await?;
+    let connects = phone.stats().await?.link_connects;
+    net.linker.kill().await?;
+    let during = phone.cmd(&Cmd::CreateNote { text: "written during a linker outage".into() }).await?;
+    let hash = hash_from(during["hash"].as_str().context("no hash")?)?;
+    tokio::time::sleep(Duration::from_secs(3)).await;
+    net.linker.restart().await?;
+    let kept = linker_number(&net.linker, "acceptances").await?;
+    anyhow::ensure!(kept >= acceptances, "acceptance log shrank from {acceptances} to {kept}");
+    let mut metrics = BTreeMap::new();
+    metrics.insert(
+        "phone reconnected after restart".into(),
+        poll(Duration::from_secs(60), Duration::from_millis(50), async || {
+            Ok(phone.stats().await?.link_connects > connects)
+        })
+        .await
+        .context("phone did not reconnect")?,
+    );
+    metrics.insert(
+        "outage note visible after restart".into(),
+        net.authority(1).wait_for_note(&hash, Duration::from_secs(600)).await?,
+    );
+    Ok((
+        format!("{acceptances} acceptances survived the crash; the note written during the outage was published after reconnecting"),
+        metrics,
+    ))
+}
+
+async fn long_sleep(target: &Target, args: &[String], log: &Path, mut phone: Phone) -> Outcome {
+    let created = phone.cmd(&Cmd::CreateNote { text: "written before a long sleep".into() }).await?;
+    let hash = created["hash"].as_str().context("no hash")?.to_string();
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    phone.kill().await?;
+    progress("phone killed; sleeping 21 minutes so its agent info expires");
+    tokio::time::sleep(Duration::from_secs(21 * 60)).await;
+    let mut back = Phone::spawn(target, SCENARIO_PHONE, "cranelift", args, log).await?;
+    back.cmd(&Cmd::Resume).await?;
+    let mut metrics = BTreeMap::new();
+    metrics.insert(
+        "receipts complete after waking".into(),
+        poll(Duration::from_secs(900), Duration::from_secs(1), async || {
+            receipts_complete(&mut back, &hash).await
+        })
+        .await?,
+    );
+    let _ = back.quit().await;
+    Ok(("receipts reached the phone after a sleep longer than the agent-info lifetime".into(), metrics))
+}
+
+/// Correctness scenarios, on H2HC with Cranelift. Each one restarts the
+/// phone if the previous one left it dead.
+async fn run_scenarios(net: &mut Net, target: &Target, run_dir: &Path, opts: &Opts) -> Vec<ScenarioResult> {
+    let mut out = Vec::new();
+    let args = net.phone_args("h2hc", "cranelift");
+    let log = run_dir.join(format!("{SCENARIO_PHONE}.log"));
+    let mut phone = match scenario_phone(target, &args, &log, true).await {
+        Ok(p) => p,
+        Err(e) => return vec![scenario("start the scenario phone", Err(e))],
+    };
+
+    out.push(scenario("invalid note is rejected on the phone", rejection(&mut phone).await));
+
+    let (result, back) = offline_receipts(net, target, &args, &log, phone).await;
+    out.push(scenario("receipts wait in the linker while the phone is killed", result));
+    let mut phone = match back {
+        Some(p) => p,
+        None => match scenario_phone(target, &args, &log, false).await {
+            Ok(p) => p,
+            Err(e) => {
+                out.push(scenario("restart the scenario phone", Err(e)));
+                return out;
+            }
+        },
+    };
+
+    out.push(scenario("linker crash and restart", linker_crash(net, &mut phone).await));
 
     if opts.long {
-        let long = async {
-            let created = phone.cmd(&Cmd::CreateNote { text: "written before a long sleep".into() }).await?;
-            let hash = created["hash"].as_str().context("no hash")?.to_string();
-            tokio::time::sleep(Duration::from_secs(1)).await;
-            phone.kill().await?;
-            progress("phone killed; sleeping 21 minutes so its agent info expires");
-            tokio::time::sleep(Duration::from_secs(21 * 60)).await;
-            let mut back = Phone::spawn(target, name, &args, &log).await?;
-            back.cmd(&Cmd::Resume).await?;
-            let mut metrics = BTreeMap::new();
-            metrics.insert(
-                "receipts complete after waking".into(),
-                poll(Duration::from_secs(900), Duration::from_secs(1), async || {
-                    receipts_complete(&mut back, &hash).await
-                })
-                .await?,
-            );
-            let _ = back.quit().await;
-            anyhow::Ok(("receipts reached the phone after a sleep longer than the agent-info lifetime".into(), metrics))
-        }
-        .await;
-        out.push(scenario("receipts after a 21-minute sleep", long));
-        return out;
+        out.push(scenario("receipts after a 21-minute sleep", long_sleep(target, &args, &log, phone).await));
+    } else {
+        let _ = phone.quit().await;
     }
-    let _ = phone.quit().await;
     out
 }
 
@@ -557,12 +596,11 @@ async fn main() -> anyhow::Result<()> {
                 serial: opts.serial.clone(),
                 remote_dir: "/data/local/tmp/h2hc".into(),
             };
-            let bin = root.join("target/aarch64-linux-android/release/h2hc-phone");
-            t.prepare(&bin, &happ_path, &[net.linker.port, net.bootstrap.port]).await?;
+            t.prepare(&root, &happ_path, &[net.linker.port, net.bootstrap.port]).await?;
             t
         }
         _ => Target::Local {
-            phone_bin: root.join("target/release/h2hc-phone"),
+            root: root.clone(),
             happ: happ_path.clone(),
             data_root: std::env::temp_dir().join(format!("h2hc-{stamp}")),
         },

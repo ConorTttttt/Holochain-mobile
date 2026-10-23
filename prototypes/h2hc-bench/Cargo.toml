@@ -10,7 +10,7 @@ anyhow = "1"
 base64 = "0.22"
 ed25519-dalek.workspace = true
 h2hc-conductor = { path = "../h2hc-conductor" }
-holochain.workspace = true
+holochain = { workspace = true, features = ["wasmer-sys-cranelift"] }
 rand.workspace = true
 serde.workspace = true
 serde_json.workspace = true

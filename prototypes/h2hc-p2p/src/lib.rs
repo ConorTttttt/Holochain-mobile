@@ -30,8 +30,8 @@ use holochain_types::cell_config_overrides::CellConfigOverrides;
 use holochain_types::network::{Kitsune2NetworkMetrics, Kitsune2NetworkMetricsRequest};
 use holochain_types::prelude::*;
 use inbound::Inbound;
-use link::Link;
 use kitsune2_api::{AgentInfoSigned, BoxFut, DhtArc, SpaceId, StoredOp};
+use link::Link;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -203,7 +203,11 @@ impl H2hcP2p {
             .map(|a| a.data)
             .collect();
         if kept.len() < total {
-            tracing::debug!(op, dropped = total - kept.len(), "dropped answers the source policy does not accept");
+            tracing::debug!(
+                op,
+                dropped = total - kept.len(),
+                "dropped answers the source policy does not accept"
+            );
         }
         kept
     }
@@ -342,11 +346,14 @@ impl HcP2p for H2hcP2p {
     ) -> BoxFut<'_, HolochainP2pResult<()>> {
         Box::pin(async move {
             if config_override.is_some() {
-                tracing::info!("ignoring bootstrap and relay overrides; the linker owns networking");
+                tracing::info!(
+                    "ignoring bootstrap and relay overrides; the linker owns networking"
+                );
             }
             // Record first: the linker asks for an agent-info signature while
             // the join is still in flight.
-            self.inbound.add_joined(dna_hash.clone(), agent_pub_key.clone());
+            self.inbound
+                .add_joined(dna_hash.clone(), agent_pub_key.clone());
             let result = self
                 .request(
                     "join",
@@ -420,7 +427,10 @@ impl HcP2p for H2hcP2p {
                 zome_call_params_serialized,
                 signature,
             };
-            match self.request("call_remote", body, self.timeout(None)).await? {
+            match self
+                .request("call_remote", body, self.timeout(None))
+                .await?
+            {
                 Response::CallRemote(bytes) => Ok(bytes),
                 got => Err(unexpected("call_remote", &got)),
             }
@@ -435,14 +445,19 @@ impl HcP2p for H2hcP2p {
         Box::pin(async move {
             let signals = to_agent_list
                 .into_iter()
-                .map(|(to_agent, zome_call_params_serialized, signature)| SignedRemoteSignal {
-                    to_agent,
-                    zome_call_params_serialized,
-                    signature,
-                })
+                .map(
+                    |(to_agent, zome_call_params_serialized, signature)| SignedRemoteSignal {
+                        to_agent,
+                        zome_call_params_serialized,
+                        signature,
+                    },
+                )
                 .collect();
             let body = Request::SendRemoteSignal { dna_hash, signals };
-            match self.request("send_remote_signal", body, self.timeout(None)).await? {
+            match self
+                .request("send_remote_signal", body, self.timeout(None))
+                .await?
+            {
                 Response::Done => Ok(()),
                 got => Err(unexpected("send_remote_signal", &got)),
             }
@@ -497,18 +512,15 @@ impl HcP2p for H2hcP2p {
                 basis: basis_hash,
                 ops,
             });
-            let receipt = match self.request("publish", body, self.timeout(timeout_ms)).await? {
+            let receipt = match self
+                .request("publish", body, self.timeout(timeout_ms))
+                .await?
+            {
                 Response::PublishAccepted(receipt) => receipt,
                 got => return Err(unexpected("publish", &got)),
             };
             let linker = self.link.linker().map_err(HolochainP2pError::other)?;
-            let accepted = check_acceptance(
-                &receipt,
-                &linker,
-                &dna_hash,
-                &source,
-                &op_hash_list,
-            )?;
+            let accepted = check_acceptance(&receipt, &linker, &dna_hash, &source, &op_hash_list)?;
             self.acceptance_log
                 .record(receipt, accepted)
                 .await
@@ -538,7 +550,10 @@ impl HcP2p for H2hcP2p {
                 hash: dht_hash,
                 options: query_options(&options),
             };
-            match self.request("get", body, self.timeout(options.timeout_ms)).await? {
+            match self
+                .request("get", body, self.timeout(options.timeout_ms))
+                .await?
+            {
                 Response::Get(answers) => Ok(self.admit("get", answers)),
                 got => Err(unexpected("get", &got)),
             }
@@ -559,7 +574,10 @@ impl HcP2p for H2hcP2p {
                 key: link_key,
                 options: query_options(net),
             };
-            match self.request("get_links", body, self.timeout(net.timeout_ms)).await? {
+            match self
+                .request("get_links", body, self.timeout(net.timeout_ms))
+                .await?
+            {
                 Response::GetLinks(answers) => Ok(self.admit("get_links", answers)),
                 got => Err(unexpected("get_links", &got)),
             }
@@ -580,12 +598,17 @@ impl HcP2p for H2hcP2p {
                 query,
                 options: query_options(&options),
             };
-            match self.request("count_links", body, self.timeout(options.timeout_ms)).await? {
+            match self
+                .request("count_links", body, self.timeout(options.timeout_ms))
+                .await?
+            {
                 Response::CountLinks(answers) => self
                     .admit("count_links", answers)
                     .into_iter()
                     .next()
-                    .ok_or_else(|| HolochainP2pError::NoPeersForLocation("count_links".into(), loc)),
+                    .ok_or_else(|| {
+                        HolochainP2pError::NoPeersForLocation("count_links".into(), loc)
+                    }),
                 got => Err(unexpected("count_links", &got)),
             }
         })
@@ -646,7 +669,10 @@ impl HcP2p for H2hcP2p {
                 required_responses: options.required_responses,
                 timeout_ms: options.timeout_ms,
             };
-            let answers = match self.request(OP, body, self.timeout(options.timeout_ms)).await? {
+            let answers = match self
+                .request(OP, body, self.timeout(options.timeout_ms))
+                .await?
+            {
                 Response::AgentActivity(answers) => answers,
                 got => return Err(unexpected(OP, &got)),
             };
@@ -689,7 +715,11 @@ impl HcP2p for H2hcP2p {
                 options: query_options(&options),
             };
             match self
-                .request("must_get_agent_activity", body, self.timeout(options.timeout_ms))
+                .request(
+                    "must_get_agent_activity",
+                    body,
+                    self.timeout(options.timeout_ms),
+                )
                 .await?
             {
                 Response::MustGetAgentActivity(answers) => Ok(answers
@@ -746,7 +776,9 @@ impl HcP2p for H2hcP2p {
         Box::pin(async { Ok(HashMap::new()) })
     }
 
-    fn dump_network_stats(&self) -> BoxFut<'_, HolochainP2pResult<kitsune2_api::ApiTransportStats>> {
+    fn dump_network_stats(
+        &self,
+    ) -> BoxFut<'_, HolochainP2pResult<kitsune2_api::ApiTransportStats>> {
         Box::pin(async {
             Ok(kitsune2_api::ApiTransportStats {
                 transport_stats: kitsune2_api::TransportStats {

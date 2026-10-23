@@ -24,7 +24,12 @@ pub fn once(chan: FrameChannel) -> Connector {
     Arc::new(move || {
         let chan = slot.lock().unwrap().take();
         Box::pin(async move {
-            chan.ok_or_else(|| ProtocolError::new(ErrorKind::ConnectionClosed, "single-use channel already used"))
+            chan.ok_or_else(|| {
+                ProtocolError::new(
+                    ErrorKind::ConnectionClosed,
+                    "single-use channel already used",
+                )
+            })
         })
     })
 }

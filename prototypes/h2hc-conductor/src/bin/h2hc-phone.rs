@@ -326,6 +326,7 @@ async fn main() -> anyhow::Result<()> {
             "wasmi" => WasmBackend::Wasmi,
             _ => WasmBackend::Cranelift,
         }),
+        // Fails at startup if this build has a different engine.
         ..Default::default()
     };
     let passphrase = Arc::new(Mutex::new(sodoken::LockedArray::from(

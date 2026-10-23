@@ -77,7 +77,12 @@ impl LinkerSession {
         let FrameChannel { tx, mut rx } = chan;
         tx.send(Frame::Hello(hello)).await.map_err(|_| closed())?;
         let welcome = match tokio::time::timeout(handshake_timeout, rx.recv()).await {
-            Err(_) => return Err(ProtocolError::new(ErrorKind::Timeout, "no Welcome from linker")),
+            Err(_) => {
+                return Err(ProtocolError::new(
+                    ErrorKind::Timeout,
+                    "no Welcome from linker",
+                ))
+            }
             Ok(None) => return Err(closed()),
             Ok(Some(Frame::Welcome(w))) => w,
             Ok(Some(Frame::Response { body: Err(e), .. })) => return Err(e),
@@ -198,7 +203,11 @@ async fn serve(
                         Ok(()) => {
                             let _ = tx.send(Frame::Ack { seq }).await;
                         }
-                        Err(err) => tracing::warn!(seq, ?err, "inbox item not handled; leaving it unacknowledged"),
+                        Err(err) => tracing::warn!(
+                            seq,
+                            ?err,
+                            "inbox item not handled; leaving it unacknowledged"
+                        ),
                     }
                 });
             }

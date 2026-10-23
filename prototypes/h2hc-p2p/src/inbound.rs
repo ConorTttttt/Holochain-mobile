@@ -2,8 +2,8 @@
 
 use crate::session::InboundHandler;
 use futures::future::BoxFuture;
-use h2hc_protocol::*;
 use h2hc_protocol::Call;
+use h2hc_protocol::*;
 use holochain_keystore::MetaLairClient;
 use holochain_p2p::event::DynHcP2pHandler;
 use holochain_types::prelude::*;
@@ -59,13 +59,21 @@ impl Inbound {
 
     fn handler(&self) -> Result<&DynHcP2pHandler, ProtocolError> {
         self.handler.get().ok_or_else(|| {
-            ProtocolError::new(ErrorKind::Retryable { retry_after_ms: Some(1_000) }, "conductor handler not registered yet")
+            ProtocolError::new(
+                ErrorKind::Retryable {
+                    retry_after_ms: Some(1_000),
+                },
+                "conductor handler not registered yet",
+            )
         })
     }
 
     /// Refuse anything that would let the linker hold a stronger credential
     /// than "this agent is reachable through me for the next 20 minutes".
-    fn check_agent_info(&self, info: &kitsune2_api::AgentInfo) -> Result<AgentPubKey, ProtocolError> {
+    fn check_agent_info(
+        &self,
+        info: &kitsune2_api::AgentInfo,
+    ) -> Result<AgentPubKey, ProtocolError> {
         let refuse = |m: String| ProtocolError::new(ErrorKind::Rejected, m);
         let agent = AgentPubKey::from_k2_agent(&info.agent);
         let dna = DnaHash::from_k2_space(&info.space);
@@ -160,7 +168,9 @@ impl InboundHandler for Inbound {
                     signature,
                 } => {
                     handler
-                        .handle_remote_signal_direct(dna_hash, to_agent, signal, from_agent, signature)
+                        .handle_remote_signal_direct(
+                            dna_hash, to_agent, signal, from_agent, signature,
+                        )
                         .await
                 }
             };

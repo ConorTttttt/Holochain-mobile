@@ -22,9 +22,13 @@ pub async fn connect(
 ) -> Result<FrameChannel, ProtocolError> {
     use std::sync::atomic::Ordering::Relaxed;
 
-    let (ws, _) = tokio_tungstenite::connect_async(url).await.map_err(|e| {
-        ProtocolError::new(ErrorKind::ConnectionClosed, format!("connect {url}: {e}"))
-    })?;
+    // TCP_NODELAY: request and response frames are small, and Nagle's
+    // algorithm with delayed ACKs can hold one back for 40 ms.
+    let (ws, _) = tokio_tungstenite::connect_async_with_config(url, None, true)
+        .await
+        .map_err(|e| {
+            ProtocolError::new(ErrorKind::ConnectionClosed, format!("connect {url}: {e}"))
+        })?;
     counters.connects.fetch_add(1, Relaxed);
     let (mut sink, mut stream) = ws.split();
     let (out_tx, mut out_rx) = mpsc::channel::<Frame>(256);
@@ -55,7 +59,9 @@ pub async fn connect(
                 Ok(Message::Close(_)) | Err(_) => break,
                 Ok(_) => continue,
             };
-            counters.bytes_received.fetch_add(bytes.len() as u64, Relaxed);
+            counters
+                .bytes_received
+                .fetch_add(bytes.len() as u64, Relaxed);
             match codec::decode(&bytes) {
                 Ok(frame) => {
                     if in_tx.send(frame).await.is_err() {
