@@ -606,36 +606,41 @@ async fn main() -> anyhow::Result<()> {
         },
     };
 
-    let mut configs = Vec::new();
-    for (network, wasm) in &opts.configs {
-        progress(format!("running {network} + {wasm}"));
-        configs.push(run_config(&net, &target, &run_dir, network, wasm, &opts).await);
-    }
-    let scenarios = if opts.scenarios {
-        progress("running scenarios");
-        run_scenarios(&mut net, &target, &run_dir, &opts).await
-    } else {
-        Vec::new()
-    };
-
     let host = String::from_utf8(std::process::Command::new("uname").arg("-srm").output()?.stdout)?
         .trim()
         .to_string();
-    let report = Report {
+    let mut report = Report {
         started: stamp.clone(),
         baseline,
         target: target.name().into(),
         host,
         authorities: opts.authorities,
         iterations: opts.iterations,
-        configs,
-        scenarios,
+        configs: Vec::new(),
+        scenarios: Vec::new(),
     };
     let out_dir = root.join("benchmarks/results");
     std::fs::create_dir_all(&out_dir)?;
     let base = out_dir.join(format!("{stamp}-{}", target.name()));
-    std::fs::write(base.with_extension("json"), serde_json::to_string_pretty(&report)?)?;
-    std::fs::write(base.with_extension("md"), report.markdown())?;
+    // Written after every stage, so an interrupted run keeps what it measured.
+    let save = |report: &Report| -> anyhow::Result<()> {
+        std::fs::write(base.with_extension("json"), serde_json::to_string_pretty(report)?)?;
+        std::fs::write(base.with_extension("md"), report.markdown())?;
+        Ok(())
+    };
+
+    for (network, wasm) in &opts.configs {
+        progress(format!("running {network} + {wasm}"));
+        report
+            .configs
+            .push(run_config(&net, &target, &run_dir, network, wasm, &opts).await);
+        save(&report)?;
+    }
+    if opts.scenarios {
+        progress("running scenarios");
+        report.scenarios = run_scenarios(&mut net, &target, &run_dir, &opts).await;
+        save(&report)?;
+    }
     println!("{}", report.markdown());
     progress(format!("report written to {}.md", base.display()));
     Ok(())
