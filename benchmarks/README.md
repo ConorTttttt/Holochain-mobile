@@ -21,12 +21,14 @@ All runs so far are on a desktop (Linux x86_64), with the "phone" as an ordinary
 | [20261023-192829-local](results/20261023-192829-local.md) | After the wasmi fix: the same |
 | [20261023-195136-local](results/20261023-195136-local.md) | After the wasmi fix: 100 iterations of H2HC and Kitsune2 with wasmi, and H2HC with Cranelift |
 | [20261023-195814-local](results/20261023-195814-local.md) | After the wasmi fix: all four configurations at 20 iterations, 5 minutes idle, scenarios |
+| [20261023-221957-android](results/20261023-221957-android.md) | Galaxy S23+ after the wasmi fix: H2HC with both engines and Kitsune2 with wasmi, memory after every iteration |
+| [20261023-224126-android](results/20261023-224126-android.md) | Galaxy S23+ before the wasmi fix: H2HC + wasmi, 10 iterations |
 
 ## Memory: wasmi leaked the store of every zome call
 
 H2HC + wasmi grew from 96 MB to 575 MB after 10 iterations on the phone, and to 2.4 GB after 60 on the desktop. Holochain was not the cause. **wasmer 7.1.0's wasmi backend never frees a store**, so every zome call left its instance and linear memory behind. A patch to the vendored wasmer ([`wasmer-7.1.0-wasmi-store-ownership.patch`](../patches/wasmer-7.1.0-wasmi-store-ownership.patch)) fixes it.
 
-On the desktop, live heap growth fell from **63 MB per iteration to 13 KB**. H2HC + wasmi now holds 104–128 MB of RSS over 100 iterations, against about 435 MB for Cranelift. The phone has not been re-measured.
+Live heap growth per iteration fell from **145 MB to 0.1–0.2 MB on the Galaxy S23+**, and from 63 MB to 13 KB on the desktop. On the phone, H2HC + wasmi now holds about 60 MB of RSS over 50 iterations, against about 145 MB for Cranelift. It also starts 4–8 times faster, and its operations are as fast as Cranelift's.
 
 ### What grew
 
@@ -106,11 +108,41 @@ Freeing stores also made **wasmi faster**. Desktop local writes went from about 
 | RSS after the workload | 436 MB | 119 MB |
 | Data on disk | 46.6 MB | 6.9 MB |
 
+### On the phone
+
+Galaxy S23+, Android 16, the same setup as the earlier phone runs. Live heap comes from bionic's `mallinfo`.
+- Before: [224126](results/20261023-224126-android.md), the pre-fix phone built from `5b42ca1` and run with `--phone-dir`.
+- After: [221957](results/20261023-221957-android.md), with 60 s settling and 5 minutes idle.
+
+| | Live heap at ready → last iteration | Growth per iteration | RSS at ready → last iteration | After idle |
+|---|---|---|---|---|
+| H2HC + wasmi, before, 10 iterations | 218 → 1,670 MB | 145 MB | 96 → 470 MB | RSS 564 MB, live 2,084 MB |
+| H2HC + wasmi, after, 50 iterations | 66 → 72 MB | 0.1–0.2 MB | 55 → 63 MB | RSS 54 MB, live 51 MB |
+| Kitsune2 + wasmi, after, 50 iterations | 80 → 88 MB | 0.1–0.2 MB | 69 → 78 MB | RSS 41 MB, live 64 MB |
+| H2HC + Cranelift, after, 20 iterations | 204 → 188 MB | none | 149 → 144 MB | RSS 14 MB, live 167 MB |
+
+- **The phone leaked faster than the desktop:** 145 MB per iteration, against 63 MB.
+- **The small growth left during the workload is cache.** Live heap falls back during idle, because Holochain closes idle database connections and their SQLite page caches.
+- **RSS after idle is not a reliable figure on Android:** Android swapped out the idle Cranelift phone's pages, leaving 14 MB of RSS with 167 MB still allocated.
+
+Engines compared in the same run:
+
+| H2HC, Galaxy S23+ (221957) | Cranelift | wasmi |
+|---|---|---|
+| Install | 1,561 ms | 335 ms |
+| First zome call | 1,931 ms | 232 ms |
+| Network ready | 2.45 s | 0.84 s |
+| Create note, p50 | 139 ms | 143 ms |
+| Get own note, p50 | 20 ms | 18 ms |
+| Live heap after the workload | 188 MB | 72 MB |
+| Idle CPU | 11 ms/min | 6 ms/min |
+
+The pre-fix phone binary was compiling on the PC during the H2HC configurations of this run. The PC hosts the authorities and the linker, so network operations were slower for both engines; for example, link queries took about 100 ms against 40–50 ms in earlier runs. Kitsune2 + wasmi ran after the build finished and was normal (21–38 ms). Local operations run on the phone and were unaffected. Kitsune2 + wasmi's idle CPU was about 250 ms/min, its own networking as before.
+
 ### What is left
 
-- **The phone has not been re-measured.** The fix is in platform-independent code, but Android's allocator and arm64 performance decide whether wasmi is the better choice there. Before the fix, the phone's wasmi latencies were already close to Cranelift's.
 - **wasmi zome calls are not metered.** `holochain_wasmer_host` meters Cranelift calls but has no metering for wasmi. A zome stuck in a loop runs until Holochain's call timeout, rather than being stopped by a metering limit.
-- **Every conductor start allocates about 256 MB for a moment, on both engines.** `holochain_data` derives the database key with Argon2id at its moderate memory limit. Peak RSS is about 270 MB even though the conductor settles at 30–100 MB; on a low-memory phone that could get the process killed at startup.
+- **Every conductor start allocates about 256 MB for a moment, on both engines.** `holochain_data` derives the database key with Argon2id at its moderate memory limit. Peak RSS is 266–269 MB on the phone and about 270 MB on the desktop, even though wasmi settles at about 60 MB; on a low-memory phone that could get the process killed at startup.
 - **Cranelift's desktop RSS is mostly allocator retention.** Live heap is about 75 MB, but glibc keeps about 310 MB freed after compiling, so RSS stays near 435 MB. On the phone Cranelift was about 145 MB.
 - **A few wasmi-backend paths Holochain does not use still leak a type copy per call:** `Memory::ty`, `Global::ty` and `Table::ty`.
 
@@ -282,7 +314,7 @@ How it was run:
 What the phone run shows:
 
 - **Idle CPU is about 2.2–2.4 s of CPU per minute** in every configuration, roughly 4% of a core all the time, with or without Kitsune2. This was the conductor's own background work, not networking: the scheduler polling described above, before the fix.
-- **The wasmi leak reproduces on arm64:** 96 MB to 575 MB after 10 iterations. Cranelift holds steady at about 145 MB, far below the desktop's 430 MB. The leak has since been fixed in wasmer's wasmi backend ([above](#memory-wasmi-leaked-the-store-of-every-zome-call)); the phone has not been re-measured.
+- **The wasmi leak reproduces on arm64:** 96 MB to 575 MB after 10 iterations. Cranelift holds steady at about 145 MB, far below the desktop's 430 MB. The leak has since been fixed in wasmer's wasmi backend, and wasmi now holds about 60 MB on this phone ([above](#memory-wasmi-leaked-the-store-of-every-zome-call)).
 - **Writes cost about 100–145 ms on the phone**, against 16 ms on the desktop. This is local commit and validation, the same with either network.
 - **H2HC still gets receipts in under a second**, against about 10 s for Kitsune2.
 - **Over this USB link, H2HC reads and remote calls are about the same as Kitsune2.**

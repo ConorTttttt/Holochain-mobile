@@ -1,0 +1,1363 @@
+{
+  "started": "20261023-221957",
+  "baseline": {
+    "authority note visible at another authority": {
+      "n": 20,
+      "failures": 0,
+      "p50": 48.598133000000004,
+      "p95": 59.04961,
+      "min": 8.45367,
+      "max": 63.21181200000001,
+      "mean": 42.54330405
+    },
+    "remote call": {
+      "n": 20,
+      "failures": 0,
+      "p50": 31.044945000000002,
+      "p95": 41.925011999999995,
+      "min": 13.652812,
+      "max": 42.170977,
+      "mean": 30.340287350000004
+    },
+    "signal round trip": {
+      "n": 20,
+      "failures": 0,
+      "p50": 35.819628,
+      "p95": 52.046633,
+      "min": 22.397959,
+      "max": 57.667294,
+      "mean": 37.3061442
+    }
+  },
+  "target": "android",
+  "phone_builds": "target",
+  "host": "Linux 7.0.0-38-generic x86_64",
+  "authorities": 3,
+  "iterations": 20,
+  "configs": [
+    {
+      "network": "h2hc",
+      "wasm": "wasmi",
+      "env": [],
+      "keystore": "memory",
+      "iterations": 50,
+      "startup_ms": 2034.136093,
+      "install_ms": 334.96984299999997,
+      "enable_ms": 151.937344,
+      "first_call_ms": 232.358854,
+      "network_ready_ms": 839.059192,
+      "latency": {
+        "create note (local commit)": {
+          "n": 50,
+          "failures": 0,
+          "p50": 142.750521,
+          "p95": 237.71927,
+          "min": 71.312292,
+          "max": 250.647136,
+          "mean": 150.35830202
+        },
+        "get authority's note (first fetch)": {
+          "n": 50,
+          "failures": 0,
+          "p50": 44.629009999999994,
+          "p95": 190.172656,
+          "min": 19.167083,
+          "max": 396.741771,
+          "mean": 69.86079690000001
+        },
+        "get links (authority's notes)": {
+          "n": 50,
+          "failures": 0,
+          "p50": 103.772135,
+          "p95": 182.271719,
+          "min": 42.376979,
+          "max": 194.45323,
+          "mean": 103.42057078000002
+        },
+        "get own note": {
+          "n": 50,
+          "failures": 0,
+          "p50": 17.714479,
+          "p95": 33.940208,
+          "min": 7.950625,
+          "max": 38.380261,
+          "mean": 20.14166044
+        },
+        "phone note visible at an authority": {
+          "n": 5,
+          "failures": 0,
+          "p50": 76.83018,
+          "p95": 261.563111,
+          "min": 45.435314,
+          "max": 261.563111,
+          "mean": 107.2380518
+        },
+        "remote call authority to phone": {
+          "n": 50,
+          "failures": 0,
+          "p50": 48.913560000000004,
+          "p95": 142.274109,
+          "min": 26.164675,
+          "max": 270.944754,
+          "mean": 59.90537044
+        },
+        "remote call phone to authority": {
+          "n": 50,
+          "failures": 0,
+          "p50": 66.56015599999999,
+          "p95": 198.991927,
+          "min": 37.830104000000006,
+          "max": 675.98177,
+          "mean": 88.11174582000001
+        },
+        "signal round trip authority to phone": {
+          "n": 50,
+          "failures": 0,
+          "p50": 63.651900999999995,
+          "p95": 113.625098,
+          "min": 33.483879,
+          "max": 713.682031,
+          "mean": 79.90755951999998
+        },
+        "signal round trip phone to authority": {
+          "n": 50,
+          "failures": 0,
+          "p50": 92.647917,
+          "p95": 131.91645799999998,
+          "min": 67.09474,
+          "max": 369.826927,
+          "mean": 100.45211665999999
+        },
+        "validation receipts for every op": {
+          "n": 5,
+          "failures": 0,
+          "p50": 367.061471,
+          "p95": 1452.3558830000002,
+          "min": 161.03948000000003,
+          "max": 1452.3558830000002,
+          "mean": 557.9095222
+        }
+      },
+      "memory": [
+        {
+          "rss_kb": 58404,
+          "rss_anon_kb": 29912,
+          "heap_in_use_kb": 67487,
+          "heap_free_kb": 944
+        },
+        {
+          "rss_kb": 59940,
+          "rss_anon_kb": 31356,
+          "heap_in_use_kb": 67333,
+          "heap_free_kb": 1346
+        },
+        {
+          "rss_kb": 60784,
+          "rss_anon_kb": 32200,
+          "heap_in_use_kb": 68407,
+          "heap_free_kb": 1464
+        },
+        {
+          "rss_kb": 60728,
+          "rss_anon_kb": 32084,
+          "heap_in_use_kb": 68219,
+          "heap_free_kb": 1500
+        },
+        {
+          "rss_kb": 60620,
+          "rss_anon_kb": 31976,
+          "heap_in_use_kb": 67786,
+          "heap_free_kb": 1613
+        },
+        {
+          "rss_kb": 60668,
+          "rss_anon_kb": 32024,
+          "heap_in_use_kb": 68046,
+          "heap_free_kb": 1649
+        },
+        {
+          "rss_kb": 61188,
+          "rss_anon_kb": 32544,
+          "heap_in_use_kb": 68109,
+          "heap_free_kb": 1594
+        },
+        {
+          "rss_kb": 61228,
+          "rss_anon_kb": 32584,
+          "heap_in_use_kb": 68427,
+          "heap_free_kb": 1484
+        },
+        {
+          "rss_kb": 61124,
+          "rss_anon_kb": 32480,
+          "heap_in_use_kb": 68577,
+          "heap_free_kb": 1558
+        },
+        {
+          "rss_kb": 61840,
+          "rss_anon_kb": 33196,
+          "heap_in_use_kb": 69158,
+          "heap_free_kb": 1641
+        },
+        {
+          "rss_kb": 61364,
+          "rss_anon_kb": 32720,
+          "heap_in_use_kb": 68608,
+          "heap_free_kb": 1703
+        },
+        {
+          "rss_kb": 60972,
+          "rss_anon_kb": 32328,
+          "heap_in_use_kb": 67392,
+          "heap_free_kb": 1671
+        },
+        {
+          "rss_kb": 61352,
+          "rss_anon_kb": 32708,
+          "heap_in_use_kb": 67829,
+          "heap_free_kb": 1746
+        },
+        {
+          "rss_kb": 61000,
+          "rss_anon_kb": 32356,
+          "heap_in_use_kb": 67336,
+          "heap_free_kb": 1791
+        },
+        {
+          "rss_kb": 62040,
+          "rss_anon_kb": 33396,
+          "heap_in_use_kb": 68816,
+          "heap_free_kb": 1887
+        },
+        {
+          "rss_kb": 61436,
+          "rss_anon_kb": 32792,
+          "heap_in_use_kb": 67328,
+          "heap_free_kb": 1767
+        },
+        {
+          "rss_kb": 61644,
+          "rss_anon_kb": 33000,
+          "heap_in_use_kb": 67669,
+          "heap_free_kb": 1938
+        },
+        {
+          "rss_kb": 61736,
+          "rss_anon_kb": 33092,
+          "heap_in_use_kb": 67786,
+          "heap_free_kb": 1701
+        },
+        {
+          "rss_kb": 61444,
+          "rss_anon_kb": 32800,
+          "heap_in_use_kb": 68318,
+          "heap_free_kb": 1809
+        },
+        {
+          "rss_kb": 61848,
+          "rss_anon_kb": 33180,
+          "heap_in_use_kb": 67953,
+          "heap_free_kb": 1950
+        },
+        {
+          "rss_kb": 61552,
+          "rss_anon_kb": 32884,
+          "heap_in_use_kb": 69202,
+          "heap_free_kb": 1541
+        },
+        {
+          "rss_kb": 62276,
+          "rss_anon_kb": 33608,
+          "heap_in_use_kb": 69947,
+          "heap_free_kb": 1476
+        },
+        {
+          "rss_kb": 62684,
+          "rss_anon_kb": 34016,
+          "heap_in_use_kb": 69932,
+          "heap_free_kb": 1819
+        },
+        {
+          "rss_kb": 62492,
+          "rss_anon_kb": 33824,
+          "heap_in_use_kb": 69559,
+          "heap_free_kb": 1456
+        },
+        {
+          "rss_kb": 62220,
+          "rss_anon_kb": 33552,
+          "heap_in_use_kb": 69438,
+          "heap_free_kb": 1657
+        },
+        {
+          "rss_kb": 62624,
+          "rss_anon_kb": 33956,
+          "heap_in_use_kb": 69956,
+          "heap_free_kb": 1715
+        },
+        {
+          "rss_kb": 62772,
+          "rss_anon_kb": 34104,
+          "heap_in_use_kb": 69625,
+          "heap_free_kb": 1854
+        },
+        {
+          "rss_kb": 62792,
+          "rss_anon_kb": 34124,
+          "heap_in_use_kb": 69795,
+          "heap_free_kb": 1740
+        },
+        {
+          "rss_kb": 62744,
+          "rss_anon_kb": 34076,
+          "heap_in_use_kb": 69750,
+          "heap_free_kb": 1921
+        },
+        {
+          "rss_kb": 62352,
+          "rss_anon_kb": 33684,
+          "heap_in_use_kb": 70080,
+          "heap_free_kb": 1639
+        },
+        {
+          "rss_kb": 63000,
+          "rss_anon_kb": 34332,
+          "heap_in_use_kb": 71366,
+          "heap_free_kb": 1785
+        },
+        {
+          "rss_kb": 62576,
+          "rss_anon_kb": 33908,
+          "heap_in_use_kb": 70023,
+          "heap_free_kb": 1688
+        },
+        {
+          "rss_kb": 62636,
+          "rss_anon_kb": 33968,
+          "heap_in_use_kb": 70425,
+          "heap_free_kb": 1678
+        },
+        {
+          "rss_kb": 63388,
+          "rss_anon_kb": 34720,
+          "heap_in_use_kb": 71909,
+          "heap_free_kb": 1482
+        },
+        {
+          "rss_kb": 63800,
+          "rss_anon_kb": 35132,
+          "heap_in_use_kb": 72687,
+          "heap_free_kb": 1544
+        },
+        {
+          "rss_kb": 64200,
+          "rss_anon_kb": 35416,
+          "heap_in_use_kb": 72895,
+          "heap_free_kb": 1880
+        },
+        {
+          "rss_kb": 64532,
+          "rss_anon_kb": 35748,
+          "heap_in_use_kb": 73716,
+          "heap_free_kb": 1763
+        },
+        {
+          "rss_kb": 64712,
+          "rss_anon_kb": 35928,
+          "heap_in_use_kb": 74009,
+          "heap_free_kb": 1726
+        },
+        {
+          "rss_kb": 64860,
+          "rss_anon_kb": 36076,
+          "heap_in_use_kb": 73801,
+          "heap_free_kb": 2142
+        },
+        {
+          "rss_kb": 64188,
+          "rss_anon_kb": 35404,
+          "heap_in_use_kb": 73424,
+          "heap_free_kb": 1615
+        },
+        {
+          "rss_kb": 64108,
+          "rss_anon_kb": 35324,
+          "heap_in_use_kb": 72970,
+          "heap_free_kb": 1741
+        },
+        {
+          "rss_kb": 64368,
+          "rss_anon_kb": 35584,
+          "heap_in_use_kb": 72451,
+          "heap_free_kb": 1796
+        },
+        {
+          "rss_kb": 64252,
+          "rss_anon_kb": 35468,
+          "heap_in_use_kb": 72623,
+          "heap_free_kb": 1712
+        },
+        {
+          "rss_kb": 64444,
+          "rss_anon_kb": 35660,
+          "heap_in_use_kb": 72972,
+          "heap_free_kb": 1947
+        },
+        {
+          "rss_kb": 64488,
+          "rss_anon_kb": 35704,
+          "heap_in_use_kb": 73309,
+          "heap_free_kb": 1714
+        },
+        {
+          "rss_kb": 64532,
+          "rss_anon_kb": 35748,
+          "heap_in_use_kb": 73799,
+          "heap_free_kb": 1864
+        },
+        {
+          "rss_kb": 64968,
+          "rss_anon_kb": 36184,
+          "heap_in_use_kb": 74699,
+          "heap_free_kb": 1708
+        },
+        {
+          "rss_kb": 64812,
+          "rss_anon_kb": 36028,
+          "heap_in_use_kb": 73768,
+          "heap_free_kb": 1871
+        },
+        {
+          "rss_kb": 64552,
+          "rss_anon_kb": 35768,
+          "heap_in_use_kb": 73680,
+          "heap_free_kb": 1887
+        },
+        {
+          "rss_kb": 64584,
+          "rss_anon_kb": 35800,
+          "heap_in_use_kb": 74271,
+          "heap_free_kb": 1912
+        }
+      ],
+      "stats_ready": {
+        "rss_kb": 56932,
+        "peak_rss_kb": 273096,
+        "rss_anon_kb": 29280,
+        "rss_file_kb": 27292,
+        "heap_in_use_kb": 67957,
+        "heap_free_kb": 794,
+        "cpu_user_ms": 2223,
+        "cpu_sys_ms": 533,
+        "threads": 26,
+        "data_bytes": 13678286,
+        "link_sent": 8570,
+        "link_received": 15095,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 64912,
+        "peak_rss_kb": 273096,
+        "rss_anon_kb": 36128,
+        "rss_file_kb": 28424,
+        "heap_in_use_kb": 72904,
+        "heap_free_kb": 2447,
+        "cpu_user_ms": 18733,
+        "cpu_sys_ms": 15092,
+        "threads": 30,
+        "data_bytes": 22689814,
+        "link_sent": 286885,
+        "link_received": 976742,
+        "link_connects": 1
+      },
+      "stats_idle_start": {
+        "rss_kb": 55932,
+        "peak_rss_kb": 273096,
+        "rss_anon_kb": 27092,
+        "rss_file_kb": 28480,
+        "heap_in_use_kb": 54047,
+        "heap_free_kb": 3576,
+        "cpu_user_ms": 19421,
+        "cpu_sys_ms": 15519,
+        "threads": 16,
+        "data_bytes": 7606390,
+        "link_sent": 286933,
+        "link_received": 997583,
+        "link_connects": 1
+      },
+      "stats_after_idle": {
+        "rss_kb": 55900,
+        "peak_rss_kb": 273096,
+        "rss_anon_kb": 27060,
+        "rss_file_kb": 28480,
+        "heap_in_use_kb": 52442,
+        "heap_free_kb": 4277,
+        "cpu_user_ms": 19440,
+        "cpu_sys_ms": 15530,
+        "threads": 14,
+        "data_bytes": 7573622,
+        "link_sent": 286933,
+        "link_received": 997583,
+        "link_connects": 1
+      },
+      "settle_secs": 60,
+      "idle_secs": 300,
+      "idle_cpu_samples": [
+        5.0,
+        14.0,
+        4.0,
+        4.0,
+        3.0
+      ],
+      "idle_threads": [
+        {
+          "name": "h2hc-phone-wasm",
+          "threads": 1,
+          "cpu_ms_per_min": 4.217199999999999,
+          "wakeups_per_min": 1.4
+        },
+        {
+          "name": "tokio-rt-worker",
+          "threads": 7,
+          "cpu_ms_per_min": 2.5568,
+          "wakeups_per_min": 26.0
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 6,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": 0,
+      "idle_frames": {},
+      "errors": []
+    },
+    {
+      "network": "h2hc",
+      "wasm": "cranelift",
+      "env": [],
+      "keystore": "memory",
+      "iterations": 20,
+      "startup_ms": 2608.9480200000003,
+      "install_ms": 1561.217447,
+      "enable_ms": 222.236979,
+      "first_call_ms": 1930.698489,
+      "network_ready_ms": 2449.7849,
+      "latency": {
+        "create note (local commit)": {
+          "n": 20,
+          "failures": 0,
+          "p50": 139.215156,
+          "p95": 202.716406,
+          "min": 70.152761,
+          "max": 208.564792,
+          "mean": 148.3783829
+        },
+        "get authority's note (first fetch)": {
+          "n": 20,
+          "failures": 0,
+          "p50": 38.56224,
+          "p95": 77.145833,
+          "min": 19.408437,
+          "max": 80.345364,
+          "mean": 38.7681587
+        },
+        "get links (authority's notes)": {
+          "n": 20,
+          "failures": 0,
+          "p50": 99.769896,
+          "p95": 126.145781,
+          "min": 44.602344,
+          "max": 128.800261,
+          "mean": 93.7493464
+        },
+        "get own note": {
+          "n": 20,
+          "failures": 0,
+          "p50": 20.463333,
+          "p95": 29.659636,
+          "min": 10.29849,
+          "max": 33.671822999999996,
+          "mean": 19.6856172
+        },
+        "phone note visible at an authority": {
+          "n": 5,
+          "failures": 0,
+          "p50": 57.677423,
+          "p95": 86.445538,
+          "min": 49.401430000000005,
+          "max": 86.445538,
+          "mean": 66.56606000000001
+        },
+        "remote call authority to phone": {
+          "n": 20,
+          "failures": 0,
+          "p50": 47.14886799999999,
+          "p95": 65.66609,
+          "min": 24.011814,
+          "max": 98.23895300000001,
+          "mean": 47.09395515
+        },
+        "remote call phone to authority": {
+          "n": 20,
+          "failures": 0,
+          "p50": 49.810052,
+          "p95": 71.652396,
+          "min": 33.630208,
+          "max": 77.396198,
+          "mean": 50.183648399999996
+        },
+        "signal round trip authority to phone": {
+          "n": 20,
+          "failures": 0,
+          "p50": 56.022129,
+          "p95": 74.02977299999999,
+          "min": 29.186021999999998,
+          "max": 74.415746,
+          "mean": 54.385295199999995
+        },
+        "signal round trip phone to authority": {
+          "n": 20,
+          "failures": 0,
+          "p50": 91.895416,
+          "p95": 107.451042,
+          "min": 61.746666,
+          "max": 110.662969,
+          "mean": 87.4990286
+        },
+        "validation receipts for every op": {
+          "n": 5,
+          "failures": 0,
+          "p50": 199.39848600000002,
+          "p95": 1129.831059,
+          "min": 164.693559,
+          "max": 1129.831059,
+          "mean": 373.739678
+        }
+      },
+      "memory": [
+        {
+          "rss_kb": 148280,
+          "rss_anon_kb": 116352,
+          "heap_in_use_kb": 197040,
+          "heap_free_kb": 4391
+        },
+        {
+          "rss_kb": 146756,
+          "rss_anon_kb": 114680,
+          "heap_in_use_kb": 193439,
+          "heap_free_kb": 4112
+        },
+        {
+          "rss_kb": 146624,
+          "rss_anon_kb": 114544,
+          "heap_in_use_kb": 192711,
+          "heap_free_kb": 4256
+        },
+        {
+          "rss_kb": 147092,
+          "rss_anon_kb": 115008,
+          "heap_in_use_kb": 192757,
+          "heap_free_kb": 4410
+        },
+        {
+          "rss_kb": 147264,
+          "rss_anon_kb": 115180,
+          "heap_in_use_kb": 192822,
+          "heap_free_kb": 4233
+        },
+        {
+          "rss_kb": 147100,
+          "rss_anon_kb": 115016,
+          "heap_in_use_kb": 193192,
+          "heap_free_kb": 3991
+        },
+        {
+          "rss_kb": 147760,
+          "rss_anon_kb": 115676,
+          "heap_in_use_kb": 193487,
+          "heap_free_kb": 4048
+        },
+        {
+          "rss_kb": 147608,
+          "rss_anon_kb": 115524,
+          "heap_in_use_kb": 193603,
+          "heap_free_kb": 4108
+        },
+        {
+          "rss_kb": 147692,
+          "rss_anon_kb": 115608,
+          "heap_in_use_kb": 194124,
+          "heap_free_kb": 3907
+        },
+        {
+          "rss_kb": 147540,
+          "rss_anon_kb": 115456,
+          "heap_in_use_kb": 193057,
+          "heap_free_kb": 4190
+        },
+        {
+          "rss_kb": 147684,
+          "rss_anon_kb": 115600,
+          "heap_in_use_kb": 193693,
+          "heap_free_kb": 4162
+        },
+        {
+          "rss_kb": 147660,
+          "rss_anon_kb": 115576,
+          "heap_in_use_kb": 193393,
+          "heap_free_kb": 4134
+        },
+        {
+          "rss_kb": 147416,
+          "rss_anon_kb": 115332,
+          "heap_in_use_kb": 192973,
+          "heap_free_kb": 4002
+        },
+        {
+          "rss_kb": 147996,
+          "rss_anon_kb": 115912,
+          "heap_in_use_kb": 193594,
+          "heap_free_kb": 3973
+        },
+        {
+          "rss_kb": 147744,
+          "rss_anon_kb": 115660,
+          "heap_in_use_kb": 192930,
+          "heap_free_kb": 4078
+        },
+        {
+          "rss_kb": 147616,
+          "rss_anon_kb": 115532,
+          "heap_in_use_kb": 192303,
+          "heap_free_kb": 4224
+        },
+        {
+          "rss_kb": 147688,
+          "rss_anon_kb": 115604,
+          "heap_in_use_kb": 193412,
+          "heap_free_kb": 3811
+        },
+        {
+          "rss_kb": 147888,
+          "rss_anon_kb": 115804,
+          "heap_in_use_kb": 193211,
+          "heap_free_kb": 3924
+        },
+        {
+          "rss_kb": 147724,
+          "rss_anon_kb": 115640,
+          "heap_in_use_kb": 193012,
+          "heap_free_kb": 4147
+        },
+        {
+          "rss_kb": 147812,
+          "rss_anon_kb": 115728,
+          "heap_in_use_kb": 192820,
+          "heap_free_kb": 4363
+        }
+      ],
+      "stats_ready": {
+        "rss_kb": 152764,
+        "peak_rss_kb": 275924,
+        "rss_anon_kb": 121480,
+        "rss_file_kb": 30900,
+        "heap_in_use_kb": 209111,
+        "heap_free_kb": 5296,
+        "cpu_user_ms": 9596,
+        "cpu_sys_ms": 2522,
+        "threads": 37,
+        "data_bytes": 83368566,
+        "link_sent": 6605,
+        "link_received": 13838,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 147324,
+        "peak_rss_kb": 275924,
+        "rss_anon_kb": 115240,
+        "rss_file_kb": 31700,
+        "heap_in_use_kb": 192138,
+        "heap_free_kb": 4277,
+        "cpu_user_ms": 17020,
+        "cpu_sys_ms": 8866,
+        "threads": 40,
+        "data_bytes": 89953230,
+        "link_sent": 130071,
+        "link_received": 486977,
+        "link_connects": 1
+      },
+      "stats_idle_start": {
+        "rss_kb": 15160,
+        "peak_rss_kb": 275924,
+        "rss_anon_kb": 5292,
+        "rss_file_kb": 9484,
+        "heap_in_use_kb": 172661,
+        "heap_free_kb": 6242,
+        "cpu_user_ms": 17233,
+        "cpu_sys_ms": 9129,
+        "threads": 25,
+        "data_bytes": 53440630,
+        "link_sent": 130110,
+        "link_received": 495629,
+        "link_connects": 1
+      },
+      "stats_after_idle": {
+        "rss_kb": 14820,
+        "peak_rss_kb": 275924,
+        "rss_anon_kb": 4988,
+        "rss_file_kb": 9448,
+        "heap_in_use_kb": 171304,
+        "heap_free_kb": 6791,
+        "cpu_user_ms": 17264,
+        "cpu_sys_ms": 9153,
+        "threads": 23,
+        "data_bytes": 53407862,
+        "link_sent": 130110,
+        "link_received": 495629,
+        "link_connects": 1
+      },
+      "settle_secs": 60,
+      "idle_secs": 300,
+      "idle_cpu_samples": [
+        5.0,
+        33.0,
+        8.0,
+        4.0,
+        5.0
+      ],
+      "idle_threads": [
+        {
+          "name": "h2hc-phone-cran",
+          "threads": 1,
+          "cpu_ms_per_min": 4.5446,
+          "wakeups_per_min": 3.8
+        },
+        {
+          "name": "tokio-rt-worker",
+          "threads": 15,
+          "cpu_ms_per_min": 3.8347999999999995,
+          "wakeups_per_min": 27.400000000000002
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 7,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": 0,
+      "idle_frames": {},
+      "errors": []
+    },
+    {
+      "network": "kitsune2",
+      "wasm": "wasmi",
+      "env": [],
+      "keystore": "memory",
+      "iterations": 50,
+      "startup_ms": 2154.793176,
+      "install_ms": 340.87375,
+      "enable_ms": 313.904844,
+      "first_call_ms": 209.254479,
+      "network_ready_ms": 7411.659603,
+      "latency": {
+        "create note (local commit)": {
+          "n": 50,
+          "failures": 0,
+          "p50": 153.803802,
+          "p95": 218.310052,
+          "min": 39.68526,
+          "max": 273.480261,
+          "mean": 146.41755314
+        },
+        "get authority's note (first fetch)": {
+          "n": 50,
+          "failures": 0,
+          "p50": 26.273646000000003,
+          "p95": 33.901875,
+          "min": 15.302657,
+          "max": 38.936875,
+          "mean": 25.37129682000001
+        },
+        "get links (authority's notes)": {
+          "n": 50,
+          "failures": 0,
+          "p50": 100.189375,
+          "p95": 141.577916,
+          "min": 39.383177,
+          "max": 145.040365,
+          "mean": 97.26443646000001
+        },
+        "get own note": {
+          "n": 50,
+          "failures": 0,
+          "p50": 26.692135,
+          "p95": 37.233021,
+          "min": 8.387656,
+          "max": 45.335573,
+          "mean": 26.765285340000002
+        },
+        "phone note visible at an authority": {
+          "n": 5,
+          "failures": 0,
+          "p50": 33.271495,
+          "p95": 62.5011,
+          "min": 32.729725,
+          "max": 62.5011,
+          "mean": 39.0842114
+        },
+        "remote call authority to phone": {
+          "n": 50,
+          "failures": 0,
+          "p50": 33.359353,
+          "p95": 46.884121,
+          "min": 12.209628,
+          "max": 54.806669,
+          "mean": 32.48511292
+        },
+        "remote call phone to authority": {
+          "n": 50,
+          "failures": 0,
+          "p50": 30.722239,
+          "p95": 47.002552,
+          "min": 11.822813,
+          "max": 47.54875,
+          "mean": 31.493936459999997
+        },
+        "signal round trip authority to phone": {
+          "n": 50,
+          "failures": 0,
+          "p50": 38.495129000000006,
+          "p95": 56.290623999999994,
+          "min": 13.191226,
+          "max": 62.361686,
+          "mean": 38.55885219999999
+        },
+        "signal round trip phone to authority": {
+          "n": 50,
+          "failures": 0,
+          "p50": 57.235833,
+          "p95": 73.36239599999999,
+          "min": 15.06875,
+          "max": 87.78849,
+          "mean": 53.62181566
+        },
+        "validation receipts for every op": {
+          "n": 5,
+          "failures": 0,
+          "p50": 9795.237391,
+          "p95": 9999.260786,
+          "min": 6942.566328,
+          "max": 9999.260786,
+          "mean": 9266.5585264
+        }
+      },
+      "memory": [
+        {
+          "rss_kb": 73660,
+          "rss_anon_kb": 34676,
+          "heap_in_use_kb": 82225,
+          "heap_free_kb": 1846
+        },
+        {
+          "rss_kb": 74072,
+          "rss_anon_kb": 35012,
+          "heap_in_use_kb": 83569,
+          "heap_free_kb": 1686
+        },
+        {
+          "rss_kb": 74800,
+          "rss_anon_kb": 35740,
+          "heap_in_use_kb": 84464,
+          "heap_free_kb": 1663
+        },
+        {
+          "rss_kb": 74736,
+          "rss_anon_kb": 35676,
+          "heap_in_use_kb": 83952,
+          "heap_free_kb": 1807
+        },
+        {
+          "rss_kb": 75212,
+          "rss_anon_kb": 36152,
+          "heap_in_use_kb": 84377,
+          "heap_free_kb": 1814
+        },
+        {
+          "rss_kb": 75456,
+          "rss_anon_kb": 36396,
+          "heap_in_use_kb": 84087,
+          "heap_free_kb": 1944
+        },
+        {
+          "rss_kb": 76120,
+          "rss_anon_kb": 37060,
+          "heap_in_use_kb": 85715,
+          "heap_free_kb": 1860
+        },
+        {
+          "rss_kb": 75976,
+          "rss_anon_kb": 36916,
+          "heap_in_use_kb": 85279,
+          "heap_free_kb": 1992
+        },
+        {
+          "rss_kb": 76340,
+          "rss_anon_kb": 37280,
+          "heap_in_use_kb": 84657,
+          "heap_free_kb": 2166
+        },
+        {
+          "rss_kb": 76404,
+          "rss_anon_kb": 37344,
+          "heap_in_use_kb": 84399,
+          "heap_free_kb": 2280
+        },
+        {
+          "rss_kb": 76772,
+          "rss_anon_kb": 37712,
+          "heap_in_use_kb": 84585,
+          "heap_free_kb": 2326
+        },
+        {
+          "rss_kb": 76388,
+          "rss_anon_kb": 37328,
+          "heap_in_use_kb": 84934,
+          "heap_free_kb": 2089
+        },
+        {
+          "rss_kb": 76368,
+          "rss_anon_kb": 37308,
+          "heap_in_use_kb": 84713,
+          "heap_free_kb": 2246
+        },
+        {
+          "rss_kb": 77136,
+          "rss_anon_kb": 38076,
+          "heap_in_use_kb": 85436,
+          "heap_free_kb": 2171
+        },
+        {
+          "rss_kb": 76428,
+          "rss_anon_kb": 37368,
+          "heap_in_use_kb": 84396,
+          "heap_free_kb": 2211
+        },
+        {
+          "rss_kb": 76852,
+          "rss_anon_kb": 37792,
+          "heap_in_use_kb": 84634,
+          "heap_free_kb": 2245
+        },
+        {
+          "rss_kb": 77072,
+          "rss_anon_kb": 38012,
+          "heap_in_use_kb": 85224,
+          "heap_free_kb": 2375
+        },
+        {
+          "rss_kb": 77092,
+          "rss_anon_kb": 38032,
+          "heap_in_use_kb": 85246,
+          "heap_free_kb": 2273
+        },
+        {
+          "rss_kb": 76116,
+          "rss_anon_kb": 37056,
+          "heap_in_use_kb": 83933,
+          "heap_free_kb": 2370
+        },
+        {
+          "rss_kb": 76060,
+          "rss_anon_kb": 37000,
+          "heap_in_use_kb": 84015,
+          "heap_free_kb": 2416
+        },
+        {
+          "rss_kb": 76136,
+          "rss_anon_kb": 37076,
+          "heap_in_use_kb": 83465,
+          "heap_free_kb": 2326
+        },
+        {
+          "rss_kb": 76576,
+          "rss_anon_kb": 37516,
+          "heap_in_use_kb": 83969,
+          "heap_free_kb": 2430
+        },
+        {
+          "rss_kb": 76744,
+          "rss_anon_kb": 37684,
+          "heap_in_use_kb": 84971,
+          "heap_free_kb": 2452
+        },
+        {
+          "rss_kb": 77120,
+          "rss_anon_kb": 38060,
+          "heap_in_use_kb": 87450,
+          "heap_free_kb": 1861
+        },
+        {
+          "rss_kb": 77912,
+          "rss_anon_kb": 38852,
+          "heap_in_use_kb": 88482,
+          "heap_free_kb": 2101
+        },
+        {
+          "rss_kb": 78652,
+          "rss_anon_kb": 39592,
+          "heap_in_use_kb": 88546,
+          "heap_free_kb": 1869
+        },
+        {
+          "rss_kb": 79028,
+          "rss_anon_kb": 39968,
+          "heap_in_use_kb": 89625,
+          "heap_free_kb": 1806
+        },
+        {
+          "rss_kb": 79560,
+          "rss_anon_kb": 40500,
+          "heap_in_use_kb": 90460,
+          "heap_free_kb": 1947
+        },
+        {
+          "rss_kb": 79688,
+          "rss_anon_kb": 40628,
+          "heap_in_use_kb": 91253,
+          "heap_free_kb": 2242
+        },
+        {
+          "rss_kb": 79348,
+          "rss_anon_kb": 40288,
+          "heap_in_use_kb": 89896,
+          "heap_free_kb": 2247
+        },
+        {
+          "rss_kb": 79328,
+          "rss_anon_kb": 40268,
+          "heap_in_use_kb": 90551,
+          "heap_free_kb": 2184
+        },
+        {
+          "rss_kb": 79364,
+          "rss_anon_kb": 40304,
+          "heap_in_use_kb": 90813,
+          "heap_free_kb": 2146
+        },
+        {
+          "rss_kb": 79472,
+          "rss_anon_kb": 40412,
+          "heap_in_use_kb": 90559,
+          "heap_free_kb": 2240
+        },
+        {
+          "rss_kb": 79168,
+          "rss_anon_kb": 40108,
+          "heap_in_use_kb": 89537,
+          "heap_free_kb": 2166
+        },
+        {
+          "rss_kb": 79064,
+          "rss_anon_kb": 40004,
+          "heap_in_use_kb": 89592,
+          "heap_free_kb": 2047
+        },
+        {
+          "rss_kb": 79420,
+          "rss_anon_kb": 40360,
+          "heap_in_use_kb": 90379,
+          "heap_free_kb": 2260
+        },
+        {
+          "rss_kb": 79512,
+          "rss_anon_kb": 40452,
+          "heap_in_use_kb": 90327,
+          "heap_free_kb": 2176
+        },
+        {
+          "rss_kb": 79472,
+          "rss_anon_kb": 40412,
+          "heap_in_use_kb": 89683,
+          "heap_free_kb": 2140
+        },
+        {
+          "rss_kb": 79192,
+          "rss_anon_kb": 40132,
+          "heap_in_use_kb": 89363,
+          "heap_free_kb": 2044
+        },
+        {
+          "rss_kb": 79528,
+          "rss_anon_kb": 40468,
+          "heap_in_use_kb": 90242,
+          "heap_free_kb": 2205
+        },
+        {
+          "rss_kb": 80032,
+          "rss_anon_kb": 40972,
+          "heap_in_use_kb": 91025,
+          "heap_free_kb": 2150
+        },
+        {
+          "rss_kb": 79780,
+          "rss_anon_kb": 40720,
+          "heap_in_use_kb": 91071,
+          "heap_free_kb": 2408
+        },
+        {
+          "rss_kb": 80224,
+          "rss_anon_kb": 41164,
+          "heap_in_use_kb": 91009,
+          "heap_free_kb": 2334
+        },
+        {
+          "rss_kb": 79696,
+          "rss_anon_kb": 40636,
+          "heap_in_use_kb": 89576,
+          "heap_free_kb": 2831
+        },
+        {
+          "rss_kb": 79572,
+          "rss_anon_kb": 40512,
+          "heap_in_use_kb": 88936,
+          "heap_free_kb": 2759
+        },
+        {
+          "rss_kb": 79280,
+          "rss_anon_kb": 40220,
+          "heap_in_use_kb": 89577,
+          "heap_free_kb": 2182
+        },
+        {
+          "rss_kb": 79664,
+          "rss_anon_kb": 40604,
+          "heap_in_use_kb": 90191,
+          "heap_free_kb": 2264
+        },
+        {
+          "rss_kb": 80540,
+          "rss_anon_kb": 41480,
+          "heap_in_use_kb": 91313,
+          "heap_free_kb": 2174
+        },
+        {
+          "rss_kb": 79948,
+          "rss_anon_kb": 40888,
+          "heap_in_use_kb": 91226,
+          "heap_free_kb": 2133
+        },
+        {
+          "rss_kb": 80248,
+          "rss_anon_kb": 41188,
+          "heap_in_use_kb": 90861,
+          "heap_free_kb": 2522
+        }
+      ],
+      "stats_ready": {
+        "rss_kb": 71648,
+        "peak_rss_kb": 275696,
+        "rss_anon_kb": 33812,
+        "rss_file_kb": 37452,
+        "heap_in_use_kb": 82105,
+        "heap_free_kb": 2062,
+        "cpu_user_ms": 2896,
+        "cpu_sys_ms": 1641,
+        "threads": 29,
+        "data_bytes": 13711246,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_after_workload": {
+        "rss_kb": 73204,
+        "peak_rss_kb": 275696,
+        "rss_anon_kb": 34104,
+        "rss_file_kb": 38716,
+        "heap_in_use_kb": 75176,
+        "heap_free_kb": 3055,
+        "cpu_user_ms": 20794,
+        "cpu_sys_ms": 16630,
+        "threads": 35,
+        "data_bytes": 16958622,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_idle_start": {
+        "rss_kb": 70200,
+        "peak_rss_kb": 275696,
+        "rss_anon_kb": 30944,
+        "rss_file_kb": 38872,
+        "heap_in_use_kb": 68080,
+        "heap_free_kb": 4167,
+        "cpu_user_ms": 20963,
+        "cpu_sys_ms": 16877,
+        "threads": 24,
+        "data_bytes": 7898366,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_after_idle": {
+        "rss_kb": 42460,
+        "peak_rss_kb": 275696,
+        "rss_anon_kb": 12852,
+        "rss_file_kb": 29224,
+        "heap_in_use_kb": 65680,
+        "heap_free_kb": 4983,
+        "cpu_user_ms": 21402,
+        "cpu_sys_ms": 17728,
+        "threads": 20,
+        "data_bytes": 7997630,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "settle_secs": 60,
+      "idle_secs": 300,
+      "idle_cpu_samples": [
+        207.0,
+        370.0,
+        285.0,
+        244.0,
+        184.0
+      ],
+      "idle_threads": [
+        {
+          "name": "tokio-rt-worker",
+          "threads": 7,
+          "cpu_ms_per_min": 214.36,
+          "wakeups_per_min": 811.0
+        },
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 6,
+          "cpu_ms_per_min": 21.607,
+          "wakeups_per_min": 53.2
+        },
+        {
+          "name": "h2hc-phone-wasm",
+          "threads": 1,
+          "cpu_ms_per_min": 6.2292,
+          "wakeups_per_min": 1.8
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 6,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": null,
+      "idle_frames": {},
+      "errors": []
+    }
+  ],
+  "scenarios": []
+}
