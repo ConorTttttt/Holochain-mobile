@@ -23,6 +23,11 @@ pub enum Command {
     Receipts { hash: String },
     /// Process resource use.
     Stats,
+    /// CPU time and wakeups of every thread.
+    Threads,
+    /// Sample where CPU time goes for `secs` seconds. Needs the `profile`
+    /// feature; writes collapsed stacks and a flamegraph to the data dir.
+    Profile { secs: u64 },
     Quit,
 }
 
@@ -52,4 +57,16 @@ pub struct Stats {
     pub link_received: u64,
     /// Connections opened to the linker, including reconnects.
     pub link_connects: u64,
+}
+
+/// One thread, from `/proc/self/task`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ThreadStats {
+    pub tid: u64,
+    pub name: String,
+    /// Time on CPU, in microseconds.
+    pub cpu_us: u64,
+    /// Voluntary context switches: roughly, how often the thread slept and
+    /// was woken.
+    pub wakeups: u64,
 }

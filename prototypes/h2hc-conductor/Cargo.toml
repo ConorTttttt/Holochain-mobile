@@ -14,6 +14,9 @@ name = "h2hc-phone"
 default = ["cranelift"]
 cranelift = ["holochain/wasmer-sys-cranelift"]
 wasmi = ["holochain/wasmer-wasmi"]
+# The `profile` control command: an in-process sampling profiler, since perf
+# needs privileges that an adb shell does not have.
+profile = ["dep:pprof"]
 
 [dependencies]
 anyhow = "1"
@@ -25,6 +28,7 @@ holochain_conductor_api = "=0.7.1"
 kitsune2_api.workspace = true
 lair_keystore_api = "=0.7.1"
 libc = "0.2"
+pprof = { version = "0.15", features = ["flamegraph"], optional = true }
 serde.workspace = true
 serde_json.workspace = true
 sodoken = "0.1"

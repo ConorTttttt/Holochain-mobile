@@ -8,11 +8,12 @@ cd "$ROOT"
 
 [ -d vendor/holochain-0.7.1 ] || ./scripts/vendor-holochain.sh
 [ -f tests/fixtures/notes/workdir/notes.happ ] || ./scripts/build-fixtures.sh
-cargo build --release --bin h2hc-phone --bin h2hc-bench
+# The profile feature only links the sampler that --profile-secs starts.
+cargo build --release --bin h2hc-phone --bin h2hc-bench --features h2hc-conductor/profile
 # Holochain 0.7.1 cannot run wasmi when Cranelift is compiled in, so the
 # wasmi phone is a separate build.
 cargo build --release -p h2hc-conductor --bin h2hc-phone \
-  --no-default-features --features wasmi --target-dir target/wasmi
+  --no-default-features --features wasmi,profile --target-dir target/wasmi
 (cd prototypes/h2hc-linker && cargo build --release)
 
 exec target/release/h2hc-bench "$@"

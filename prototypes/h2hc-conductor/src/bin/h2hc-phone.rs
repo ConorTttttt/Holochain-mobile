@@ -9,7 +9,7 @@
 //! ```
 
 use base64::Engine;
-use h2hc_conductor::control::{Command, Ready, Stats};
+use h2hc_conductor::control::{Command, Ready, Stats, ThreadStats};
 use h2hc_conductor::*;
 use h2hc_p2p::ws::WsCounters;
 use h2hc_protocol::LinkerId;
@@ -239,6 +239,8 @@ impl Phone {
                 })
             }
             Command::Stats => serde_json::to_value(self.stats())?,
+            Command::Threads => json!({ "threads": threads() }),
+            Command::Profile { secs } => self.profile(secs).await?,
             Command::Quit => std::process::exit(0),
         })
     }
@@ -257,6 +259,43 @@ impl Phone {
                 }
             }
         });
+    }
+
+    #[cfg(feature = "profile")]
+    async fn profile(&self, secs: u64) -> anyhow::Result<Value> {
+        use std::fmt::Write;
+        // SIGPROF counts CPU time, so an idle process is rarely interrupted.
+        let guard = pprof::ProfilerGuardBuilder::default()
+            .frequency(997)
+            .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+            .build()?;
+        tokio::time::sleep(Duration::from_secs(secs)).await;
+        let report = guard.report().build()?;
+        let base = self.data_dir.join(format!(
+            "profile-{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_secs()
+        ));
+        // Collapsed stacks, outermost frame first, as inferno reads them.
+        let mut folded = String::new();
+        let mut samples = 0;
+        for (frames, count) in &report.data {
+            samples += count;
+            let _ = write!(folded, "{}", frames.thread_name_or_id());
+            for frame in frames.frames.iter().rev() {
+                for symbol in frame.iter().rev() {
+                    let _ = write!(folded, ";{symbol}");
+                }
+            }
+            let _ = writeln!(folded, " {count}");
+        }
+        std::fs::write(base.with_extension("folded"), folded)?;
+        report.flamegraph(std::fs::File::create(base.with_extension("svg"))?)?;
+        Ok(json!({ "samples": samples, "folded": base.with_extension("folded"), "svg": base.with_extension("svg") }))
+    }
+
+    #[cfg(not(feature = "profile"))]
+    async fn profile(&self, _secs: u64) -> anyhow::Result<Value> {
+        anyhow::bail!("built without the profile feature")
     }
 
     fn stats(&self) -> Stats {
@@ -285,6 +324,40 @@ impl Phone {
             link_connects: self.counters.connects.load(Relaxed),
         }
     }
+}
+
+/// Every thread's CPU time and voluntary context switches. CPU time comes
+/// from `schedstat` (nanoseconds) where the kernel has it, else from `stat`
+/// (clock ticks).
+fn threads() -> Vec<ThreadStats> {
+    let Ok(dir) = std::fs::read_dir("/proc/self/task") else {
+        return Vec::new();
+    };
+    let tick_us = 1_000_000 / unsafe { libc::sysconf(libc::_SC_CLK_TCK) }.max(1) as u64;
+    dir.flatten()
+        .filter_map(|e| {
+            let tid = e.file_name().to_str()?.parse().ok()?;
+            let path = e.path();
+            let read = |f: &str| std::fs::read_to_string(path.join(f)).ok();
+            let cpu_us = match read("schedstat") {
+                Some(s) => s.split_whitespace().next()?.parse::<u64>().ok()? / 1000,
+                None => {
+                    // utime and stime follow the parenthesised name.
+                    let stat = read("stat")?;
+                    let rest = stat.get(stat.rfind(')')? + 2..)?;
+                    let ticks: u64 = rest.split_whitespace().skip(11).take(2).filter_map(|v| v.parse::<u64>().ok()).sum();
+                    ticks * tick_us
+                }
+            };
+            let wakeups = read("status")?
+                .lines()
+                .find_map(|l| l.strip_prefix("voluntary_ctxt_switches:"))?
+                .trim()
+                .parse()
+                .ok()?;
+            Some(ThreadStats { tid, name: read("comm")?.trim().to_string(), cpu_us, wakeups })
+        })
+        .collect()
 }
 
 fn dir_size(path: &Path) -> u64 {

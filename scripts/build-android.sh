@@ -22,6 +22,6 @@ export AR_aarch64_linux_android="$BIN/llvm-ar"
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$CC_aarch64_linux_android"
 
 [ -d vendor/holochain-0.7.1 ] || ./scripts/vendor-holochain.sh
-cargo build --release --target aarch64-linux-android --bin h2hc-phone
+cargo build --release --target aarch64-linux-android -p h2hc-conductor --bin h2hc-phone --features profile
 cargo build --release --target aarch64-linux-android -p h2hc-conductor --bin h2hc-phone \
-  --no-default-features --features wasmi --target-dir target/wasmi
+  --no-default-features --features wasmi,profile --target-dir target/wasmi

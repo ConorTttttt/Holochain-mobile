@@ -2,7 +2,7 @@
 //! over adb.
 
 use anyhow::Context;
-use h2hc_conductor::control::{Command as PhoneCommand, Ready, Stats};
+use h2hc_conductor::control::{Command as PhoneCommand, Ready, Stats, ThreadStats};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
@@ -16,8 +16,8 @@ const COMMAND_TIMEOUT: Duration = Duration::from_secs(180);
 #[derive(Clone)]
 pub enum Target {
     Local {
-        /// The workspace root; phone builds live under its `target/`.
-        root: PathBuf,
+        /// The cargo target directory holding the phone builds.
+        builds: PathBuf,
         happ: PathBuf,
         /// Short, because Lair's Unix socket lives inside each data directory
         /// and socket paths are limited to about 108 bytes.
@@ -48,7 +48,7 @@ impl Target {
     }
 
     /// Copy both phone builds and the hApp to the device and forward ports.
-    pub async fn prepare(&self, root: &Path, happ: &Path, ports: &[u16]) -> anyhow::Result<()> {
+    pub async fn prepare(&self, builds: &Path, happ: &Path, ports: &[u16]) -> anyhow::Result<()> {
         let Target::Adb { serial, remote_dir } = self else {
             return Ok(());
         };
@@ -63,7 +63,7 @@ impl Target {
         };
         run(vec!["shell".into(), format!("mkdir -p {remote_dir}")]).await?;
         for wasm in ["cranelift", "wasmi"] {
-            let bin = phone_bin(root, "aarch64-linux-android", wasm);
+            let bin = phone_bin(builds, "aarch64-linux-android", wasm);
             run(vec!["push".into(), bin.display().to_string(), format!("{remote_dir}/h2hc-phone-{wasm}")]).await?;
         }
         run(vec!["push".into(), happ.display().to_string(), format!("{remote_dir}/notes.happ")]).await?;
@@ -79,6 +79,20 @@ impl Target {
             Target::Local { data_root, .. } => data_root.join(name).display().to_string(),
             Target::Adb { remote_dir, .. } => format!("{remote_dir}/{name}"),
         }
+    }
+
+    /// Copy a file the phone wrote to this machine.
+    pub async fn fetch(&self, remote: &str, local: &Path) -> anyhow::Result<()> {
+        match self {
+            Target::Local { .. } => {
+                std::fs::copy(remote, local)?;
+            }
+            Target::Adb { serial, .. } => {
+                let out = Self::adb(serial).args(["pull", remote, &local.display().to_string()]).output().await?;
+                anyhow::ensure!(out.status.success(), "adb pull {remote}: {}", String::from_utf8_lossy(&out.stderr));
+            }
+        }
+        Ok(())
     }
 
     /// Remove a phone's data so the next run starts fresh.
@@ -100,9 +114,9 @@ impl Target {
 
 /// The next JSON line, skipping anything else on stdout (Lair prints its
 /// setup lines there).
-async fn next_json(lines: &mut Lines<BufReader<ChildStdout>>) -> anyhow::Result<String> {
+async fn next_json(lines: &mut Lines<BufReader<ChildStdout>>, within: Duration) -> anyhow::Result<String> {
     loop {
-        let line = tokio::time::timeout(COMMAND_TIMEOUT, lines.next_line())
+        let line = tokio::time::timeout(within, lines.next_line())
             .await
             .context("phone did not answer in time")??
             .context("phone exited")?;
@@ -112,13 +126,14 @@ async fn next_json(lines: &mut Lines<BufReader<ChildStdout>>) -> anyhow::Result<
     }
 }
 
-/// Each WASM engine is a separate build (see h2hc-conductor's features).
-pub fn phone_bin(root: &Path, triple: &str, wasm: &str) -> PathBuf {
+/// Each WASM engine is a separate build (see h2hc-conductor's features);
+/// `builds` is the cargo target directory.
+pub fn phone_bin(builds: &Path, triple: &str, wasm: &str) -> PathBuf {
     let dir = match (triple, wasm) {
-        ("", "wasmi") => root.join("target/wasmi/release"),
-        ("", _) => root.join("target/release"),
-        (t, "wasmi") => root.join("target/wasmi").join(t).join("release"),
-        (t, _) => root.join("target").join(t).join("release"),
+        ("", "wasmi") => builds.join("wasmi/release"),
+        ("", _) => builds.join("release"),
+        (t, "wasmi") => builds.join("wasmi").join(t).join("release"),
+        (t, _) => builds.join(t).join("release"),
     };
     dir.join("h2hc-phone")
 }
@@ -134,18 +149,32 @@ impl Phone {
     /// Start a phone. `args` are h2hc-phone arguments other than the data
     /// directory and hApp, which come from the target.
     pub async fn spawn(target: &Target, name: &str, wasm: &str, args: &[String], log: &Path) -> anyhow::Result<Self> {
+        Self::spawn_with_env(target, name, wasm, args, &[], log).await
+    }
+
+    /// As [`Phone::spawn`], with extra environment variables for the phone.
+    pub async fn spawn_with_env(
+        target: &Target,
+        name: &str,
+        wasm: &str,
+        args: &[String],
+        env: &[(String, String)],
+        log: &Path,
+    ) -> anyhow::Result<Self> {
         let data_dir = target.data_dir(name);
         let mut cmd = match target {
-            Target::Local { root, happ, .. } => {
-                let mut cmd = Command::new(phone_bin(root, "", wasm));
+            Target::Local { builds, happ, .. } => {
+                let mut cmd = Command::new(phone_bin(builds, "", wasm));
                 cmd.args(args)
-                    .args(["--data-dir", &data_dir, "--happ", &happ.display().to_string()]);
+                    .args(["--data-dir", &data_dir, "--happ", &happ.display().to_string()])
+                    .envs(env.iter().map(|(k, v)| (k, v)));
                 cmd
             }
             Target::Adb { serial, remote_dir } => {
                 let mut cmd = Target::adb(serial);
+                let env: String = env.iter().map(|(k, v)| format!("{k}={v} ")).collect();
                 let line = format!(
-                    "cd {remote_dir} && RUST_LOG=warn ./h2hc-phone-{wasm} {} --data-dir {data_dir} --happ {remote_dir}/notes.happ",
+                    "cd {remote_dir} && {env}RUST_LOG=warn ./h2hc-phone-{wasm} {} --data-dir {data_dir} --happ {remote_dir}/notes.happ",
                     args.join(" ")
                 );
                 cmd.args(["shell", &line]);
@@ -162,7 +191,7 @@ impl Phone {
             .context("starting h2hc-phone")?;
         let stdin = child.stdin.take().context("no stdin")?;
         let mut lines = BufReader::new(child.stdout.take().context("no stdout")?).lines();
-        let first = next_json(&mut lines)
+        let first = next_json(&mut lines, COMMAND_TIMEOUT)
             .await
             .context("phone did not become ready")?;
         let ready: Ready = serde_json::from_str(&first)
@@ -176,11 +205,15 @@ impl Phone {
     }
 
     pub async fn cmd(&mut self, cmd: &PhoneCommand) -> anyhow::Result<Value> {
+        self.cmd_within(cmd, COMMAND_TIMEOUT).await
+    }
+
+    pub async fn cmd_within(&mut self, cmd: &PhoneCommand, within: Duration) -> anyhow::Result<Value> {
         let mut line = serde_json::to_string(cmd)?;
         line.push('\n');
         self.stdin.write_all(line.as_bytes()).await?;
         self.stdin.flush().await?;
-        let reply = next_json(&mut self.lines)
+        let reply = next_json(&mut self.lines, within)
             .await
             .with_context(|| format!("no reply to {cmd:?}"))?;
         let value: Value = serde_json::from_str(&reply)?;
@@ -193,6 +226,10 @@ impl Phone {
 
     pub async fn stats(&mut self) -> anyhow::Result<Stats> {
         Ok(serde_json::from_value(self.cmd(&PhoneCommand::Stats).await?)?)
+    }
+
+    pub async fn threads(&mut self) -> anyhow::Result<Vec<ThreadStats>> {
+        Ok(serde_json::from_value(self.cmd(&PhoneCommand::Threads).await?["threads"].take())?)
     }
 
     /// Kill without warning, as Android does to a background app.

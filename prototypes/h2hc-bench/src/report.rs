@@ -1,6 +1,6 @@
 //! Results, written as JSON for comparison across runs and Markdown to read.
 
-use h2hc_conductor::control::Stats;
+use h2hc_conductor::control::{Stats, ThreadStats};
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fmt::Write;
@@ -64,6 +64,8 @@ impl Series {
 pub struct ConfigResult {
     pub network: String,
     pub wasm: String,
+    /// Environment variables given to this phone only, for experiments.
+    pub env: Vec<(String, String)>,
     pub keystore: String,
     pub iterations: usize,
     pub startup_ms: f64,
@@ -75,8 +77,19 @@ pub struct ConfigResult {
     pub latency: BTreeMap<String, Summary>,
     pub stats_ready: Stats,
     pub stats_after_workload: Stats,
+    /// After the workload and the settle period.
+    pub stats_idle_start: Stats,
     pub stats_after_idle: Stats,
+    /// Time left after the workload for receipts and republishes to finish
+    /// before idle is measured.
+    pub settle_secs: u64,
     pub idle_secs: u64,
+    /// Idle CPU in each minute of the idle period, in ms per minute.
+    pub idle_cpu_samples: Vec<f64>,
+    /// Idle CPU and wakeups by thread name, busiest first.
+    pub idle_threads: Vec<ThreadIdle>,
+    /// Collapsed stacks from a profile taken after the idle period.
+    pub profile: Option<String>,
     /// Publish batches the linker accepted while the phone sat idle (H2HC):
     /// the conductor republishing ops that lack enough receipts.
     pub idle_linker_acceptances: Option<u64>,
@@ -87,20 +100,53 @@ pub struct ConfigResult {
 
 impl ConfigResult {
     pub fn label(&self) -> String {
-        format!("{} + {}", self.network, self.wasm)
+        let mut label = format!("{} + {}", self.network, self.wasm);
+        for (k, v) in &self.env {
+            label.push_str(&format!(", {k}={v}"));
+        }
+        label
     }
 
     pub fn idle_cpu_ms_per_min(&self) -> f64 {
-        let before = self.stats_after_workload.cpu_user_ms + self.stats_after_workload.cpu_sys_ms;
+        let before = self.stats_idle_start.cpu_user_ms + self.stats_idle_start.cpu_sys_ms;
         let after = self.stats_after_idle.cpu_user_ms + self.stats_after_idle.cpu_sys_ms;
         per_min(after.saturating_sub(before), self.idle_secs)
     }
 
     pub fn idle_link_bytes_per_min(&self) -> f64 {
-        let before = self.stats_after_workload.link_sent + self.stats_after_workload.link_received;
+        let before = self.stats_idle_start.link_sent + self.stats_idle_start.link_received;
         let after = self.stats_after_idle.link_sent + self.stats_after_idle.link_received;
         per_min(after.saturating_sub(before), self.idle_secs)
     }
+}
+
+/// Threads that share a name, over the idle period.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct ThreadIdle {
+    pub name: String,
+    pub threads: usize,
+    pub cpu_ms_per_min: f64,
+    pub wakeups_per_min: f64,
+}
+
+/// Group two thread snapshots by name. A thread that started during the
+/// period counts in full.
+pub fn thread_deltas(before: &[ThreadStats], after: &[ThreadStats], secs: u64) -> Vec<ThreadIdle> {
+    let earlier: BTreeMap<u64, &ThreadStats> = before.iter().map(|t| (t.tid, t)).collect();
+    let mut by_name: BTreeMap<&str, ThreadIdle> = BTreeMap::new();
+    for t in after {
+        let (cpu, wakeups) = match earlier.get(&t.tid) {
+            Some(b) => (t.cpu_us.saturating_sub(b.cpu_us), t.wakeups.saturating_sub(b.wakeups)),
+            None => (t.cpu_us, t.wakeups),
+        };
+        let e = by_name.entry(&t.name).or_insert_with(|| ThreadIdle { name: t.name.clone(), ..Default::default() });
+        e.threads += 1;
+        e.cpu_ms_per_min += cpu as f64 / 1000.0 * 60.0 / secs.max(1) as f64;
+        e.wakeups_per_min += per_min(wakeups, secs);
+    }
+    let mut v: Vec<ThreadIdle> = by_name.into_values().collect();
+    v.sort_by(|a, b| b.cpu_ms_per_min.total_cmp(&a.cpu_ms_per_min));
+    v
 }
 
 fn per_min(delta: u64, secs: u64) -> f64 {
@@ -125,6 +171,8 @@ pub struct Report {
     /// The same operations between two full-arc authorities, for comparison.
     pub baseline: BTreeMap<String, Summary>,
     pub target: String,
+    /// Where the phone builds came from.
+    pub phone_builds: String,
     pub host: String,
     pub authorities: usize,
     pub iterations: usize,
@@ -150,8 +198,8 @@ impl Report {
         let _ = writeln!(md, "# H2HC phone benchmark\n");
         let _ = writeln!(
             md,
-            "Run {} on {} ({}). {} full-arc authorities, {} iterations per operation.\n",
-            self.started, self.target, self.host, self.authorities, self.iterations
+            "Run {} on {} ({}). {} full-arc authorities, {} iterations per operation. Phone builds from `{}`.\n",
+            self.started, self.target, self.host, self.authorities, self.iterations, self.phone_builds
         );
 
         if self.configs.iter().any(|c| c.keystore == "memory") {
@@ -248,6 +296,38 @@ impl Report {
                 republish,
                 c.stats_after_idle.data_bytes as f64 / 1_048_576.0
             );
+        }
+
+        let idle: Vec<&ConfigResult> = self.configs.iter().filter(|c| !c.idle_threads.is_empty()).collect();
+        if !idle.is_empty() {
+            let _ = writeln!(md, "\n## Idle CPU in detail\n");
+            for c in idle {
+                let (lo, hi) = c
+                    .idle_cpu_samples
+                    .iter()
+                    .fold((f64::MAX, 0f64), |(lo, hi), v| (lo.min(*v), hi.max(*v)));
+                let wakeups: f64 = c.idle_threads.iter().map(|t| t.wakeups_per_min).sum();
+                let _ = writeln!(
+                    md,
+                    "**{}**: {:.0} ms/min over {} s after {} s settling; minutes ranged {:.0}–{:.0} ms; {:.0} thread wakeups/min.\n",
+                    c.label(),
+                    c.idle_cpu_ms_per_min(),
+                    c.idle_secs,
+                    c.settle_secs,
+                    lo,
+                    hi,
+                    wakeups
+                );
+                let _ = writeln!(md, "| Thread | Count | CPU ms/min | Wakeups/min |");
+                let _ = writeln!(md, "|---|---|---|---|");
+                for t in c.idle_threads.iter().filter(|t| t.cpu_ms_per_min >= 0.5 || t.wakeups_per_min >= 1.0) {
+                    let _ = writeln!(md, "| {} | {} | {:.1} | {:.0} |", t.name, t.threads, t.cpu_ms_per_min, t.wakeups_per_min);
+                }
+                if let Some(p) = &c.profile {
+                    let _ = writeln!(md, "\nProfile: `{p}`");
+                }
+                let _ = writeln!(md);
+            }
         }
 
         let h2hc: Vec<&ConfigResult> = self.configs.iter().filter(|c| c.network == "h2hc").collect();

@@ -4,8 +4,10 @@
 //! ```text
 //! h2hc-bench [--configs h2hc:cranelift,h2hc:wasmi,kitsune2:cranelift,kitsune2:wasmi]
 //!            [--iterations 20] [--receipt-samples 5] [--authorities 3]
-//!            [--idle-secs 60] [--no-scenarios] [--long]
+//!            [--idle-secs 60] [--settle-secs 0] [--profile-secs 0]
+//!            [--no-scenarios] [--long]
 //!            [--target local|android] [--serial <adb serial>]
+//!            [--phone-dir target]
 //! ```
 
 mod net;
@@ -26,7 +28,9 @@ use std::time::{Duration, Instant};
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 
 struct Opts {
-    configs: Vec<(String, String)>,
+    /// `network:wasm`, optionally `@NAME=value+NAME=value` for environment
+    /// variables given to that phone only.
+    configs: Vec<(String, String, Vec<(String, String)>)>,
     iterations: usize,
     /// Iterations for wasmi configurations, whose memory grows per call.
     wasmi_iterations: usize,
@@ -35,10 +39,18 @@ struct Opts {
     receipt_samples: usize,
     authorities: usize,
     idle_secs: u64,
+    /// Wait after the workload before measuring idle.
+    settle_secs: u64,
+    /// Profile the phone for this long after the idle period (needs a phone
+    /// built with the `profile` feature).
+    profile_secs: u64,
     scenarios: bool,
     long: bool,
     target: String,
     serial: Option<String>,
+    /// The cargo target directory to take phone builds from, so that saved
+    /// builds can be compared with the current one.
+    phone_dir: Option<PathBuf>,
     root: PathBuf,
 }
 
@@ -65,8 +77,17 @@ fn parse() -> anyhow::Result<Opts> {
         .split(',')
         .filter(|c| *c != "none")
         .map(|c| {
+            let (c, env) = c.split_once('@').unwrap_or((c, ""));
             let (n, w) = c.split_once(':').context("config is network:wasm")?;
-            Ok((n.to_string(), w.to_string()))
+            let env = env
+                .split('+')
+                .filter(|e| !e.is_empty())
+                .map(|e| {
+                    let (k, v) = e.split_once('=').context("phone environment is NAME=value")?;
+                    Ok((k.to_string(), v.to_string()))
+                })
+                .collect::<anyhow::Result<_>>()?;
+            Ok((n.to_string(), w.to_string(), env))
         })
         .collect::<anyhow::Result<_>>()?;
     Ok(Opts {
@@ -79,11 +100,14 @@ fn parse() -> anyhow::Result<Opts> {
         receipt_samples: num("receipt-samples", 5)? as usize,
         authorities: num("authorities", 3)? as usize,
         idle_secs: num("idle-secs", 60)?,
+        settle_secs: num("settle-secs", 0)?,
+        profile_secs: num("profile-secs", 0)?,
         // The scenarios restart the phone, which needs keys that persist.
         scenarios: !flags.iter().any(|f| f == "no-scenarios") && map.get("target").map(String::as_str) != Some("android"),
         long: flags.iter().any(|f| f == "long"),
         target: map.get("target").cloned().unwrap_or_else(|| "local".into()),
         serial: map.get("serial").cloned(),
+        phone_dir: map.get("phone-dir").map(PathBuf::from),
         root: PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."),
     })
 }
@@ -171,13 +195,21 @@ async fn receipts_complete(phone: &mut Phone, hash: &str) -> anyhow::Result<bool
     Ok(ops > 0 && r["ops_with_receipt"].as_u64() == Some(ops))
 }
 
-async fn run_config(net: &Net, target: &Target, run_dir: &Path, network: &str, wasm: &str, opts: &Opts) -> ConfigResult {
+async fn run_config(
+    net: &Net,
+    target: &Target,
+    run_dir: &Path,
+    (network, wasm, env): &(String, String, Vec<(String, String)>),
+    opts: &Opts,
+) -> ConfigResult {
     let mut r = ConfigResult {
-        network: network.into(),
-        wasm: wasm.into(),
+        network: network.clone(),
+        wasm: wasm.clone(),
+        env: env.clone(),
         keystore: opts.keystore.clone(),
         iterations: if wasm == "wasmi" { opts.wasmi_iterations } else { opts.iterations },
         idle_secs: opts.idle_secs,
+        settle_secs: opts.settle_secs,
         ..Default::default()
     };
     if let Err(e) = run_config_inner(net, target, run_dir, opts, &mut r).await {
@@ -187,10 +219,17 @@ async fn run_config(net: &Net, target: &Target, run_dir: &Path, network: &str, w
 }
 
 async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opts, r: &mut ConfigResult) -> anyhow::Result<()> {
-    let name = format!("phone-{}-{}", r.network, r.wasm);
+    let mut name = format!("phone-{}-{}", r.network, r.wasm);
+    if !r.env.is_empty() {
+        // Short, because Lair's socket path lives under the data directory.
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        r.env.hash(&mut h);
+        name.push_str(&format!("-{:06x}", h.finish() & 0xff_ffff));
+    }
     target.wipe(&name).await?;
     let args = net.phone_args(&r.network, &r.wasm);
-    let mut phone = Phone::spawn(target, &name, &r.wasm, &args, &run_dir.join(format!("{name}.log"))).await?;
+    let mut phone = Phone::spawn_with_env(target, &name, &r.wasm, &args, &r.env, &run_dir.join(format!("{name}.log"))).await?;
     r.startup_ms = phone.ready.startup_ms;
 
     let installed = phone.cmd(&Cmd::Install).await?;
@@ -225,7 +264,10 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
     let mut remote_notes = Vec::new();
     for i in 0..n {
         let h = net.authority(i).create_note(&format!("authority note {i}")).await?;
-        net.authority(i + 1).wait_for_note(&h, Duration::from_secs(60)).await?;
+        // A slow authority shows up in the phone's read results.
+        if let Err(e) = net.authority(i + 1).wait_for_note(&h, Duration::from_secs(60)).await {
+            r.errors.push(format!("authority note {i}: {e}"));
+        }
         remote_notes.push(hash_b64(&h));
     }
 
@@ -326,13 +368,30 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
         r.latency.insert(name.to_string(), s.summary());
     }
     r.stats_after_workload = phone.stats().await?;
-    progress(format!("{}: workload done; idling {} s", r.label(), opts.idle_secs));
+    if opts.settle_secs > 0 {
+        progress(format!("{}: workload done; settling {} s", r.label(), opts.settle_secs));
+        tokio::time::sleep(Duration::from_secs(opts.settle_secs)).await;
+    }
+    progress(format!("{}: idling {} s", r.label(), opts.idle_secs));
     let idle_from = match r.network.as_str() {
         "h2hc" => net.linker.status().await.ok(),
         _ => None,
     };
-    tokio::time::sleep(Duration::from_secs(opts.idle_secs)).await;
-    r.stats_after_idle = phone.stats().await?;
+    let threads_before = phone.threads().await?;
+    r.stats_idle_start = phone.stats().await?;
+    let mut last = r.stats_idle_start.clone();
+    let mut left = opts.idle_secs;
+    while left > 0 {
+        let slice = left.min(60);
+        tokio::time::sleep(Duration::from_secs(slice)).await;
+        let now = phone.stats().await?;
+        let cpu = |s: &h2hc_conductor::control::Stats| s.cpu_user_ms + s.cpu_sys_ms;
+        r.idle_cpu_samples.push(cpu(&now).saturating_sub(cpu(&last)) as f64 * 60.0 / slice as f64);
+        last = now;
+        left -= slice;
+    }
+    r.stats_after_idle = last;
+    r.idle_threads = report::thread_deltas(&threads_before, &phone.threads().await?, opts.idle_secs);
     if let (Some(from), Ok(to)) = (idle_from, net.linker.status().await) {
         r.idle_linker_acceptances = Some(
             to["acceptances"].as_u64().unwrap_or(0).saturating_sub(from["acceptances"].as_u64().unwrap_or(0)),
@@ -346,6 +405,19 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
                         r.idle_frames.insert(format!("{label}: {kind}"), delta);
                     }
                 }
+            }
+        }
+    }
+    if opts.profile_secs > 0 {
+        progress(format!("{}: profiling {} s", r.label(), opts.profile_secs));
+        let p = phone
+            .cmd_within(&Cmd::Profile { secs: opts.profile_secs }, Duration::from_secs(opts.profile_secs + 120))
+            .await?;
+        for ext in ["folded", "svg"] {
+            let local = run_dir.join(format!("{name}-profile.{ext}"));
+            target.fetch(p[ext].as_str().context("no profile path")?, &local).await?;
+            if ext == "folded" {
+                r.profile = Some(local.display().to_string());
             }
         }
     }
@@ -635,17 +707,21 @@ async fn main() -> anyhow::Result<()> {
     progress(format!("linker at {}", linker.ws_url()));
     let mut net = Net { keystore: opts.keystore.clone(), bootstrap, authorities, linker };
 
+    let builds = match &opts.phone_dir {
+        Some(dir) => dir.canonicalize().with_context(|| format!("no phone builds at {}", dir.display()))?,
+        None => root.join("target"),
+    };
     let target = match opts.target.as_str() {
         "android" => {
             let t = Target::Adb {
                 serial: opts.serial.clone(),
                 remote_dir: "/data/local/tmp/h2hc".into(),
             };
-            t.prepare(&root, &happ_path, &[net.linker.port, net.bootstrap.port]).await?;
+            t.prepare(&builds, &happ_path, &[net.linker.port, net.bootstrap.port]).await?;
             t
         }
         _ => Target::Local {
-            root: root.clone(),
+            builds: builds.clone(),
             happ: happ_path.clone(),
             data_root: std::env::temp_dir().join(format!("h2hc-{stamp}")),
         },
@@ -658,6 +734,7 @@ async fn main() -> anyhow::Result<()> {
         started: stamp.clone(),
         baseline,
         target: target.name().into(),
+        phone_builds: builds.strip_prefix(&root).unwrap_or(&builds).display().to_string(),
         host,
         authorities: opts.authorities,
         iterations: opts.iterations,
@@ -674,11 +751,11 @@ async fn main() -> anyhow::Result<()> {
         Ok(())
     };
 
-    for (network, wasm) in &opts.configs {
-        progress(format!("running {network} + {wasm}"));
+    for config in &opts.configs {
+        progress(format!("running {} + {} {:?}", config.0, config.1, config.2));
         report
             .configs
-            .push(run_config(&net, &target, &run_dir, network, wasm, &opts).await);
+            .push(run_config(&net, &target, &run_dir, config, &opts).await);
         save(&report)?;
     }
     if opts.scenarios {
