@@ -28,6 +28,10 @@ static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 struct Opts {
     configs: Vec<(String, String)>,
     iterations: usize,
+    /// Iterations for wasmi configurations, whose memory grows per call.
+    wasmi_iterations: usize,
+    /// Keystore for phones: `lair`, or `memory` where Lair cannot run.
+    keystore: String,
     receipt_samples: usize,
     authorities: usize,
     idle_secs: u64,
@@ -68,10 +72,15 @@ fn parse() -> anyhow::Result<Opts> {
     Ok(Opts {
         configs,
         iterations: num("iterations", 20)? as usize,
+        wasmi_iterations: num("wasmi-iterations", num("iterations", 20)?)? as usize,
+        keystore: map.get("keystore").cloned().unwrap_or_else(|| {
+            if map.get("target").map(String::as_str) == Some("android") { "memory".into() } else { "lair".into() }
+        }),
         receipt_samples: num("receipt-samples", 5)? as usize,
         authorities: num("authorities", 3)? as usize,
         idle_secs: num("idle-secs", 60)?,
-        scenarios: !flags.iter().any(|f| f == "no-scenarios"),
+        // The scenarios restart the phone, which needs keys that persist.
+        scenarios: !flags.iter().any(|f| f == "no-scenarios") && map.get("target").map(String::as_str) != Some("android"),
         long: flags.iter().any(|f| f == "long"),
         target: map.get("target").cloned().unwrap_or_else(|| "local".into()),
         serial: map.get("serial").cloned(),
@@ -98,6 +107,7 @@ fn hash_b64(h: &ActionHash) -> String {
 }
 
 struct Net {
+    keystore: String,
     bootstrap: Bootstrap,
     authorities: Vec<Authority>,
     linker: Linker,
@@ -105,7 +115,14 @@ struct Net {
 
 impl Net {
     fn phone_args(&self, network: &str, wasm: &str) -> Vec<String> {
-        let mut args = vec!["--network".into(), network.into(), "--wasm".into(), wasm.into()];
+        let mut args = vec![
+            "--network".into(),
+            network.into(),
+            "--wasm".into(),
+            wasm.into(),
+            "--keystore".into(),
+            self.keystore.clone(),
+        ];
         if network == "h2hc" {
             args.extend([
                 "--linker-url".into(),
@@ -158,6 +175,8 @@ async fn run_config(net: &Net, target: &Target, run_dir: &Path, network: &str, w
     let mut r = ConfigResult {
         network: network.into(),
         wasm: wasm.into(),
+        keystore: opts.keystore.clone(),
+        iterations: if wasm == "wasmi" { opts.wasmi_iterations } else { opts.iterations },
         idle_secs: opts.idle_secs,
         ..Default::default()
     };
@@ -199,7 +218,7 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
     progress(format!("{}: network ready after {:?}", r.label(), r.network_ready_ms));
     r.stats_ready = phone.stats().await?;
 
-    let n = opts.iterations;
+    let n = if r.wasm == "wasmi" { opts.wasmi_iterations } else { opts.iterations };
     let mut series: BTreeMap<&str, Series> = BTreeMap::new();
 
     // Notes held by authorities, each fetched once by the phone.
@@ -614,7 +633,7 @@ async fn main() -> anyhow::Result<()> {
     let baseline = baseline(&authorities, opts.iterations).await;
     let linker = Linker::start(&linker_bin, &run_dir, &bootstrap.url()).await?;
     progress(format!("linker at {}", linker.ws_url()));
-    let mut net = Net { bootstrap, authorities, linker };
+    let mut net = Net { keystore: opts.keystore.clone(), bootstrap, authorities, linker };
 
     let target = match opts.target.as_str() {
         "android" => {

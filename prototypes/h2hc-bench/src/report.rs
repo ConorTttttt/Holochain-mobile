@@ -64,6 +64,8 @@ impl Series {
 pub struct ConfigResult {
     pub network: String,
     pub wasm: String,
+    pub keystore: String,
+    pub iterations: usize,
     pub startup_ms: f64,
     pub install_ms: f64,
     pub enable_ms: f64,
@@ -152,6 +154,12 @@ impl Report {
             self.started, self.target, self.host, self.authorities, self.iterations
         );
 
+        if self.configs.iter().any(|c| c.keystore == "memory") {
+            let _ = writeln!(
+                md,
+                "Phones used Holochain's in-memory test keystore: Android does not let the adb shell user bind Lair's Unix socket. Startup therefore leaves out Lair's passphrase hashing, and scenarios that restart the phone are skipped.\n"
+            );
+        }
         let _ = writeln!(md, "## Startup\n");
         let _ = writeln!(md, "| Configuration | Process start to conductor | Install | Enable | First zome call | Network ready |");
         let _ = writeln!(md, "|---|---|---|---|---|---|");

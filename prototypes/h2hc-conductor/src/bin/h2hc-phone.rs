@@ -54,6 +54,7 @@ struct Args {
     bootstrap_url: String,
     relay_url: String,
     wasm: String,
+    keystore: String,
     data_dir: PathBuf,
     happ: PathBuf,
 }
@@ -81,6 +82,7 @@ fn parse_args() -> anyhow::Result<Args> {
         bootstrap_url: get("bootstrap-url", ""),
         relay_url: get("relay-url", ""),
         wasm: get("wasm", "cranelift"),
+        keystore: get("keystore", "lair"),
         data_dir: PathBuf::from(get("data-dir", "/tmp/h2hc-phone")),
         happ: PathBuf::from(get("happ", "notes.happ")),
     })
@@ -321,7 +323,12 @@ async fn main() -> anyhow::Result<()> {
 
     let mut config = ConductorConfig {
         data_root_path: Some(args.data_dir.clone().into()),
-        keystore: KeystoreConfig::LairServerInProc { lair_root: None },
+        // `memory` is for adb-shell runs: Android does not let the shell
+        // user bind Lair's Unix socket. Keys then do not survive a restart.
+        keystore: match args.keystore.as_str() {
+            "memory" => KeystoreConfig::DangerTestKeystore,
+            _ => KeystoreConfig::LairServerInProc { lair_root: None },
+        },
         wasm_backend: Some(match args.wasm.as_str() {
             "wasmi" => WasmBackend::Wasmi,
             _ => WasmBackend::Cranelift,
@@ -368,6 +375,7 @@ async fn main() -> anyhow::Result<()> {
         event: "ready".into(),
         network: args.network.clone(),
         wasm: args.wasm.clone(),
+        keystore: args.keystore.clone(),
         startup_ms: ms(process_start),
     })?);
 

@@ -32,6 +32,9 @@ pub struct Ready {
     pub event: String,
     pub network: String,
     pub wasm: String,
+    /// `lair` (Lair with a Unix socket and passphrase) or `memory`.
+    #[serde(default)]
+    pub keystore: String,
     /// From process start to a running conductor.
     pub startup_ms: f64,
 }
