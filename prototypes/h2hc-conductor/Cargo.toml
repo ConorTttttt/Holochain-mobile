@@ -1,0 +1,24 @@
+[package]
+name = "h2hc-conductor"
+description = "A Holochain conductor whose network is an H2HC linker"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+h2hc-p2p.workspace = true
+h2hc-protocol.workspace = true
+holochain.workspace = true
+kitsune2_api.workspace = true
+lair_keystore_api = "=0.7.1"
+
+[dev-dependencies]
+ed25519-dalek.workspace = true
+futures.workspace = true
+holochain_types.workspace = true
+holochain_keystore.workspace = true
+rand.workspace = true
+sodoken = "0.1"
+tempfile = "3"
+kitsune2_api.workspace = true
+tokio.workspace = true

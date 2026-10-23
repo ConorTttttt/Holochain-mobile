@@ -1,0 +1,41 @@
+[workspace]
+resolver = "2"
+exclude = ["tests/fixtures"]
+members = [
+    "prototypes/h2hc-protocol",
+    "prototypes/h2hc-p2p",
+    "prototypes/h2hc-conductor",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace.dependencies]
+h2hc-protocol = { path = "prototypes/h2hc-protocol" }
+h2hc-p2p = { path = "prototypes/h2hc-p2p" }
+
+# Holochain is pinned to the release the compatibility matrix was checked against.
+holochain = "=0.7.1"
+holochain_types = "=0.7.1"
+holochain_p2p = "=0.7.1"
+holochain_state = "=0.7.1"
+holochain_keystore = "=0.7.1"
+kitsune2_api = "0.5.2"
+
+ed25519-dalek = { version = "2.2", features = ["rand_core"] }
+futures = "0.3"
+rand = "0.8"
+rmp-serde = "1.3"
+serde = { version = "1", features = ["derive"] }
+serde_bytes = "0.11"
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1.52", features = ["macros", "rt-multi-thread", "sync", "time"] }
+tracing = "0.1"
+
+# Adds ConductorBuilder::with_p2p_factory. Run scripts/vendor-holochain.sh to
+# create vendor/; the change itself is patches/holochain-0.7.1-p2p-factory.patch.
+[patch.crates-io]
+holochain = { path = "vendor/holochain-0.7.1" }
