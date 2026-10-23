@@ -4,10 +4,10 @@ Working repo for the v4 plan: https://claude.ai/artifact/QzfGayyLzmZmhPsGc4zKtS.
 
 | Step | Deliverable | Status |
 |---|---|---|
-| 1 | Physical arm64 baseline, Cranelift and wasmi | Bench ready (`scripts/bench-android.sh`); waiting for the Android tools and a phone |
+| 1 | Physical arm64 baseline, Cranelift and wasmi | Desktop results in [benchmarks/](benchmarks/README.md); arm64 run waiting for the Android tools and a phone |
 | 2 | HcP2p and HcP2pHandler compatibility matrix; injectable network factory | Done: [matrix](research/hcp2p-compat-matrix.md), [factory patch](patches/holochain-0.7.1-p2p-factory.patch) |
 | 3 | Durable linker acceptance, truthful status, receipt inbox | Done in the local linker fork |
-| 4 | End-to-end H2HC conductor | Runs against a real local network |
+| 4 | End-to-end H2HC conductor | Runs against a real local network: reads, writes, receipts, remote calls and signals both ways |
 | 5 | Suspension, restart and recovery | Reconnection, linker crash and phone kill covered; command idempotency not started |
 | 6 | Checkpoints and reconciliation | Not started |
 | 7 | Authority-workflow reduction | Not started |
