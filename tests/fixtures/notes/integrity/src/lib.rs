@@ -3,6 +3,8 @@
 //!
 //! - A note must be non-empty and at most `MAX_NOTE_CHARS` characters.
 //! - Only a note's author may update or delete it.
+//! - An `AuthorToNote` link must start at its creator's own agent key, and
+//!   only its creator may delete it.
 
 use hdi::prelude::*;
 
@@ -18,6 +20,19 @@ pub struct Note {
 #[unit_enum(UnitEntryTypes)]
 pub enum EntryTypes {
     Note(Note),
+}
+
+#[hdk_link_types]
+pub enum LinkTypes {
+    AuthorToNote,
+}
+
+fn validate_author_link(action: &TypedAction<CreateLinkData>) -> ValidateCallbackResult {
+    if action.data.base_address == AnyLinkableHash::from(action.author().clone()) {
+        ValidateCallbackResult::Valid
+    } else {
+        ValidateCallbackResult::Invalid("an author can only link from their own key".into())
+    }
 }
 
 fn validate_note(note: &Note) -> ValidateCallbackResult {
@@ -60,7 +75,7 @@ fn validate_update(
 
 #[hdk_extern]
 pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
-    match op.flattened::<EntryTypes, ()>()? {
+    match op.flattened::<EntryTypes, LinkTypes>()? {
         FlatOp::CreateEntry(OpEntry::CreateEntry {
             app_entry: EntryTypes::Note(note),
             ..
@@ -85,6 +100,23 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
         | FlatOp::CreateRecord(OpRecord::DeleteEntry { action }) => {
             by_original_author(action.data.deletes_address.clone(), action.author())
         }
+        FlatOp::Link(OpLink::CreateLink {
+            link_type: LinkTypes::AuthorToNote,
+            action,
+        })
+        | FlatOp::CreateRecord(OpRecord::CreateLink {
+            link_type: LinkTypes::AuthorToNote,
+            action,
+        }) => Ok(validate_author_link(&action)),
+        FlatOp::Link(OpLink::DeleteLink {
+            original_action,
+            action,
+            ..
+        }) => Ok(if original_action.author() == action.author() {
+            ValidateCallbackResult::Valid
+        } else {
+            ValidateCallbackResult::Invalid("only a link's creator may delete it".into())
+        }),
         _ => Ok(ValidateCallbackResult::Valid),
     }
 }
