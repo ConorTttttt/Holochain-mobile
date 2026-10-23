@@ -12,6 +12,7 @@ use tokio_tungstenite::tungstenite::Message;
 pub struct WsCounters {
     pub bytes_sent: std::sync::atomic::AtomicU64,
     pub bytes_received: std::sync::atomic::AtomicU64,
+    pub connects: std::sync::atomic::AtomicU64,
 }
 
 /// Connect to a linker's conductor endpoint, e.g. `ws://127.0.0.1:8090/conductor/v1`.
@@ -24,6 +25,7 @@ pub async fn connect(
     let (ws, _) = tokio_tungstenite::connect_async(url).await.map_err(|e| {
         ProtocolError::new(ErrorKind::ConnectionClosed, format!("connect {url}: {e}"))
     })?;
+    counters.connects.fetch_add(1, Relaxed);
     let (mut sink, mut stream) = ws.split();
     let (out_tx, mut out_rx) = mpsc::channel::<Frame>(256);
     let (in_tx, in_rx) = mpsc::channel::<Frame>(256);

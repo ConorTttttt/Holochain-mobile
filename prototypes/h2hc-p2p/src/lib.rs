@@ -9,10 +9,12 @@
 //! `ConductorBuilder` that accepts a network factory.
 
 mod inbound;
+mod link;
 mod peer_store;
 pub mod session;
 pub mod ws;
 
+pub use link::{once, Connector};
 pub use session::{FrameChannel, InboundHandler, LinkerSession};
 
 use futures::future::BoxFuture;
@@ -28,6 +30,7 @@ use holochain_types::cell_config_overrides::CellConfigOverrides;
 use holochain_types::network::{Kitsune2NetworkMetrics, Kitsune2NetworkMetricsRequest};
 use holochain_types::prelude::*;
 use inbound::Inbound;
+use link::Link;
 use kitsune2_api::{AgentInfoSigned, BoxFut, DhtArc, SpaceId, StoredOp};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
@@ -112,22 +115,15 @@ pub type P2pFactory = Box<
         + Send,
 >;
 
-/// Build a [`P2pFactory`] that connects to a linker. `connect` opens the
-/// byte transport and returns its frame channel.
-pub fn factory<C>(connect: C, options: H2hcOptions) -> P2pFactory
-where
-    C: FnOnce() -> BoxFut<'static, Result<FrameChannel, ProtocolError>> + Send + 'static,
-{
+/// Build a [`P2pFactory`] that connects to a linker through `connector`.
+pub fn factory(connector: Connector, options: H2hcOptions) -> P2pFactory {
     Box::new(move |config, keystore| {
-        Box::pin(async move {
-            let chan = connect().await.map_err(HolochainP2pError::other)?;
-            H2hcP2p::connect(config, keystore, chan, options).await
-        })
+        Box::pin(async move { H2hcP2p::connect(config, keystore, connector, options).await })
     })
 }
 
 pub struct H2hcP2p {
-    session: Arc<LinkerSession>,
+    link: Arc<Link>,
     inbound: Arc<Inbound>,
     get_dht_store: GetDhtStore,
     get_conductor_store: GetConductorStore,
@@ -139,31 +135,33 @@ pub struct H2hcP2p {
 impl std::fmt::Debug for H2hcP2p {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("H2hcP2p")
-            .field("session", &self.session)
+            .field("connects", &self.link.connects())
             .field("source_policy", &self.source_policy)
             .finish()
     }
 }
 
 impl H2hcP2p {
+    /// Never fails for network reasons: if the linker is unreachable the
+    /// adapter keeps trying in the background.
     pub async fn connect(
         config: HolochainP2pConfig,
         keystore: MetaLairClient,
-        chan: FrameChannel,
+        connector: Connector,
         options: H2hcOptions,
     ) -> HolochainP2pResult<DynHcP2p> {
         let inbound = Arc::new(Inbound::new(keystore));
-        let session = LinkerSession::connect(
-            chan,
+        let link = Link::start(
+            connector,
             options.hello,
             options.expected_linker,
             options.handshake_timeout,
+            config.request_timeout,
             inbound.clone(),
         )
-        .await
-        .map_err(HolochainP2pError::other)?;
+        .await;
         Ok(Arc::new(Self {
-            session,
+            link,
             inbound,
             get_dht_store: config.get_dht_store,
             get_conductor_store: config.get_conductor_store,
@@ -186,7 +184,7 @@ impl H2hcP2p {
         body: Request,
         timeout: Duration,
     ) -> HolochainP2pResult<Response> {
-        self.session
+        self.link
             .request(body, timeout)
             .await
             .map_err(|e| to_p2p_error(op, e))
@@ -503,9 +501,10 @@ impl HcP2p for H2hcP2p {
                 Response::PublishAccepted(receipt) => receipt,
                 got => return Err(unexpected("publish", &got)),
             };
+            let linker = self.link.linker().map_err(HolochainP2pError::other)?;
             let accepted = check_acceptance(
                 &receipt,
-                &self.session.linker(),
+                &linker,
                 &dna_hash,
                 &source,
                 &op_hash_list,

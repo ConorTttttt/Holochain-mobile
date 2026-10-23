@@ -155,7 +155,7 @@ async fn phone() -> Phone {
     let conductor = build_phone_conductor(
         config,
         passphrase,
-        move || Box::pin(async move { Ok(chan) }),
+        once(chan),
         options,
     )
     .await

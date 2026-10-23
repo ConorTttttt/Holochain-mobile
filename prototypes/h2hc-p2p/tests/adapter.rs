@@ -218,7 +218,7 @@ async fn phone_with(responder: Responder, policy: SourcePolicy) -> Phone {
         source_policy: policy,
         ..Default::default()
     };
-    let p2p = H2hcP2p::connect(HolochainP2pConfig::default(), keystore.clone(), chan, options)
+    let p2p = H2hcP2p::connect(HolochainP2pConfig::default(), keystore.clone(), once(chan), options)
         .await
         .unwrap();
     Phone {
@@ -282,10 +282,12 @@ async fn a_linker_with_an_unexpected_key_is_refused() {
         expected_linker: Some(LinkerId::from_signing_key(&impostor)),
         ..Default::default()
     };
-    let err = H2hcP2p::connect(HolochainP2pConfig::default(), keystore, chan, options)
+    let p2p = H2hcP2p::connect(HolochainP2pConfig::default(), keystore, once(chan), options)
         .await
-        .unwrap_err();
-    assert_eq!(protocol_error(&err).unwrap().kind, ErrorKind::Unauthorized);
+        .unwrap();
+    let hash: AnyDhtHash = ActionHash::from_raw_32(vec![5; 32]).into();
+    let err = p2p.get(dna(), hash, Default::default(), None).await.unwrap_err();
+    assert_eq!(protocol_error(&err).unwrap().kind, ErrorKind::ConnectionClosed);
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -632,4 +634,53 @@ fn acceptance_receipts_must_be_signed_and_complete() {
     assert!(check_acceptance(&receipt, &linker, &dna(), &agent(2), &more).is_err());
     let other = LinkerId::from_signing_key(&SigningKey::generate(&mut rand::rngs::OsRng));
     assert!(check_acceptance(&receipt, &other, &dna(), &agent(2), &ops).is_err());
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn reconnects_and_rejoins_after_the_linker_drops() {
+    // Every connection gets a fresh scripted linker sharing one key.
+    let key = SigningKey::generate(&mut rand::rngs::OsRng);
+    let (linkers_tx, mut linkers) = mpsc::unbounded_channel::<Linker>();
+    let connector_key = key.clone();
+    let connector: Connector = Arc::new(move || {
+        let (chan, mut linker) = spawn_linker(done());
+        linker.key = connector_key.clone();
+        let _ = linkers_tx.send(linker);
+        Box::pin(async move { Ok(chan) })
+    });
+    // spawn_linker signs Welcome with its own key, so don't pin one here.
+    let p2p = H2hcP2p::connect(
+        HolochainP2pConfig::default(),
+        spawn_test_keystore().await.unwrap(),
+        connector,
+        H2hcOptions::default(),
+    )
+    .await
+    .unwrap();
+    let mut first = linkers.recv().await.unwrap();
+    p2p.join(dna(), agent(2), None, None).await.unwrap();
+
+    first.close.take().unwrap().send(()).unwrap();
+    // Dropping the handle drops its sender too, so the phone sees the close.
+    drop(first);
+    let second = tokio::time::timeout(Duration::from_secs(5), linkers.recv())
+        .await
+        .expect("adapter reconnects")
+        .unwrap();
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    loop {
+        let rejoined = second
+            .requests
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|r| matches!(r, Request::Join { agent: a, .. } if *a == agent(2)));
+        if rejoined {
+            break;
+        }
+        assert!(tokio::time::Instant::now() < deadline, "agent re-joined on the new connection");
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    p2p.leave(dna(), agent(2)).await.unwrap();
+    let _ = key;
 }

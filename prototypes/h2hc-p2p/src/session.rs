@@ -5,8 +5,9 @@
 //! matches responses to requests, and hands linker-initiated frames to an
 //! [`InboundHandler`].
 //!
-//! Reconnection is not handled here yet: when the channel closes, pending and
-//! later requests fail with `ConnectionClosed`.
+//! A session does not reconnect: when its channel closes, pending and later
+//! requests fail with `ConnectionClosed` and [`LinkerSession::wait_closed`]
+//! returns, so the owner can open a new one.
 
 use futures::future::BoxFuture;
 use h2hc_protocol::*;
@@ -14,7 +15,7 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, watch};
 
 /// The two directions of a connection.
 pub struct FrameChannel {
@@ -50,6 +51,7 @@ pub struct LinkerSession {
     pending: Pending,
     next_id: AtomicU64,
     welcome: Welcome,
+    closed: watch::Receiver<bool>,
 }
 
 impl std::fmt::Debug for LinkerSession {
@@ -102,13 +104,29 @@ impl LinkerSession {
         }
 
         let pending: Pending = Default::default();
-        tokio::spawn(serve(rx, tx.clone(), pending.clone(), inbound));
+        let (tx_for_serve, pending_for_serve) = (tx.clone(), pending.clone());
+        let (closed_tx, closed) = watch::channel(false);
+        tokio::spawn(async move {
+            serve(rx, tx_for_serve, pending_for_serve, inbound).await;
+            let _ = closed_tx.send(true);
+        });
         Ok(Arc::new(Self {
             tx,
             pending,
             next_id: AtomicU64::new(1),
             welcome,
+            closed,
         }))
+    }
+
+    pub fn is_closed(&self) -> bool {
+        *self.closed.borrow()
+    }
+
+    /// Returns once the connection has closed.
+    pub async fn wait_closed(&self) {
+        let mut closed = self.closed.clone();
+        let _ = closed.wait_for(|c| *c).await;
     }
 
     /// The key this linker signs acceptance receipts with.
@@ -121,6 +139,9 @@ impl LinkerSession {
         body: Request,
         timeout: Duration,
     ) -> Result<Response, ProtocolError> {
+        if self.is_closed() {
+            return Err(closed());
+        }
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let (resp_tx, resp_rx) = oneshot::channel();
         self.pending.lock().unwrap().insert(id, resp_tx);

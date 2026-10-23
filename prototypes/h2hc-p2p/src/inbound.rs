@@ -44,6 +44,10 @@ impl Inbound {
             .remove(&(dna.clone(), agent.clone()));
     }
 
+    pub(crate) fn joined_list(&self) -> Vec<(DnaHash, AgentPubKey)> {
+        self.joined.lock().unwrap().iter().cloned().collect()
+    }
+
     pub(crate) fn joined_count(&self, dna: &DnaHash) -> usize {
         self.joined
             .lock()
