@@ -43,3 +43,6 @@ tracing = "0.1"
 # create vendor/; the change itself is patches/holochain-0.7.1-p2p-factory.patch.
 [patch.crates-io]
 holochain = { path = "vendor/holochain-0.7.1" }
+# Frees wasmi stores when they are dropped:
+# patches/wasmer-7.1.0-wasmi-store-ownership.patch.
+wasmer = { path = "vendor/wasmer-7.1.0" }

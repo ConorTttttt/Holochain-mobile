@@ -21,7 +21,7 @@ export CXX_aarch64_linux_android="$BIN/aarch64-linux-android$API-clang++"
 export AR_aarch64_linux_android="$BIN/llvm-ar"
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$CC_aarch64_linux_android"
 
-[ -d vendor/holochain-0.7.1 ] || ./scripts/vendor-holochain.sh
+[ -d vendor/holochain-0.7.1 ] && [ -d vendor/wasmer-7.1.0 ] || ./scripts/vendor-holochain.sh
 cargo build --release --target aarch64-linux-android -p h2hc-conductor --bin h2hc-phone --features profile
 cargo build --release --target aarch64-linux-android -p h2hc-conductor --bin h2hc-phone \
   --no-default-features --features wasmi,profile --target-dir target/wasmi

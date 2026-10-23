@@ -2382,6 +2382,7 @@ dependencies = [
  "tokio",
  "tracing-subscriber",
  "url2",
+ "wasmer",
 ]
 
 [[package]]
@@ -8573,8 +8574,6 @@ dependencies = [
 [[package]]
 name = "wasmer"
 version = "7.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57bf3ce47ae9ef62e35c0b23e89b72250548d6d960d0832a5638b05a701769a8"
 dependencies = [
  "bindgen",
  "bytes",

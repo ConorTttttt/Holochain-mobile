@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-[ -d vendor/holochain-0.7.1 ] || ./scripts/vendor-holochain.sh
+[ -d vendor/holochain-0.7.1 ] && [ -d vendor/wasmer-7.1.0 ] || ./scripts/vendor-holochain.sh
 [ -f tests/fixtures/notes/workdir/notes.happ ] || ./scripts/build-fixtures.sh
 # The profile feature only links the sampler that --profile-secs starts.
 cargo build --release --bin h2hc-phone --bin h2hc-bench --features h2hc-conductor/profile

@@ -1,0 +1,497 @@
+--- a/src/backend/wasmi/bindings.rs
++++ b/src/backend/wasmi/bindings.rs
+@@ -2,6 +2,9 @@
+ #![allow(non_camel_case_types)]
+ #![allow(non_snake_case)]
+ #![allow(unused)]
++// bindgen declares libc's memcpy and friends with C's integer types. Cargo
++// hides this for registry builds but not for this vendored copy.
++#![allow(suspicious_runtime_symbol_definitions)]
+ 
+ include!(concat!(env!("OUT_DIR"), "/wasmi_bindings.rs"));
+ 
+--- a/src/backend/wasmi/entities/function/mod.rs
++++ b/src/backend/wasmi/entities/function/mod.rs
+@@ -18,7 +18,10 @@
+     },
+ };
+ 
+-use super::{super::error::Trap, store::StoreHandle};
++use super::{
++    super::error::Trap,
++    store::{OwnedHandle, StoreHandle},
++};
+ use wasmer_types::{FunctionType, RawValue};
+ 
+ pub(crate) mod env;
+@@ -53,6 +56,22 @@
+     pub(crate) env_handle: Option<StoreHandle<VMFunctionEnvironment>>,
+ }
+ 
++/// A value vector passed to `wasm_func_call`, deleted however the call
++/// returns.
++pub(crate) struct OwnedValVec(pub(crate) wasm_val_vec_t);
++
++impl Drop for OwnedValVec {
++    fn drop(&mut self) {
++        unsafe { wasm_val_vec_delete(&mut self.0) }
++    }
++}
++
++/// Frees a host function's callback environment when `wasmi` drops the
++/// function, which happens when its store is dropped.
++unsafe extern "C" fn drop_callback_env<F>(env: *mut c_void) {
++    drop(unsafe { Box::from_raw(env as *mut FunctionCallbackEnv<'static, F>) });
++}
++
+ impl<'a, F> std::fmt::Debug for FunctionCallbackEnv<'a, F> {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+         f.debug_struct("FunctionCallbackEnv")
+@@ -127,6 +146,8 @@
+ 
+         let mut store = store.as_store_mut();
+         let inner = store.inner.store.as_wasmi().inner;
++        // `store` moves into the callback environment below.
++        let wasmi_store: *mut crate::backend::wasmi::store::Store = store.inner.store.as_wasmi_mut();
+ 
+         let callback: CCallback = make_fn_callback(&func, param_types.len());
+ 
+@@ -143,13 +164,18 @@
+                 wasm_functype,
+                 Some(callback),
+                 callback_env as *mut _ as _,
+-                None,
++                Some(drop_callback_env::<F>),
+             )
+         };
+ 
+         if wasm_function.is_null() {
+             panic!("failed when creating new typed function");
+         }
++        unsafe {
++            // The function keeps its own copy of the type.
++            wasm_functype_delete(wasm_functype);
++            (*wasmi_store).own(OwnedHandle::Func(wasm_function));
++        }
+ 
+         Self {
+             handle: wasm_function,
+@@ -196,6 +222,8 @@
+ 
+         let mut store = store.as_store_mut();
+         let inner = store.inner.store.as_wasmi().inner;
++        // `store` moves into the callback environment below.
++        let wasmi_store: *mut crate::backend::wasmi::store::Store = store.inner.store.as_wasmi_mut();
+ 
+         let callback: CCallback = unsafe {
+             std::mem::transmute(
+@@ -217,13 +245,18 @@
+                 wasm_functype,
+                 Some(callback),
+                 callback_env as _,
+-                None,
++                Some(drop_callback_env::<F>),
+             )
+         };
+ 
+         if wasm_function.is_null() {
+             panic!("failed when creating new typed function");
+         }
++        unsafe {
++            // The function keeps its own copy of the type.
++            wasm_functype_delete(wasm_functype);
++            (*wasmi_store).own(OwnedHandle::Func(wasm_function));
++        }
+ 
+         Self {
+             handle: wasm_function,
+@@ -278,6 +311,8 @@
+ 
+         let mut store = store.as_store_mut();
+         let inner = store.inner.store.as_wasmi().inner;
++        // `store` moves into the callback environment below.
++        let wasmi_store: *mut crate::backend::wasmi::store::Store = store.inner.store.as_wasmi_mut();
+ 
+         let callback: CCallback = unsafe {
+             std::mem::transmute(
+@@ -299,13 +334,18 @@
+                 wasm_functype,
+                 Some(callback),
+                 callback_env as _,
+-                None,
++                Some(drop_callback_env::<F>),
+             )
+         };
+ 
+         if wasm_function.is_null() {
+             panic!("failed when creating new typed function");
+         }
++        unsafe {
++            // The function keeps its own copy of the type.
++            wasm_functype_delete(wasm_functype);
++            (*wasmi_store).own(OwnedHandle::Func(wasm_function));
++        }
+ 
+         Self {
+             handle: wasm_function,
+@@ -333,6 +373,8 @@
+             res
+         };
+ 
++        // `wasm_func_type` returns a copy of the type.
++        unsafe { wasm_functype_delete(type_) };
+         FunctionType::new(params, returns)
+     }
+ 
+@@ -356,7 +398,7 @@
+         let store_mut = store.as_store_mut();
+         // let wasm_func_param_arity(self.handle)
+ 
+-        let mut args = {
++        let mut args = OwnedValVec({
+             unsafe {
+                 let mut wasm_params = params
+                     .iter()
+@@ -367,22 +409,22 @@
+                 wasm_val_vec_new(&mut vec, wasm_params.len(), wasm_params.as_ptr());
+                 vec
+             }
+-        };
++        });
+ 
+         let size = unsafe { wasm_func_result_arity(self.handle) };
+ 
+-        let mut results = {
++        let mut results = OwnedValVec({
+             unsafe {
+                 let mut vec = Default::default();
+                 wasm_val_vec_new_uninitialized(&mut vec, size);
+                 vec
+             }
+-        };
++        });
+ 
+         let mut trap;
+ 
+         loop {
+-            trap = unsafe { wasm_func_call(self.handle, &mut args as _, &mut results as *mut _) };
++            trap = unsafe { wasm_func_call(self.handle, &mut args.0 as _, &mut results.0 as *mut _) };
+ 
+             let store_mut = store.as_store_mut();
+             if let Some(callback) = store_mut.inner.on_called.take() {
+@@ -407,7 +449,7 @@
+         }
+ 
+         let values = unsafe {
+-            let results = std::ptr::slice_from_raw_parts(results.data, results.size);
++            let results = std::ptr::slice_from_raw_parts(results.0.data, results.0.size);
+             (*results)
+                 .iter()
+                 .map(|v| IntoWasmerValue::into_wv(*v))
+--- a/src/backend/wasmi/entities/function/typed.rs
++++ b/src/backend/wasmi/entities/function/typed.rs
+@@ -41,24 +41,24 @@
+                      } ),* ]
+                  };
+ 
+-                 let mut results = {
++                 let mut results = super::OwnedValVec({
+                     unsafe {
+                         let mut ret = std::mem::zeroed();
+                         wasm_val_vec_new_uninitialized(&mut ret, Rets::wasm_types().len());
+                         ret
+                     }
+-                };
++                });
+ 
+ 
+                 let func = unsafe { wasm_extern_as_func(self.func.to_vm_extern().into_wasmi()) };
+ 
+-                let mut params = unsafe {std::mem::zeroed()};
+-                unsafe {wasm_val_vec_new(&mut params, params_list.len(), params_list.as_ptr())};
++                let mut params = super::OwnedValVec(unsafe {std::mem::zeroed()});
++                unsafe {wasm_val_vec_new(&mut params.0, params_list.len(), params_list.as_ptr())};
+ 
+                  let mut trap;
+ 
+                  loop {
+-                    trap = unsafe { wasm_func_call(func, &params, &mut results) };
++                    trap = unsafe { wasm_func_call(func, &params.0, &mut results.0) };
+ 
+                     let store_mut = store.as_store_mut();
+                     if let Some(callback) = store_mut.inner.on_called.take() {
+@@ -86,13 +86,13 @@
+                     match Rets::size() {
+                         0 => {},
+                         1 => {
+-                            let val = (*results.data.wrapping_add(0)).clone();
++                            let val = (*results.0.data.wrapping_add(0)).clone();
+                             let val = val.into_wv();
+                             *mut_rets = val.as_raw(&mut store);
+                         }
+                         _n => {
+                             for (i, ret_type) in Rets::wasm_types().iter().enumerate() {
+-                                    let val = (*results.data.wrapping_add(i)).clone();
++                                    let val = (*results.0.data.wrapping_add(i)).clone();
+                                     let val = val.into_wv();
+                                     let slot = mut_rets.add(i);
+                                     *slot = val.as_raw(&mut store);
+--- a/src/backend/wasmi/entities/global.rs
++++ b/src/backend/wasmi/entities/global.rs
+@@ -44,7 +44,7 @@
+         val: Value,
+         mutability: Mutability,
+     ) -> Result<Self, RuntimeError> {
+-        let store = store.as_store_mut();
++        let mut store = store.as_store_mut();
+ 
+         let wasmi_type = val.ty().into_ct();
+         let wasmi_value = val.into_cv();
+@@ -57,15 +57,22 @@
+         let wasmi_global_type =
+             unsafe { wasm_globaltype_new(wasm_valtype_new(wasmi_type), wasmi_mutability) };
+ 
+-        Ok(Self {
+-            handle: unsafe {
+-                wasm_global_new(
+-                    store.inner.store.as_wasmi().inner,
+-                    wasmi_global_type,
+-                    &wasmi_value,
+-                )
+-            },
+-        })
++        let handle = unsafe {
++            wasm_global_new(
++                store.inner.store.as_wasmi().inner,
++                wasmi_global_type,
++                &wasmi_value,
++            )
++        };
++        if !handle.is_null() {
++            store
++                .inner
++                .store
++                .as_wasmi_mut()
++                .own(crate::backend::wasmi::store::OwnedHandle::Global(handle));
++        }
++
++        Ok(Self { handle })
+     }
+ 
+     pub fn ty(&self, _store: &impl AsStoreRef) -> GlobalType {
+--- a/src/backend/wasmi/entities/instance.rs
++++ b/src/backend/wasmi/entities/instance.rs
+@@ -3,8 +3,8 @@
+ 
+ use crate::{
+     AsStoreMut, AsStoreRef, Exports, Extern, Imports, InstantiationError, Module,
+-    backend::wasmi::bindings::*, entities::external::VMExternToExtern, vm::VMExtern,
+-    wasmi::error::Trap,
++    backend::wasmi::bindings::*, backend::wasmi::store::OwnedHandle,
++    entities::external::VMExternToExtern, vm::VMExtern, wasmi::error::Trap,
+ };
+ 
+ #[derive(PartialEq, Eq)]
+@@ -30,19 +30,15 @@
+         //}
+ 
+         let mut trap: *mut wasm_trap_t = std::ptr::null_mut() as _;
+-        let externs: Vec<_> = externs.into_iter().map(|v| v.into_wasmi()).collect();
++        let mut externs: Vec<_> = externs.into_iter().map(|v| v.into_wasmi()).collect();
+ 
+-        let instance = unsafe {
+-            let mut imports = unsafe {
+-                let mut vec = Default::default();
+-                wasm_extern_vec_new(&mut vec, externs.len(), externs.as_ptr());
+-                vec
+-            };
+-
+-            std::mem::forget(externs);
+-
+-            wasm_instance_new(store, module, &mut imports, &mut trap)
++        // `wasm_instance_new` only reads the imports, which belong to their
++        // store, so lend it our list rather than a vector that owns them.
++        let imports = wasm_extern_vec_t {
++            size: externs.len(),
++            data: externs.as_mut_ptr(),
+         };
++        let instance = unsafe { wasm_instance_new(store, module, &imports, &mut trap) };
+ 
+         if instance.is_null() {
+             let trap = Trap::from(trap);
+@@ -59,9 +55,21 @@
+             vec
+         };
+ 
+-        let c_api_externs: &[*mut wasm_extern_t] =
+-            unsafe { std::slice::from_raw_parts(c_api_externs.data, c_api_externs.size) };
+-        let c_api_externs = c_api_externs.to_vec();
++        let c_api_externs_vec: &mut [*mut wasm_extern_t] = unsafe {
++            std::slice::from_raw_parts_mut(c_api_externs.data, c_api_externs.size)
++        };
++        let externs = c_api_externs_vec.to_vec();
++        {
++            // The store deletes the externs; free only the vector that held them.
++            let mut store_mut = store.as_store_mut();
++            let wasmi_store = store_mut.inner.store.as_wasmi_mut();
++            for slot in c_api_externs_vec.iter_mut() {
++                wasmi_store.own(OwnedHandle::Extern(*slot));
++                *slot = std::ptr::null_mut();
++            }
++        }
++        unsafe { wasm_extern_vec_delete(&mut c_api_externs) };
++        let c_api_externs = externs;
+         let mut exports = unsafe {
+             let mut vec = Default::default();
+             wasm_module_exports(module.as_wasmi().handle.inner, &mut vec);
+@@ -71,6 +79,7 @@
+         let c_api_exports: &[*mut wasm_exporttype_t] =
+             unsafe { std::slice::from_raw_parts(exports.data, exports.size) };
+         let c_api_exports = c_api_exports.to_vec();
++        let mut exporttypes = exports;
+ 
+         // We need to use the order of the exports from the polyfill info to get the right
+         // one, i.e. the from the declaration.
+@@ -88,6 +97,9 @@
+             })
+             .collect();
+ 
++        // The names were copied out above.
++        unsafe { wasm_exporttype_vec_delete(&mut exporttypes) };
++
+         let mut exports = Exports::new();
+ 
+         for e in module_exports {
+--- a/src/backend/wasmi/entities/memory/mod.rs
++++ b/src/backend/wasmi/entities/memory/mod.rs
+@@ -53,6 +53,13 @@
+         let mut store = store.as_store_mut();
+         let inner = store.inner.store.as_wasmi().inner;
+         let c_memory = unsafe { wasm_memory_new(inner, memorytype) };
++        if !c_memory.is_null() {
++            store
++                .inner
++                .store
++                .as_wasmi_mut()
++                .own(crate::backend::wasmi::store::OwnedHandle::Memory(c_memory));
++        }
+ 
+         Ok(Self { handle: c_memory })
+     }
+--- a/src/backend/wasmi/entities/store/mod.rs
++++ b/src/backend/wasmi/entities/store/mod.rs
+@@ -1,17 +1,36 @@
+ //! Data types, functions and traits for `wasmi`'s `Store` implementation.
+ use crate::{
+     AsStoreRef, BackendStore, StoreRef,
+-    backend::wasmi::bindings::{wasm_store_delete, wasm_store_new, wasm_store_t},
++    backend::wasmi::bindings::{
++        wasm_extern_delete, wasm_extern_t, wasm_func_delete, wasm_func_t, wasm_global_delete,
++        wasm_global_t, wasm_memory_delete, wasm_memory_t, wasm_store_delete, wasm_store_new,
++        wasm_store_t, wasm_table_delete, wasm_table_t,
++    },
+     engine::{AsEngineRef, Engine, EngineRef},
+ };
+ 
+ mod obj;
+ pub use obj::*;
+ 
++/// A C API object created in a store, to be deleted with it.
++///
++/// Each one holds a reference to the underlying `wasmi` store, which is only
++/// freed, with its instances and linear memories, once every such object is
++/// deleted. Externs are only valid as long as their store, so they are
++/// deleted when the store is dropped.
++pub(crate) enum OwnedHandle {
++    Extern(*mut wasm_extern_t),
++    Func(*mut wasm_func_t),
++    Global(*mut wasm_global_t),
++    Memory(*mut wasm_memory_t),
++    Table(*mut wasm_table_t),
++}
++
+ /// A WebAssembly `store` in `wasmi`.
+ pub(crate) struct Store {
+     pub(crate) engine: Engine,
+     pub(crate) inner: *mut wasm_store_t,
++    owned: Vec<OwnedHandle>,
+ }
+ 
+ impl std::fmt::Debug for Store {
+@@ -25,7 +44,16 @@
+ impl Store {
+     pub(crate) fn new(engine: crate::engine::Engine) -> Self {
+         let inner: *mut wasm_store_t = unsafe { wasm_store_new(engine.as_wasmi().inner.engine) };
+-        Self { inner, engine }
++        Self {
++            inner,
++            engine,
++            owned: Vec::new(),
++        }
++    }
++
++    /// Delete `handle` when this store is dropped.
++    pub(crate) fn own(&mut self, handle: OwnedHandle) {
++        self.owned.push(handle);
+     }
+ 
+     pub(crate) fn engine(&self) -> &Engine {
+@@ -39,6 +67,17 @@
+ 
+ impl Drop for Store {
+     fn drop(&mut self) {
++        for handle in self.owned.drain(..) {
++            unsafe {
++                match handle {
++                    OwnedHandle::Extern(h) => wasm_extern_delete(h),
++                    OwnedHandle::Func(h) => wasm_func_delete(h),
++                    OwnedHandle::Global(h) => wasm_global_delete(h),
++                    OwnedHandle::Memory(h) => wasm_memory_delete(h),
++                    OwnedHandle::Table(h) => wasm_table_delete(h),
++                }
++            }
++        }
+         unsafe { wasm_store_delete(self.inner) }
+     }
+ }
+--- a/src/backend/wasmi/entities/table.rs
++++ b/src/backend/wasmi/entities/table.rs
+@@ -37,21 +37,28 @@
+         ty: TableType,
+         init: Value,
+     ) -> Result<Self, RuntimeError> {
+-        let store_mut = store.as_store_mut();
++        let mut store_mut = store.as_store_mut();
+         let engine = store_mut.engine();
+ 
+         let wasm_tablety = Self::type_to_wasmi(ty);
+         let init: wasm_val_t = init.into_cv();
+ 
+-        Ok(Self {
+-            handle: unsafe {
+-                wasm_table_new(
+-                    store_mut.inner.store.as_wasmi().inner,
+-                    wasm_tablety,
+-                    init.of.ref_,
+-                )
+-            },
+-        })
++        let handle = unsafe {
++            wasm_table_new(
++                store_mut.inner.store.as_wasmi().inner,
++                wasm_tablety,
++                init.of.ref_,
++            )
++        };
++        if !handle.is_null() {
++            store_mut
++                .inner
++                .store
++                .as_wasmi_mut()
++                .own(crate::backend::wasmi::store::OwnedHandle::Table(handle));
++        }
++
++        Ok(Self { handle })
+     }
+ 
+     pub fn to_vm_extern(&self) -> VMExtern {

@@ -43,3 +43,5 @@ holochain_types.workspace = true
 holochain_keystore.workspace = true
 rand.workspace = true
 tempfile = "3"
+# Its engine follows the cranelift and wasmi features, through holochain.
+wasmer = { version = "=7.1.0", default-features = false, features = ["wat"] }
