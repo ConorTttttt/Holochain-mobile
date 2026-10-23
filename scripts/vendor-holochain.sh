@@ -3,6 +3,8 @@
 # patches/holochain-0.7.1-*.patch:
 # - p2p-factory: ConductorBuilder::with_p2p_factory
 # - embedder-access: app signals and DHT store reads without test_utils
+# - scheduler-wakeups: the scheduler sleeps until a function is due instead
+#   of polling the database every 100 ms
 set -euo pipefail
 
 VERSION=0.7.1

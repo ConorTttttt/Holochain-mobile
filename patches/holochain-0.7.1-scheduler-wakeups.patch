@@ -1,0 +1,234 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -329,6 +329,9 @@
+ [dependencies.sodoken]
+ version = "0.1.0"
+ 
++[dependencies.sqlx]
++version = "0.9.0"
++
+ [dependencies.strum]
+ version = "0.27"
+ 
+--- a/src/conductor/cell.rs
++++ b/src/conductor/cell.rs
+@@ -218,6 +218,27 @@
+         &self.holochain_p2p_cell
+     }
+ 
++    /// How long until this cell's earliest scheduled function is due: zero
++    /// if one is due now, `None` if it has none. Persisted functions whose
++    /// window has passed are left out: every tick reschedules them, and one
++    /// that cannot be rescheduled would otherwise always be due.
++    pub(super) async fn next_scheduled_fn(
++        &self,
++        now: Timestamp,
++    ) -> sqlx::Result<Option<std::time::Duration>> {
++        let start_at: Option<i64> = sqlx::query_scalar(
++            "SELECT MIN(start_at) FROM ScheduledFunction
++             WHERE author = ? AND (ephemeral = 1 OR end_at >= ?)",
++        )
++        .bind(self.id.agent_pubkey().get_raw_36())
++        .bind(now.as_micros())
++        .fetch_one(self.space.dht_db.pool())
++        .await?;
++        Ok(start_at.map(|start_at| {
++            std::time::Duration::from_micros(start_at.saturating_sub(now.as_micros()).max(0) as u64)
++        }))
++    }
++
+     pub(super) async fn dispatch_scheduled_fns(self: Arc<Self>, now: Timestamp) {
+         let author = self.id.agent_pubkey().clone();
+         self.space
+--- a/src/conductor/conductor.rs
++++ b/src/conductor/conductor.rs
+@@ -193,6 +193,10 @@
+ 
+     scheduler: Arc<parking_lot::Mutex<Option<tokio::task::JoinHandle<()>>>>,
+ 
++    /// Wakes the scheduler when a function may have become due sooner than
++    /// it last computed: a new schedule was written or cells started.
++    scheduler_wake: Arc<tokio::sync::Notify>,
++
+     /// The WASM backend that is in use for this conductor.
+     wasm_backend: WasmBackend,
+ 
+@@ -295,6 +299,7 @@
+                 outcomes_task: RwShare::new(None),
+                 admin_websocket_ports: RwShare::new(Vec::new()),
+                 scheduler: Arc::new(parking_lot::Mutex::new(None)),
++                scheduler_wake: Arc::new(tokio::sync::Notify::new()),
+                 ribosome_store,
+                 #[cfg(feature = "test_utils")]
+                 inline_zome_store,
+@@ -2436,6 +2441,8 @@
+                 cells.extend(new_cells_map.clone());
+                 tracing::debug!(?new_cell_ids, "added cells to running_cells");
+             });
++            // Their persisted schedules may be due.
++            self.wake_scheduler();
+ 
+             // Trigger cell workflows
+             for trigger in triggers {
+@@ -2705,6 +2712,12 @@
+ mod scheduler_impls {
+     use super::*;
+ 
++    /// The longest the scheduler sleeps before checking again. The sleep runs
++    /// on a monotonic clock, which stops while the device is suspended, but
++    /// schedules are wall-clock times; this bounds how late a function can
++    /// run after a suspend or a clock change.
++    const SCHEDULER_MAX_SLEEP: std::time::Duration = std::time::Duration::from_secs(60);
++
+     impl Conductor {
+         pub(super) fn set_scheduler(&self, join_handle: tokio::task::JoinHandle<()>) {
+             let mut scheduler = self.scheduler.lock();
+@@ -2738,21 +2751,66 @@
+ 
+             futures::future::join_all(tasks).await;
+ 
++            // Each tick dispatches what is due, then sleeps until the next
++            // function is due or `wake_scheduler` is called. Ticks stay at
++            // least `interval_period` apart, as when the scheduler polled.
+             let scheduler_handle = self.clone();
+             self.set_scheduler(tokio::task::spawn(async move {
+-                let mut interval = tokio::time::interval(interval_period);
+                 loop {
+-                    interval.tick().await;
++                    let tick = tokio::time::Instant::now();
+                     scheduler_handle
+                         .clone()
+                         .dispatch_scheduled_fns(Timestamp::now())
+                         .await;
++                    let wake = scheduler_handle.scheduler_wake.notified();
++                    match scheduler_handle.next_scheduled_fn(Timestamp::now()).await {
++                        // Nothing scheduled: only a new schedule or a new cell
++                        // can change that, and both wake the scheduler.
++                        None => wake.await,
++                        Some(due_in) => {
++                            tokio::select! {
++                                _ = wake => {}
++                                _ = tokio::time::sleep(due_in.min(SCHEDULER_MAX_SLEEP)) => {}
++                            }
++                        }
++                    }
++                    tokio::time::sleep_until(tick + interval_period).await;
+                 }
+             }));
+ 
+             Ok(())
+         }
+ 
++        /// Make the scheduler look for due functions now. Call after writing
++        /// a scheduled function or starting cells.
++        pub(crate) fn wake_scheduler(&self) {
++            self.scheduler_wake.notify_one();
++        }
++
++        /// How long until the earliest scheduled function of a running cell
++        /// is due: zero if one is due now, `None` if nothing is scheduled.
++        async fn next_scheduled_fn(&self, now: Timestamp) -> Option<std::time::Duration> {
++            let mut earliest: Option<std::time::Duration> = None;
++            for cell_id in self.running_cell_ids() {
++                let Ok(cell) = self.cell_by_id(&cell_id).await else {
++                    continue;
++                };
++                let due_in = match cell.next_scheduled_fn(now).await {
++                    Ok(due_in) => due_in,
++                    Err(e) => {
++                        // Fall back to checking again after one interval.
++                        error!("error finding the next scheduled fn: {:?}", e);
++                        Some(std::time::Duration::ZERO)
++                    }
++                };
++                earliest = match (earliest, due_in) {
++                    (Some(a), Some(b)) => Some(a.min(b)),
++                    (a, b) => a.or(b),
++                };
++            }
++            earliest
++        }
++
+         /// The scheduler wants to dispatch any functions that are due.
+         pub(crate) async fn dispatch_scheduled_fns(self: Arc<Self>, now: Timestamp) {
+             let cell_arcs = {
+--- a/src/conductor/space.rs
++++ b/src/conductor/space.rs
+@@ -62,6 +62,10 @@
+     /// DHT store wrapping the new holochain_data database.
+     pub dht_store: DhtStore,
+ 
++    /// The database behind `dht_store`, for the scheduler's due-time query,
++    /// which `DhtStore` does not provide.
++    pub(crate) dht_db: holochain_state::data::DbWrite<holochain_state::data::Dht>,
++
+     /// The peer meta store. One per unique Dna.
+     pub peer_meta_store: holochain_state::peer_metadata_store::PeerMetaStore,
+ 
+@@ -469,11 +473,12 @@
+                     space_data_config,
+                 ))
+                 .map_err(ConductorError::other)?;
+-            let dht_store = DhtStore::new(new_dht_db);
++            let dht_store = DhtStore::new(new_dht_db.clone());
+ 
+             Ok(Self {
+                 dna_hash,
+                 dht_store,
++                dht_db: new_dht_db,
+                 peer_meta_store,
+                 countersigning_workspaces: Default::default(),
+                 witnessing_workspace: WitnessingWorkspace::default(),
+--- a/src/core/workflow/call_zome_workflow.rs
++++ b/src/core/workflow/call_zome_workflow.rs
+@@ -41,6 +41,16 @@
+     pub cell_id: CellId,
+ }
+ 
++/// Whether the next flush writes functions passed to `schedule`, so the
++/// scheduler must be woken to see them. Wakes it if in doubt.
++pub(crate) fn has_scheduled_fns(workspace: &SourceChainWorkspace) -> bool {
++    workspace
++        .source_chain()
++        .scratch()
++        .apply(|scratch| !scratch.scheduled_fns().is_empty())
++        .unwrap_or(true)
++}
++
+ #[cfg_attr(feature = "instrument", tracing::instrument(skip_all))]
+ #[allow(clippy::too_many_arguments)]
+ pub async fn call_zome_workflow(
+@@ -81,12 +91,16 @@
+     // commit the workspace
+     if should_write {
+         let countersigning_op = workspace.source_chain().countersigning_op()?;
++        let schedules = has_scheduled_fns(&workspace);
+         match workspace
+             .source_chain()
+             .flush(network.target_arcs().await?)
+             .await
+         {
+             Ok((flushed_actions, total_inserted_warrants)) => {
++                if schedules {
++                    conductor_handle.wake_scheduler();
++                }
+                 if total_inserted_warrants > 0 {
+                     // Warrants received through host functions must be validated.
+                     trigger_validate_dht_ops.trigger(&"call_zome_workflow");
+--- a/src/core/workflow/initialize_zomes_workflow.rs
++++ b/src/core/workflow/initialize_zomes_workflow.rs
+@@ -53,10 +53,14 @@
+ 
+     // only commit if the result was successful
+     if result == InitResult::Pass {
++        let schedules = super::call_zome_workflow::has_scheduled_fns(&workspace);
+         let (flushed_actions, _) = workspace
+             .source_chain()
+             .flush(network.target_arcs().await?)
+             .await?;
++        if schedules {
++            conductor_handle.wake_scheduler();
++        }
+ 
+         // Remove the init properties as they have served their purpose and we don't want the seed
+         // material to outlive the init callback. Do this before post-commit so cleanup is not

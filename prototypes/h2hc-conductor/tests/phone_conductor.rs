@@ -314,3 +314,48 @@ async fn a_phone_conductor_authors_and_publishes_through_the_linker() {
         }
     }
 }
+
+/// The fixture's signal from its scheduled functions.
+#[derive(serde::Deserialize, Debug)]
+enum Tick {
+    Ephemeral,
+    Cron,
+}
+
+/// Scheduled functions still run when the scheduler sleeps until one is due
+/// instead of polling: `schedule` wakes it, an ephemeral function re-arms on
+/// time and no faster, and a persisted crontab keeps firing.
+#[tokio::test(flavor = "multi_thread")]
+async fn scheduled_functions_run() {
+    let mut phone = phone().await;
+    let (agent, cell_id) = install(&mut phone).await;
+    let mut signals = phone.conductor.subscribe_to_app_signals("notes".into());
+    let () = phone
+        .conductor
+        .easy_call_zome(&agent, None, cell_id, "notes", "start_ticks", ())
+        .await
+        .unwrap();
+    let started = tokio::time::Instant::now();
+    let (mut ephemeral, mut cron) = (Vec::new(), 0);
+    while (ephemeral.len() < 5 || cron < 2) && started.elapsed() < Duration::from_secs(20) {
+        let Ok(Ok(Signal::App { signal, .. })) = tokio::time::timeout(Duration::from_secs(1), signals.recv()).await
+        else {
+            continue;
+        };
+        match signal.into_inner().decode::<Tick>() {
+            Ok(Tick::Ephemeral) => ephemeral.push(started.elapsed()),
+            Ok(Tick::Cron) => cron += 1,
+            Err(_) => {}
+        }
+    }
+    assert!(ephemeral.len() >= 5, "ephemeral ticks at {ephemeral:?}");
+    assert!(cron >= 2, "{cron} cron ticks in 20 s");
+    assert!(ephemeral[0] < Duration::from_secs(2), "first tick only after {:?}", ephemeral[0]);
+    for pair in ephemeral.windows(2) {
+        let gap = pair[1] - pair[0];
+        assert!(
+            gap >= Duration::from_millis(250) && gap < Duration::from_millis(1500),
+            "a 300 ms ephemeral schedule re-ran after {gap:?}"
+        );
+    }
+}

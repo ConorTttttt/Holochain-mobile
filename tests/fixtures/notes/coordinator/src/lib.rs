@@ -83,3 +83,30 @@ pub fn recv_remote_signal(msg: Ping) -> ExternResult<()> {
     }
     emit_signal(msg)
 }
+
+/// What the scheduled functions report to the local client.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Tick {
+    Ephemeral,
+    Cron,
+}
+
+/// Schedule `tick_ephemeral`, which re-arms itself every 300 ms, and
+/// `tick_cron`, which runs every 2 seconds on a persisted crontab.
+#[hdk_extern]
+pub fn start_ticks() -> ExternResult<()> {
+    schedule("tick_ephemeral")?;
+    schedule("tick_cron")
+}
+
+#[hdk_extern(infallible)]
+pub fn tick_ephemeral(_: Option<Schedule>) -> Option<Schedule> {
+    emit_signal(Tick::Ephemeral).ok()?;
+    Some(Schedule::Ephemeral(std::time::Duration::from_millis(300)))
+}
+
+#[hdk_extern(infallible)]
+pub fn tick_cron(_: Option<Schedule>) -> Option<Schedule> {
+    emit_signal(Tick::Cron).ok()?;
+    Some(Schedule::Persisted("*/2 * * * * *".into()))
+}
