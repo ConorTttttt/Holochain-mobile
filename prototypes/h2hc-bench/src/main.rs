@@ -5,6 +5,7 @@
 //! h2hc-bench [--configs h2hc:cranelift,h2hc:wasmi,kitsune2:cranelift,kitsune2:wasmi]
 //!            [--iterations 20] [--receipt-samples 5] [--authorities 3]
 //!            [--idle-secs 60] [--settle-secs 0] [--profile-secs 0]
+//!            [--wake-samples 0] [--wake-gap-secs 40]
 //!            [--no-scenarios] [--long]
 //!            [--target local|android] [--serial <adb serial>]
 //!            [--phone-dir target]
@@ -44,6 +45,11 @@ struct Opts {
     /// Profile the phone for this long after the idle period (needs a phone
     /// built with the `profile` feature).
     profile_secs: u64,
+    /// Operations timed after the idle period, each after `wake_gap_secs`
+    /// of quiet: longer than the 30 s after which Holochain closes idle
+    /// database connections.
+    wake_samples: usize,
+    wake_gap_secs: u64,
     scenarios: bool,
     long: bool,
     target: String,
@@ -102,6 +108,8 @@ fn parse() -> anyhow::Result<Opts> {
         idle_secs: num("idle-secs", 60)?,
         settle_secs: num("settle-secs", 0)?,
         profile_secs: num("profile-secs", 0)?,
+        wake_samples: num("wake-samples", 0)? as usize,
+        wake_gap_secs: num("wake-gap-secs", 40)?,
         // The scenarios restart the phone, which needs keys that persist.
         scenarios: !flags.iter().any(|f| f == "no-scenarios") && map.get("target").map(String::as_str) != Some("android"),
         long: flags.iter().any(|f| f == "long"),
@@ -406,6 +414,22 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
                     }
                 }
             }
+        }
+    }
+    if opts.wake_samples > 0 {
+        progress(format!("{}: timing {} operations after {} s quiet", r.label(), opts.wake_samples, opts.wake_gap_secs));
+        let mut series: BTreeMap<String, Series> = BTreeMap::new();
+        let gap = Duration::from_secs(opts.wake_gap_secs);
+        for i in 0..opts.wake_samples {
+            tokio::time::sleep(gap).await;
+            let s = series.entry(format!("get own note after {} s quiet", opts.wake_gap_secs)).or_default();
+            s.record(async { phone_ms(&phone.cmd(&Cmd::GetNote { hash: own.clone() }).await?) }.await);
+            tokio::time::sleep(gap).await;
+            let s = series.entry(format!("create note after {} s quiet", opts.wake_gap_secs)).or_default();
+            s.record(async { phone_ms(&phone.cmd(&Cmd::CreateNote { text: format!("after quiet {i}") }).await?) }.await);
+        }
+        for (name, s) in series {
+            r.latency.insert(name, s.summary());
         }
     }
     if opts.profile_secs > 0 {
