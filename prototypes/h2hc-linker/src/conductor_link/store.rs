@@ -14,6 +14,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 /// An op that passed admission, ready to store.
+#[derive(Debug)]
 pub(crate) struct AdmittedOp {
     pub hash: DhtOpHash,
     pub bytes: Vec<u8>,
