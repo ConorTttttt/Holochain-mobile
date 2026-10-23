@@ -1,0 +1,245 @@
+{
+  "started": "20261023-183136",
+  "baseline": {
+    "authority note visible at another authority": {
+      "n": 20,
+      "failures": 0,
+      "p50": 30.224015,
+      "p95": 30.754621999999998,
+      "min": 2.001731,
+      "max": 30.782612,
+      "mean": 23.2848589
+    },
+    "remote call": {
+      "n": 20,
+      "failures": 0,
+      "p50": 5.171383,
+      "p95": 5.9168069999999995,
+      "min": 4.564871,
+      "max": 6.195481,
+      "mean": 5.195103
+    },
+    "signal round trip": {
+      "n": 20,
+      "failures": 0,
+      "p50": 5.85577,
+      "p95": 6.620921999999999,
+      "min": 5.338127,
+      "max": 6.829954,
+      "mean": 5.882787800000001
+    }
+  },
+  "target": "android",
+  "phone_builds": "target/before",
+  "host": "Linux 7.0.0-38-generic x86_64",
+  "authorities": 3,
+  "iterations": 20,
+  "configs": [
+    {
+      "network": "h2hc",
+      "wasm": "cranelift",
+      "env": [],
+      "keystore": "memory",
+      "iterations": 20,
+      "startup_ms": 1952.731666,
+      "install_ms": 1202.098229,
+      "enable_ms": 123.318594,
+      "first_call_ms": 2042.942551,
+      "network_ready_ms": 2135.432471,
+      "latency": {
+        "create note (local commit)": {
+          "n": 20,
+          "failures": 0,
+          "p50": 114.720416,
+          "p95": 168.602343,
+          "min": 66.296094,
+          "max": 170.119792,
+          "mean": 115.76782014999999
+        },
+        "create note after 40 s quiet": {
+          "n": 4,
+          "failures": 0,
+          "p50": 256.97708400000005,
+          "p95": 351.673334,
+          "min": 51.559270999999995,
+          "max": 351.673334,
+          "mean": 222.03385450000002
+        },
+        "get authority's note (first fetch)": {
+          "n": 20,
+          "failures": 0,
+          "p50": 20.472292,
+          "p95": 42.94875,
+          "min": 15.379219,
+          "max": 61.90599,
+          "mean": 23.978362000000004
+        },
+        "get links (authority's notes)": {
+          "n": 20,
+          "failures": 0,
+          "p50": 39.023125,
+          "p95": 75.731875,
+          "min": 24.993542,
+          "max": 75.802916,
+          "mean": 41.61386965
+        },
+        "get own note": {
+          "n": 20,
+          "failures": 0,
+          "p50": 15.675157,
+          "p95": 21.426823,
+          "min": 10.936718,
+          "max": 22.293386,
+          "mean": 15.97841675
+        },
+        "get own note after 40 s quiet": {
+          "n": 4,
+          "failures": 0,
+          "p50": 49.966093,
+          "p95": 155.584792,
+          "min": 19.600208,
+          "max": 155.584792,
+          "mean": 67.8943225
+        },
+        "phone note visible at an authority": {
+          "n": 5,
+          "failures": 0,
+          "p50": 60.259894,
+          "p95": 97.294067,
+          "min": 31.106302999999997,
+          "max": 97.294067,
+          "mean": 56.4163722
+        },
+        "remote call authority to phone": {
+          "n": 20,
+          "failures": 0,
+          "p50": 31.584871,
+          "p95": 45.001974,
+          "min": 14.622145,
+          "max": 46.167505999999996,
+          "mean": 30.242417949999997
+        },
+        "remote call phone to authority": {
+          "n": 20,
+          "failures": 0,
+          "p50": 23.895521,
+          "p95": 33.717188,
+          "min": 17.676302,
+          "max": 36.489896,
+          "mean": 24.946651049999996
+        },
+        "signal round trip authority to phone": {
+          "n": 20,
+          "failures": 0,
+          "p50": 31.627958999999997,
+          "p95": 38.32394,
+          "min": 19.740434,
+          "max": 63.353435,
+          "mean": 30.700438600000002
+        },
+        "signal round trip phone to authority": {
+          "n": 20,
+          "failures": 0,
+          "p50": 63.277292,
+          "p95": 84.216718,
+          "min": 33.145,
+          "max": 88.043438,
+          "mean": 59.931598849999986
+        },
+        "validation receipts for every op": {
+          "n": 5,
+          "failures": 0,
+          "p50": 139.650007,
+          "p95": 170.037718,
+          "min": 100.46545599999999,
+          "max": 170.037718,
+          "mean": 143.62176300000002
+        }
+      },
+      "stats_ready": {
+        "rss_kb": 151640,
+        "peak_rss_kb": 272856,
+        "cpu_user_ms": 9882,
+        "cpu_sys_ms": 2225,
+        "threads": 36,
+        "data_bytes": 83426246,
+        "link_sent": 6672,
+        "link_received": 16037,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 146716,
+        "peak_rss_kb": 272856,
+        "cpu_user_ms": 14463,
+        "cpu_sys_ms": 6545,
+        "threads": 40,
+        "data_bytes": 89780526,
+        "link_sent": 131150,
+        "link_received": 339575,
+        "link_connects": 1
+      },
+      "stats_idle_start": {
+        "rss_kb": 140712,
+        "peak_rss_kb": 272856,
+        "cpu_user_ms": 16626,
+        "cpu_sys_ms": 7773,
+        "threads": 32,
+        "data_bytes": 57380486,
+        "link_sent": 131162,
+        "link_received": 374802,
+        "link_connects": 1
+      },
+      "stats_after_idle": {
+        "rss_kb": 13444,
+        "peak_rss_kb": 272856,
+        "cpu_user_ms": 23809,
+        "cpu_sys_ms": 11784,
+        "threads": 32,
+        "data_bytes": 57380486,
+        "link_sent": 131162,
+        "link_received": 374802,
+        "link_connects": 1
+      },
+      "settle_secs": 60,
+      "idle_secs": 300,
+      "idle_cpu_samples": [
+        2199.0,
+        2353.0,
+        2288.0,
+        2181.0,
+        2173.0
+      ],
+      "idle_threads": [
+        {
+          "name": "tokio-rt-worker",
+          "threads": 15,
+          "cpu_ms_per_min": 1438.4904000000001,
+          "wakeups_per_min": 8691.4
+        },
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 9,
+          "cpu_ms_per_min": 798.1235999999999,
+          "wakeups_per_min": 4580.6
+        },
+        {
+          "name": "h2hc-phone-cran",
+          "threads": 1,
+          "cpu_ms_per_min": 5.9826,
+          "wakeups_per_min": 5.0
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 7,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": 0,
+      "idle_frames": {},
+      "errors": []
+    }
+  ],
+  "scenarios": []
+}

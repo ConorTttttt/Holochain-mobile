@@ -14,10 +14,15 @@ All runs so far are on a desktop (Linux x86_64), with the "phone" as an ordinary
 | [20261023-160825-local](results/20261023-160825-local.md), [162323](results/20261023-162323-local.md) | First operations after 40 s of quiet, before and after the fix |
 | [20261023-163930-local](results/20261023-163930-local.md), [164542](results/20261023-164542-local.md) | First operations after 20 s and after 40 s of quiet, after the fix |
 | [20261023-170040-local](results/20261023-170040-local.md) | After the fix, phones under strace to trace the remaining idle wakeups (strace inflates CPU and wakeups) |
+| [20261023-175527-android](results/20261023-175527-android.md) | Galaxy S23+ after the fix: H2HC with both engines; Kitsune2 cut off by Auto Blocker |
+| [20261023-183136-android](results/20261023-183136-android.md) | Galaxy S23+ before the fix, H2HC + Cranelift, same protocol |
+| [20261023-184334-android](results/20261023-184334-android.md) | Galaxy S23+ after the fix, Kitsune2 + Cranelift |
 
 ## Idle CPU: Holochain's scheduler polled SQLite ten times a second
 
-The phone run below measured 2.2–2.4 s of CPU per idle minute in every configuration. Almost all of it was Holochain 0.7.1's scheduler for functions that zomes pass to `schedule()`. It is now event-driven ([patch](../patches/holochain-0.7.1-scheduler-wakeups.patch)), which cuts idle CPU on the desktop by **98% with H2HC and 86–88% with Kitsune2**. It has not yet been measured on the phone: the phone was disconnected when the fix was ready.
+The phone run below measured 2.2–2.4 s of CPU per idle minute in every configuration. Almost all of it was Holochain 0.7.1's scheduler for functions that zomes pass to `schedule()`. It is now event-driven ([patch](../patches/holochain-0.7.1-scheduler-wakeups.patch)).
+
+On the Galaxy S23+, idle CPU with H2HC fell from **2,239 to 12 ms/min** (Cranelift) and to 20 ms/min (wasmi), well under the 0.2 s/min target. With Kitsune2 it fell from 2,372 to about **230–255 ms/min**; what remains is Kitsune2's own networking. On the desktop the cut is 98% with H2HC and 86–88% with Kitsune2.
 
 ### What runs when the conductor is idle
 
@@ -88,6 +93,27 @@ Scheduled-function support is unchanged for apps. The HDK already tells develope
 
 The test fails if the wake after `schedule()` is removed.
 
+### Before and after on the phone
+
+Galaxy S23+, Android 16, over USB with the in-memory keystore: the same workload as the earlier phone run, then 60 s settling, then 5 minutes idle.
+- Fixed phones: [175527](results/20261023-175527-android.md) and [184334](results/20261023-184334-android.md).
+- Pre-fix phone, built from `711db75` and run with `--phone-dir target/before`: [183136](results/20261023-183136-android.md).
+
+Samsung's Auto Blocker cut USB debugging during 175527, so Kitsune2 was re-run in 184334. Kitsune2 + wasmi was not re-measured.
+
+| Configuration | Idle CPU before | Idle CPU after | Idle minutes after | Wakeups before | Wakeups after |
+|---|---|---|---|---|---|
+| H2HC + Cranelift | 2,239 ms/min | **12 ms/min** | 3–39 ms | 13,277/min | 31/min |
+| H2HC + wasmi | 2,356 ms/min (133555) | **20 ms/min** | 5–35 ms | – | 37/min |
+| Kitsune2 + Cranelift | 2,372 ms/min (133555) | **255 ms/min** | 223–351 ms | – | 859/min |
+| Kitsune2 + wasmi | 2,334 ms/min (133555) | not re-measured | | | |
+
+The pre-fix H2HC phone, measured the same way, stayed at 2,173–2,353 ms in every one of its five idle minutes. The 133555 figures are 60 s straight after the workload, with no settling. Kitsune2 + Cranelift's first idle minute after the fix was 351 ms and the rest 223–241 ms; that is Kitsune2's networking, slightly over the 0.2 s/min target.
+
+A 60 s profile of the idle fixed phone collected only 23 samples (H2HC + Cranelift). They were spread over reopening database connections, a few SQLite statements and frames from the linker, so no hotspot is left.
+
+All operations still work on the phone: local writes, reads, link queries, remote calls and signals both ways, publish-to-visible and receipts. Their p50s match the pre-fix run within the run-to-run spread.
+
 ### Before and after (desktop)
 
 Same network and workload: 20 iterations (10 for wasmi), then 60 s settling, then 5 minutes idle. Before: [151131](results/20261023-151131-local.md), run with the pre-fix phones via `--phone-dir`. After: [153819](results/20261023-153819-local.md).
@@ -110,7 +136,16 @@ The SQLite worker threads are now gone while idle: their connections close after
 
 **Everything else measured the same.** Local writes, reads, link queries, remote calls and signals both ways, publish-to-visible and validation receipts have the same p50 on both networks before and after. All three scenarios pass after the fix: rejection on the phone, receipts waiting while the phone is killed, and the linker crash.
 
-**One trade-off to watch on the phone.** Before, the scheduler's queries kept the pooled SQLite connections open. Now they close after 30 s of quiet, so the first operation afterwards reopens one. On the desktop this cost was lost in noise: after 40 s of quiet, create-note p50 was 16.8 ms before the fix, and 28.8 ms and 16.7 ms in two runs after it ([160825](results/20261023-160825-local.md), [162323](results/20261023-162323-local.md), [164542](results/20261023-164542-local.md)). `--wake-samples` measures it; it should be measured on the phone, where reopening costs more. If it matters, keeping one connection per pool (`min_connections(1)` in `holochain_data`) would remove it without polling.
+**The first operation after a quiet spell is slower, before and after the fix alike.** Before the fix, the scheduler's queries kept the pooled SQLite connections open; now they close after 30 s of quiet. The worry was that reopening them would slow the next operation. The phone shows it doesn't, measurably:
+
+| Phone, H2HC + Cranelift, p50 (max) | Create note | Get own note |
+|---|---|---|
+| Warm, before | 115 ms | 16 ms |
+| Warm, after | 91 ms | 15 ms |
+| After 40 s quiet, before | 257 ms (352 ms) | 50 ms (156 ms) |
+| After 40 s quiet, after | 196 ms (223 ms) | 55 ms (252 ms) |
+
+The slowdown is the phone waking up (CPU clocks and caches), not the connection pool. On the desktop it was lost in noise ([160825](results/20261023-160825-local.md), [162323](results/20261023-162323-local.md), [164542](results/20261023-164542-local.md)). `--wake-samples` measures it.
 
 ### What is left
 
@@ -125,11 +160,13 @@ A syscall trace of the fixed phones over 3 idle minutes ([170040](results/202610
 
 **Kitsune2, about 42–47 ms/min.** Most of its tokio wakeups are short QUIC and iroh timers: epoll waits of 1–25 ms, keepalives and relay traffic. The rest is gossip timeouts and Kitsune2's peer-store pruning queries every 10 s. This is Kitsune2's networking, outside the conductor, and was left as it is.
 
-**On the phone**, the desktop cost multiplied by about 7 (2.2–2.4 s/min against about 0.3 s/min before the fix). By that ratio, H2HC would idle at about 35 ms/min, under the 0.2 s/min target, and Kitsune2 at about 0.3 s/min, over it. These are estimates until the phone is measured again.
+**On the phone**, about 7 times the desktop cost:
+- **H2HC: 12–20 ms/min**, under the 0.2 s/min target.
+- **Kitsune2: about 230–255 ms/min**, just over it.
 
 ## On a phone: Samsung Galaxy S23+ (SM-S916B), Android 16
 
-[20261023-133555-android](results/20261023-133555-android.md) ran all four configurations: 20 iterations for Cranelift and 10 for wasmi.
+[20261023-133555-android](results/20261023-133555-android.md) ran all four configurations, before the scheduler fix: 20 iterations for Cranelift and 10 for wasmi. The idle CPU before and after the fix is [above](#before-and-after-on-the-phone).
 
 How it was run:
 - `h2hc-phone` ran over `adb shell` with Holochain's in-memory keystore, because Android does not let the shell user bind Lair's Unix socket. Startup therefore leaves out Lair's passphrase hashing.
