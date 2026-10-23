@@ -7,8 +7,9 @@ publish.workspace = true
 
 [dependencies]
 ed25519-dalek.workspace = true
-holochain_types.workspace = true
-kitsune2_api.workspace = true
+# Any 0.7 release: the linker builds against 0.7.0, the conductor against 0.7.1.
+holochain_types = "0.7"
+kitsune2_api = "0.5"
 rmp-serde.workspace = true
 serde.workspace = true
 serde_bytes.workspace = true

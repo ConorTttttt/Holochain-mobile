@@ -11,6 +11,7 @@
 mod inbound;
 mod peer_store;
 pub mod session;
+pub mod ws;
 
 pub use session::{FrameChannel, InboundHandler, LinkerSession};
 
