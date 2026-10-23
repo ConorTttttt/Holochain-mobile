@@ -1,0 +1,5 @@
+# hdk provides getrandom's custom backend; Holonix sets this flag too.
+# Holochain host functions are undefined symbols that must become wasm
+# imports; recent rustc no longer allows that by default on this target.
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="custom"', '-C', 'link-arg=--import-undefined']

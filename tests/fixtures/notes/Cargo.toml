@@ -1,0 +1,17 @@
+# Test-only DNA for the H2HC prototypes. Built for wasm32 by
+# scripts/build-fixtures.sh; kept out of the host workspace so wasm and host
+# builds never share features.
+[workspace]
+resolver = "2"
+members = ["integrity", "coordinator"]
+
+[workspace.dependencies]
+hdi = "=0.8.1"
+hdk = "=0.7.1"
+serde = { version = "1", features = ["derive"] }
+holochain_serialized_bytes = "=0.0.57"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
