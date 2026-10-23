@@ -1,6 +1,6 @@
 # Benchmark results
 
-All runs so far are on a desktop (Linux x86_64), with the "phone" as an ordinary process and the whole network on localhost: release builds, a local bootstrap and relay, 3 full-arc authorities, and the local linker fork. They show how the design behaves, not phone performance: there is no radio, no Android scheduler and no ARM CPU. The arm64 runs (plan step 1) need `scripts/bench-android.sh` and a phone.
+All runs so far are on a desktop (Linux x86_64), with the "phone" as an ordinary process and the whole network on localhost: release builds, a local bootstrap and relay, 3 full-arc authorities, and the local linker fork. They show how the design behaves, not phone performance: there is no radio, no Android scheduler and no ARM CPU. Phone results are in the next section.
 
 | Report | What it covers |
 |---|---|
@@ -8,7 +8,34 @@ All runs so far are on a desktop (Linux x86_64), with the "phone" as an ordinary
 | [20261023-121834-local](results/20261023-121834-local.md) | Scenarios only, on a fresh network |
 | [20261023-122614-local](results/20261023-122614-local.md) | H2HC with both engines at 60 iterations: wasmi memory growth and idle traffic |
 
-## What the numbers say
+## On a phone: Samsung Galaxy S23+ (SM-S916B), Android 16
+
+[20261023-133555-android](results/20261023-133555-android.md) ran all four configurations: 20 iterations for Cranelift and 10 for wasmi.
+
+How it was run:
+- `h2hc-phone` ran over `adb shell` with Holochain's in-memory keystore, because Android does not let the shell user bind Lair's Unix socket. Startup therefore leaves out Lair's passphrase hashing.
+- The phone reached the network on this PC through the USB cable (`adb reverse`), not over a radio.
+- The restart scenarios were skipped.
+
+| | H2HC + Cranelift | H2HC + wasmi | Kitsune2 + Cranelift | Kitsune2 + wasmi |
+|---|---|---|---|---|
+| Network ready after enable | 2.06 s | 0.37 s | 1.65 s | 2.26 s |
+| Local write, p50 | 144 ms | 117 ms | 144 ms | 105 ms |
+| Read an authority's note, p50 | 34 ms | 29 ms | 22 ms | 21 ms |
+| Remote call, either direction, p50 | 29–33 ms | 28 ms | 32–36 ms | 25–28 ms |
+| Validation receipts, p50 | 0.80 s | 0.17 s | 9.8 s | 9.7 s |
+| RSS ready, then after workload | 144, then 145 MB | 96, then 575 MB | 156, then 152 MB | 122, then 598 MB |
+| Idle CPU | 2.2 s/min | 2.4 s/min | 2.4 s/min | 2.3 s/min |
+
+What the phone run shows:
+
+- **Idle CPU is about 2.2–2.4 s of CPU per minute** in every configuration, roughly 4% of a core all the time, with or without Kitsune2. The conductor's own background work is the battery problem, not networking.
+- **The wasmi leak reproduces on arm64:** 96 MB to 575 MB after 10 iterations. Cranelift holds steady at about 145 MB, far below the desktop's 430 MB.
+- **Writes cost about 100–145 ms on the phone**, against 16 ms on the desktop. This is local commit and validation, the same with either network.
+- **H2HC still gets receipts in under a second**, against about 10 s for Kitsune2.
+- **Over this USB link, H2HC reads and remote calls are about the same as Kitsune2.**
+
+## What the numbers say (desktop)
 
 **Latency through the linker matches direct Kitsune2.** p50 on localhost:
 
