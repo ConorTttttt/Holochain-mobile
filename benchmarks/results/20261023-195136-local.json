@@ -1,0 +1,2443 @@
+{
+  "started": "20261023-195136",
+  "baseline": {
+    "authority note visible at another authority": {
+      "n": 100,
+      "failures": 0,
+      "p50": 30.322924,
+      "p95": 31.468252000000003,
+      "min": 2.253908,
+      "max": 87.085171,
+      "mean": 30.196700890000002
+    },
+    "remote call": {
+      "n": 100,
+      "failures": 0,
+      "p50": 6.240448,
+      "p95": 7.244485,
+      "min": 4.852182,
+      "max": 10.176637000000001,
+      "mean": 6.198202030000001
+    },
+    "signal round trip": {
+      "n": 100,
+      "failures": 0,
+      "p50": 7.150087999999999,
+      "p95": 8.627778,
+      "min": 5.6918999999999995,
+      "max": 439.330761,
+      "mean": 12.219965239999999
+    }
+  },
+  "target": "local",
+  "phone_builds": "target",
+  "host": "Linux 7.0.0-38-generic x86_64",
+  "authorities": 3,
+  "iterations": 100,
+  "configs": [
+    {
+      "network": "h2hc",
+      "wasm": "wasmi",
+      "env": [],
+      "keystore": "lair",
+      "iterations": 100,
+      "startup_ms": 1928.757699,
+      "install_ms": 82.13047900000001,
+      "enable_ms": 690.4753390000001,
+      "first_call_ms": 54.459291,
+      "network_ready_ms": 523.651377,
+      "latency": {
+        "create note (local commit)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 9.771264,
+          "p95": 11.544304,
+          "min": 8.443213,
+          "max": 12.661601999999998,
+          "mean": 9.978964030000004
+        },
+        "get authority's note (first fetch)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 4.07606,
+          "p95": 4.866169,
+          "min": 2.9086200000000004,
+          "max": 5.361745,
+          "mean": 4.10019946
+        },
+        "get links (authority's notes)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 10.293026,
+          "p95": 24.085817,
+          "min": 8.090480000000001,
+          "max": 579.258968,
+          "mean": 19.87177559
+        },
+        "get own note": {
+          "n": 100,
+          "failures": 0,
+          "p50": 2.722116,
+          "p95": 3.35756,
+          "min": 1.580003,
+          "max": 4.122707,
+          "mean": 2.69889191
+        },
+        "phone note visible at an authority": {
+          "n": 2,
+          "failures": 0,
+          "p50": 69.833197,
+          "p95": 69.833197,
+          "min": 32.016505,
+          "max": 69.833197,
+          "mean": 50.924851000000004
+        },
+        "remote call authority to phone": {
+          "n": 100,
+          "failures": 0,
+          "p50": 7.473528999999999,
+          "p95": 9.440002,
+          "min": 5.579968,
+          "max": 75.289074,
+          "mean": 8.154246660000002
+        },
+        "remote call phone to authority": {
+          "n": 100,
+          "failures": 0,
+          "p50": 7.108718,
+          "p95": 9.080499,
+          "min": 5.465613,
+          "max": 9.678818,
+          "mean": 7.2116354899999955
+        },
+        "signal round trip authority to phone": {
+          "n": 100,
+          "failures": 0,
+          "p50": 9.983803,
+          "p95": 12.920958,
+          "min": 7.198879,
+          "max": 16.96333,
+          "mean": 10.29387408
+        },
+        "signal round trip phone to authority": {
+          "n": 100,
+          "failures": 0,
+          "p50": 9.199642,
+          "p95": 11.856803,
+          "min": 6.501035,
+          "max": 13.796006,
+          "mean": 9.305501199999998
+        },
+        "validation receipts for every op": {
+          "n": 2,
+          "failures": 0,
+          "p50": 6231.957378,
+          "p95": 6231.957378,
+          "min": 171.428159,
+          "max": 6231.957378,
+          "mean": 3201.6927685
+        }
+      },
+      "memory": [
+        {
+          "rss_kb": 117736,
+          "rss_anon_kb": 77432,
+          "heap_in_use_kb": 27716,
+          "heap_free_kb": 60843
+        },
+        {
+          "rss_kb": 118792,
+          "rss_anon_kb": 78488,
+          "heap_in_use_kb": 28479,
+          "heap_free_kb": 61032
+        },
+        {
+          "rss_kb": 119528,
+          "rss_anon_kb": 79224,
+          "heap_in_use_kb": 28735,
+          "heap_free_kb": 61384
+        },
+        {
+          "rss_kb": 119848,
+          "rss_anon_kb": 79544,
+          "heap_in_use_kb": 28724,
+          "heap_free_kb": 61599
+        },
+        {
+          "rss_kb": 120332,
+          "rss_anon_kb": 80028,
+          "heap_in_use_kb": 28666,
+          "heap_free_kb": 62133
+        },
+        {
+          "rss_kb": 120840,
+          "rss_anon_kb": 80536,
+          "heap_in_use_kb": 28579,
+          "heap_free_kb": 63141
+        },
+        {
+          "rss_kb": 120936,
+          "rss_anon_kb": 80632,
+          "heap_in_use_kb": 29119,
+          "heap_free_kb": 62604
+        },
+        {
+          "rss_kb": 120936,
+          "rss_anon_kb": 80632,
+          "heap_in_use_kb": 28676,
+          "heap_free_kb": 63047
+        },
+        {
+          "rss_kb": 121256,
+          "rss_anon_kb": 80952,
+          "heap_in_use_kb": 28565,
+          "heap_free_kb": 63546
+        },
+        {
+          "rss_kb": 121256,
+          "rss_anon_kb": 80952,
+          "heap_in_use_kb": 28956,
+          "heap_free_kb": 63155
+        },
+        {
+          "rss_kb": 121460,
+          "rss_anon_kb": 81156,
+          "heap_in_use_kb": 28752,
+          "heap_free_kb": 63359
+        },
+        {
+          "rss_kb": 121460,
+          "rss_anon_kb": 81156,
+          "heap_in_use_kb": 28897,
+          "heap_free_kb": 63214
+        },
+        {
+          "rss_kb": 121464,
+          "rss_anon_kb": 81160,
+          "heap_in_use_kb": 29127,
+          "heap_free_kb": 62984
+        },
+        {
+          "rss_kb": 121824,
+          "rss_anon_kb": 81520,
+          "heap_in_use_kb": 29211,
+          "heap_free_kb": 63064
+        },
+        {
+          "rss_kb": 121832,
+          "rss_anon_kb": 81528,
+          "heap_in_use_kb": 29309,
+          "heap_free_kb": 62966
+        },
+        {
+          "rss_kb": 121908,
+          "rss_anon_kb": 81604,
+          "heap_in_use_kb": 28792,
+          "heap_free_kb": 63483
+        },
+        {
+          "rss_kb": 122020,
+          "rss_anon_kb": 81716,
+          "heap_in_use_kb": 29175,
+          "heap_free_kb": 63101
+        },
+        {
+          "rss_kb": 122132,
+          "rss_anon_kb": 81828,
+          "heap_in_use_kb": 29229,
+          "heap_free_kb": 63046
+        },
+        {
+          "rss_kb": 122220,
+          "rss_anon_kb": 81916,
+          "heap_in_use_kb": 28935,
+          "heap_free_kb": 63348
+        },
+        {
+          "rss_kb": 122236,
+          "rss_anon_kb": 81932,
+          "heap_in_use_kb": 29951,
+          "heap_free_kb": 62332
+        },
+        {
+          "rss_kb": 122248,
+          "rss_anon_kb": 81944,
+          "heap_in_use_kb": 29977,
+          "heap_free_kb": 62307
+        },
+        {
+          "rss_kb": 124924,
+          "rss_anon_kb": 84620,
+          "heap_in_use_kb": 30035,
+          "heap_free_kb": 65832
+        },
+        {
+          "rss_kb": 124924,
+          "rss_anon_kb": 84620,
+          "heap_in_use_kb": 30280,
+          "heap_free_kb": 65587
+        },
+        {
+          "rss_kb": 125164,
+          "rss_anon_kb": 84860,
+          "heap_in_use_kb": 30103,
+          "heap_free_kb": 66132
+        },
+        {
+          "rss_kb": 125164,
+          "rss_anon_kb": 84860,
+          "heap_in_use_kb": 30119,
+          "heap_free_kb": 66116
+        },
+        {
+          "rss_kb": 125252,
+          "rss_anon_kb": 84948,
+          "heap_in_use_kb": 30226,
+          "heap_free_kb": 66229
+        },
+        {
+          "rss_kb": 125292,
+          "rss_anon_kb": 84988,
+          "heap_in_use_kb": 30508,
+          "heap_free_kb": 65947
+        },
+        {
+          "rss_kb": 125296,
+          "rss_anon_kb": 84992,
+          "heap_in_use_kb": 30472,
+          "heap_free_kb": 65983
+        },
+        {
+          "rss_kb": 125328,
+          "rss_anon_kb": 85024,
+          "heap_in_use_kb": 29936,
+          "heap_free_kb": 66519
+        },
+        {
+          "rss_kb": 125372,
+          "rss_anon_kb": 85068,
+          "heap_in_use_kb": 30187,
+          "heap_free_kb": 66452
+        },
+        {
+          "rss_kb": 125432,
+          "rss_anon_kb": 85128,
+          "heap_in_use_kb": 30172,
+          "heap_free_kb": 66471
+        },
+        {
+          "rss_kb": 125432,
+          "rss_anon_kb": 85128,
+          "heap_in_use_kb": 29654,
+          "heap_free_kb": 66989
+        },
+        {
+          "rss_kb": 125432,
+          "rss_anon_kb": 85128,
+          "heap_in_use_kb": 29914,
+          "heap_free_kb": 66729
+        },
+        {
+          "rss_kb": 125436,
+          "rss_anon_kb": 85132,
+          "heap_in_use_kb": 30025,
+          "heap_free_kb": 66618
+        },
+        {
+          "rss_kb": 125708,
+          "rss_anon_kb": 85404,
+          "heap_in_use_kb": 30223,
+          "heap_free_kb": 66700
+        },
+        {
+          "rss_kb": 125708,
+          "rss_anon_kb": 85404,
+          "heap_in_use_kb": 30460,
+          "heap_free_kb": 66463
+        },
+        {
+          "rss_kb": 125752,
+          "rss_anon_kb": 85448,
+          "heap_in_use_kb": 30643,
+          "heap_free_kb": 66280
+        },
+        {
+          "rss_kb": 125752,
+          "rss_anon_kb": 85448,
+          "heap_in_use_kb": 30865,
+          "heap_free_kb": 66058
+        },
+        {
+          "rss_kb": 125752,
+          "rss_anon_kb": 85448,
+          "heap_in_use_kb": 30316,
+          "heap_free_kb": 66607
+        },
+        {
+          "rss_kb": 125792,
+          "rss_anon_kb": 85488,
+          "heap_in_use_kb": 30395,
+          "heap_free_kb": 66692
+        },
+        {
+          "rss_kb": 125812,
+          "rss_anon_kb": 85508,
+          "heap_in_use_kb": 30266,
+          "heap_free_kb": 66821
+        },
+        {
+          "rss_kb": 125820,
+          "rss_anon_kb": 85516,
+          "heap_in_use_kb": 30173,
+          "heap_free_kb": 66914
+        },
+        {
+          "rss_kb": 125896,
+          "rss_anon_kb": 85592,
+          "heap_in_use_kb": 30735,
+          "heap_free_kb": 66352
+        },
+        {
+          "rss_kb": 126548,
+          "rss_anon_kb": 86244,
+          "heap_in_use_kb": 30482,
+          "heap_free_kb": 66957
+        },
+        {
+          "rss_kb": 126548,
+          "rss_anon_kb": 86244,
+          "heap_in_use_kb": 30726,
+          "heap_free_kb": 66713
+        },
+        {
+          "rss_kb": 126576,
+          "rss_anon_kb": 86272,
+          "heap_in_use_kb": 30934,
+          "heap_free_kb": 66505
+        },
+        {
+          "rss_kb": 129176,
+          "rss_anon_kb": 88872,
+          "heap_in_use_kb": 31097,
+          "heap_free_kb": 69862
+        },
+        {
+          "rss_kb": 129236,
+          "rss_anon_kb": 88932,
+          "heap_in_use_kb": 30491,
+          "heap_free_kb": 70468
+        },
+        {
+          "rss_kb": 129236,
+          "rss_anon_kb": 88932,
+          "heap_in_use_kb": 30370,
+          "heap_free_kb": 70589
+        },
+        {
+          "rss_kb": 129392,
+          "rss_anon_kb": 89088,
+          "heap_in_use_kb": 30682,
+          "heap_free_kb": 70277
+        },
+        {
+          "rss_kb": 129392,
+          "rss_anon_kb": 89088,
+          "heap_in_use_kb": 30976,
+          "heap_free_kb": 69983
+        },
+        {
+          "rss_kb": 129392,
+          "rss_anon_kb": 89088,
+          "heap_in_use_kb": 31147,
+          "heap_free_kb": 69812
+        },
+        {
+          "rss_kb": 129460,
+          "rss_anon_kb": 89156,
+          "heap_in_use_kb": 31311,
+          "heap_free_kb": 69648
+        },
+        {
+          "rss_kb": 129464,
+          "rss_anon_kb": 89160,
+          "heap_in_use_kb": 31176,
+          "heap_free_kb": 69783
+        },
+        {
+          "rss_kb": 129520,
+          "rss_anon_kb": 89216,
+          "heap_in_use_kb": 31035,
+          "heap_free_kb": 70108
+        },
+        {
+          "rss_kb": 129736,
+          "rss_anon_kb": 89432,
+          "heap_in_use_kb": 31053,
+          "heap_free_kb": 70198
+        },
+        {
+          "rss_kb": 129736,
+          "rss_anon_kb": 89432,
+          "heap_in_use_kb": 31016,
+          "heap_free_kb": 70235
+        },
+        {
+          "rss_kb": 129796,
+          "rss_anon_kb": 89492,
+          "heap_in_use_kb": 31031,
+          "heap_free_kb": 70220
+        },
+        {
+          "rss_kb": 129796,
+          "rss_anon_kb": 89492,
+          "heap_in_use_kb": 31085,
+          "heap_free_kb": 70166
+        },
+        {
+          "rss_kb": 129812,
+          "rss_anon_kb": 89508,
+          "heap_in_use_kb": 31068,
+          "heap_free_kb": 70183
+        },
+        {
+          "rss_kb": 129812,
+          "rss_anon_kb": 89508,
+          "heap_in_use_kb": 31067,
+          "heap_free_kb": 70184
+        },
+        {
+          "rss_kb": 129812,
+          "rss_anon_kb": 89508,
+          "heap_in_use_kb": 31124,
+          "heap_free_kb": 70127
+        },
+        {
+          "rss_kb": 129812,
+          "rss_anon_kb": 89508,
+          "heap_in_use_kb": 31075,
+          "heap_free_kb": 70176
+        },
+        {
+          "rss_kb": 129812,
+          "rss_anon_kb": 89508,
+          "heap_in_use_kb": 31154,
+          "heap_free_kb": 70097
+        },
+        {
+          "rss_kb": 129812,
+          "rss_anon_kb": 89508,
+          "heap_in_use_kb": 31194,
+          "heap_free_kb": 70057
+        },
+        {
+          "rss_kb": 129812,
+          "rss_anon_kb": 89508,
+          "heap_in_use_kb": 31131,
+          "heap_free_kb": 70120
+        },
+        {
+          "rss_kb": 129888,
+          "rss_anon_kb": 89584,
+          "heap_in_use_kb": 31482,
+          "heap_free_kb": 69773
+        },
+        {
+          "rss_kb": 129892,
+          "rss_anon_kb": 89588,
+          "heap_in_use_kb": 31429,
+          "heap_free_kb": 69826
+        },
+        {
+          "rss_kb": 129960,
+          "rss_anon_kb": 89656,
+          "heap_in_use_kb": 31212,
+          "heap_free_kb": 70111
+        },
+        {
+          "rss_kb": 129960,
+          "rss_anon_kb": 89656,
+          "heap_in_use_kb": 31355,
+          "heap_free_kb": 69969
+        },
+        {
+          "rss_kb": 129968,
+          "rss_anon_kb": 89664,
+          "heap_in_use_kb": 31472,
+          "heap_free_kb": 70023
+        },
+        {
+          "rss_kb": 129968,
+          "rss_anon_kb": 89664,
+          "heap_in_use_kb": 31609,
+          "heap_free_kb": 69886
+        },
+        {
+          "rss_kb": 129968,
+          "rss_anon_kb": 89664,
+          "heap_in_use_kb": 31271,
+          "heap_free_kb": 70225
+        },
+        {
+          "rss_kb": 130296,
+          "rss_anon_kb": 89992,
+          "heap_in_use_kb": 31574,
+          "heap_free_kb": 70253
+        },
+        {
+          "rss_kb": 130296,
+          "rss_anon_kb": 89992,
+          "heap_in_use_kb": 31566,
+          "heap_free_kb": 70261
+        },
+        {
+          "rss_kb": 130296,
+          "rss_anon_kb": 89992,
+          "heap_in_use_kb": 31999,
+          "heap_free_kb": 69828
+        },
+        {
+          "rss_kb": 130296,
+          "rss_anon_kb": 89992,
+          "heap_in_use_kb": 31958,
+          "heap_free_kb": 69869
+        },
+        {
+          "rss_kb": 130300,
+          "rss_anon_kb": 89996,
+          "heap_in_use_kb": 32019,
+          "heap_free_kb": 69808
+        },
+        {
+          "rss_kb": 130540,
+          "rss_anon_kb": 90236,
+          "heap_in_use_kb": 31180,
+          "heap_free_kb": 70887
+        },
+        {
+          "rss_kb": 130552,
+          "rss_anon_kb": 90248,
+          "heap_in_use_kb": 31467,
+          "heap_free_kb": 70600
+        },
+        {
+          "rss_kb": 130580,
+          "rss_anon_kb": 90276,
+          "heap_in_use_kb": 31553,
+          "heap_free_kb": 70514
+        },
+        {
+          "rss_kb": 130580,
+          "rss_anon_kb": 90276,
+          "heap_in_use_kb": 31410,
+          "heap_free_kb": 70657
+        },
+        {
+          "rss_kb": 130580,
+          "rss_anon_kb": 90276,
+          "heap_in_use_kb": 32081,
+          "heap_free_kb": 69986
+        },
+        {
+          "rss_kb": 130580,
+          "rss_anon_kb": 90276,
+          "heap_in_use_kb": 31259,
+          "heap_free_kb": 70808
+        },
+        {
+          "rss_kb": 130580,
+          "rss_anon_kb": 90276,
+          "heap_in_use_kb": 31264,
+          "heap_free_kb": 70803
+        },
+        {
+          "rss_kb": 130580,
+          "rss_anon_kb": 90276,
+          "heap_in_use_kb": 31201,
+          "heap_free_kb": 70866
+        },
+        {
+          "rss_kb": 131008,
+          "rss_anon_kb": 90704,
+          "heap_in_use_kb": 31926,
+          "heap_free_kb": 70273
+        },
+        {
+          "rss_kb": 131008,
+          "rss_anon_kb": 90704,
+          "heap_in_use_kb": 31647,
+          "heap_free_kb": 70552
+        },
+        {
+          "rss_kb": 131088,
+          "rss_anon_kb": 90784,
+          "heap_in_use_kb": 31861,
+          "heap_free_kb": 70534
+        },
+        {
+          "rss_kb": 131096,
+          "rss_anon_kb": 90792,
+          "heap_in_use_kb": 31472,
+          "heap_free_kb": 70923
+        },
+        {
+          "rss_kb": 131284,
+          "rss_anon_kb": 90980,
+          "heap_in_use_kb": 31877,
+          "heap_free_kb": 70622
+        },
+        {
+          "rss_kb": 131288,
+          "rss_anon_kb": 90984,
+          "heap_in_use_kb": 31795,
+          "heap_free_kb": 70704
+        },
+        {
+          "rss_kb": 131288,
+          "rss_anon_kb": 90984,
+          "heap_in_use_kb": 31878,
+          "heap_free_kb": 70621
+        },
+        {
+          "rss_kb": 131288,
+          "rss_anon_kb": 90984,
+          "heap_in_use_kb": 32029,
+          "heap_free_kb": 70470
+        },
+        {
+          "rss_kb": 131296,
+          "rss_anon_kb": 90992,
+          "heap_in_use_kb": 31704,
+          "heap_free_kb": 71019
+        },
+        {
+          "rss_kb": 131300,
+          "rss_anon_kb": 90996,
+          "heap_in_use_kb": 31578,
+          "heap_free_kb": 71177
+        },
+        {
+          "rss_kb": 131300,
+          "rss_anon_kb": 90996,
+          "heap_in_use_kb": 30989,
+          "heap_free_kb": 71766
+        },
+        {
+          "rss_kb": 131348,
+          "rss_anon_kb": 91044,
+          "heap_in_use_kb": 31907,
+          "heap_free_kb": 70848
+        },
+        {
+          "rss_kb": 131348,
+          "rss_anon_kb": 91044,
+          "heap_in_use_kb": 31217,
+          "heap_free_kb": 71539
+        },
+        {
+          "rss_kb": 131348,
+          "rss_anon_kb": 91044,
+          "heap_in_use_kb": 31647,
+          "heap_free_kb": 71108
+        }
+      ],
+      "stats_ready": {
+        "rss_kb": 107428,
+        "peak_rss_kb": 285896,
+        "rss_anon_kb": 67652,
+        "rss_file_kb": 39616,
+        "heap_in_use_kb": 26484,
+        "heap_free_kb": 49256,
+        "cpu_user_ms": 1351,
+        "cpu_sys_ms": 285,
+        "threads": 41,
+        "data_bytes": 13502256,
+        "link_sent": 5135,
+        "link_received": 3790,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 131348,
+        "peak_rss_kb": 285896,
+        "rss_anon_kb": 91044,
+        "rss_file_kb": 40144,
+        "heap_in_use_kb": 31337,
+        "heap_free_kb": 71418,
+        "cpu_user_ms": 6400,
+        "cpu_sys_ms": 1287,
+        "threads": 42,
+        "data_bytes": 22874280,
+        "link_sent": 529189,
+        "link_received": 3586308,
+        "link_connects": 1
+      },
+      "stats_idle_start": {
+        "rss_kb": 131424,
+        "peak_rss_kb": 285896,
+        "rss_anon_kb": 90960,
+        "rss_file_kb": 40336,
+        "heap_in_use_kb": 30472,
+        "heap_free_kb": 72283,
+        "cpu_user_ms": 6850,
+        "cpu_sys_ms": 1372,
+        "threads": 38,
+        "data_bytes": 23361408,
+        "link_sent": 529288,
+        "link_received": 3590470,
+        "link_connects": 1
+      },
+      "stats_after_idle": {
+        "rss_kb": 131612,
+        "peak_rss_kb": 285896,
+        "rss_anon_kb": 90960,
+        "rss_file_kb": 40588,
+        "heap_in_use_kb": 22823,
+        "heap_free_kb": 79932,
+        "cpu_user_ms": 6862,
+        "cpu_sys_ms": 1372,
+        "threads": 28,
+        "data_bytes": 8734976,
+        "link_sent": 529288,
+        "link_received": 3590470,
+        "link_connects": 1
+      },
+      "settle_secs": 30,
+      "idle_secs": 60,
+      "idle_cpu_samples": [
+        12.0
+      ],
+      "idle_threads": [
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 2,
+          "cpu_ms_per_min": 4.152,
+          "wakeups_per_min": 8.0
+        },
+        {
+          "name": "tokio-rt-worker",
+          "threads": 13,
+          "cpu_ms_per_min": 4.113,
+          "wakeups_per_min": 103.0
+        },
+        {
+          "name": "h2hc-phone",
+          "threads": 1,
+          "cpu_ms_per_min": 1.381,
+          "wakeups_per_min": 3.0
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 12,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": 0,
+      "idle_frames": {},
+      "errors": []
+    },
+    {
+      "network": "kitsune2",
+      "wasm": "wasmi",
+      "env": [],
+      "keystore": "lair",
+      "iterations": 100,
+      "startup_ms": 1445.085686,
+      "install_ms": 80.69230300000001,
+      "enable_ms": 47.502433,
+      "first_call_ms": 53.65645,
+      "network_ready_ms": 3064.884911,
+      "latency": {
+        "create note (local commit)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 9.255757,
+          "p95": 10.642418,
+          "min": 8.00334,
+          "max": 11.948569,
+          "mean": 9.322590990000002
+        },
+        "get authority's note (first fetch)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 4.708935,
+          "p95": 5.783092,
+          "min": 3.595041,
+          "max": 6.332341,
+          "mean": 4.7279762199999995
+        },
+        "get links (authority's notes)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 14.727396,
+          "p95": 27.017762,
+          "min": 11.79002,
+          "max": 30.780498,
+          "mean": 18.028776890000003
+        },
+        "get own note": {
+          "n": 100,
+          "failures": 0,
+          "p50": 3.197946,
+          "p95": 4.23152,
+          "min": 1.876569,
+          "max": 4.722622,
+          "mean": 3.19554816
+        },
+        "phone note visible at an authority": {
+          "n": 2,
+          "failures": 0,
+          "p50": 572.818718,
+          "p95": 572.818718,
+          "min": 34.043223,
+          "max": 572.818718,
+          "mean": 303.4309705
+        },
+        "remote call authority to phone": {
+          "n": 100,
+          "failures": 0,
+          "p50": 7.504561,
+          "p95": 9.212200000000001,
+          "min": 6.044296999999999,
+          "max": 13.626263,
+          "mean": 7.654709840000004
+        },
+        "remote call phone to authority": {
+          "n": 100,
+          "failures": 0,
+          "p50": 7.480907,
+          "p95": 9.194083,
+          "min": 6.010814,
+          "max": 30.751492,
+          "mean": 7.8147352099999985
+        },
+        "signal round trip authority to phone": {
+          "n": 100,
+          "failures": 0,
+          "p50": 10.341547,
+          "p95": 13.537632,
+          "min": 7.708258,
+          "max": 639.273242,
+          "mean": 16.941425070000005
+        },
+        "signal round trip phone to authority": {
+          "n": 100,
+          "failures": 0,
+          "p50": 9.354067,
+          "p95": 11.74168,
+          "min": 6.589894,
+          "max": 550.4083410000001,
+          "mean": 14.720104849999998
+        },
+        "validation receipts for every op": {
+          "n": 2,
+          "failures": 0,
+          "p50": 8404.43035,
+          "p95": 8404.43035,
+          "min": 3381.319795,
+          "max": 8404.43035,
+          "mean": 5892.8750725
+        }
+      },
+      "memory": [
+        {
+          "rss_kb": 135396,
+          "rss_anon_kb": 84436,
+          "heap_in_use_kb": 33963,
+          "heap_free_kb": 73728
+        },
+        {
+          "rss_kb": 139924,
+          "rss_anon_kb": 88964,
+          "heap_in_use_kb": 34810,
+          "heap_free_kb": 78714
+        },
+        {
+          "rss_kb": 141772,
+          "rss_anon_kb": 90812,
+          "heap_in_use_kb": 35138,
+          "heap_free_kb": 78761
+        },
+        {
+          "rss_kb": 142920,
+          "rss_anon_kb": 91960,
+          "heap_in_use_kb": 35396,
+          "heap_free_kb": 79187
+        },
+        {
+          "rss_kb": 143660,
+          "rss_anon_kb": 92700,
+          "heap_in_use_kb": 35560,
+          "heap_free_kb": 79291
+        },
+        {
+          "rss_kb": 144728,
+          "rss_anon_kb": 93768,
+          "heap_in_use_kb": 35080,
+          "heap_free_kb": 81291
+        },
+        {
+          "rss_kb": 145116,
+          "rss_anon_kb": 94156,
+          "heap_in_use_kb": 35091,
+          "heap_free_kb": 81732
+        },
+        {
+          "rss_kb": 145384,
+          "rss_anon_kb": 94424,
+          "heap_in_use_kb": 35943,
+          "heap_free_kb": 80884
+        },
+        {
+          "rss_kb": 145748,
+          "rss_anon_kb": 94788,
+          "heap_in_use_kb": 35374,
+          "heap_free_kb": 81493
+        },
+        {
+          "rss_kb": 145892,
+          "rss_anon_kb": 94932,
+          "heap_in_use_kb": 35824,
+          "heap_free_kb": 81251
+        },
+        {
+          "rss_kb": 145960,
+          "rss_anon_kb": 95000,
+          "heap_in_use_kb": 36275,
+          "heap_free_kb": 80968
+        },
+        {
+          "rss_kb": 145968,
+          "rss_anon_kb": 95008,
+          "heap_in_use_kb": 36348,
+          "heap_free_kb": 80895
+        },
+        {
+          "rss_kb": 146168,
+          "rss_anon_kb": 95208,
+          "heap_in_use_kb": 36391,
+          "heap_free_kb": 81072
+        },
+        {
+          "rss_kb": 146172,
+          "rss_anon_kb": 95212,
+          "heap_in_use_kb": 36540,
+          "heap_free_kb": 80927
+        },
+        {
+          "rss_kb": 146356,
+          "rss_anon_kb": 95396,
+          "heap_in_use_kb": 36581,
+          "heap_free_kb": 81074
+        },
+        {
+          "rss_kb": 146360,
+          "rss_anon_kb": 95400,
+          "heap_in_use_kb": 36733,
+          "heap_free_kb": 80926
+        },
+        {
+          "rss_kb": 146664,
+          "rss_anon_kb": 95704,
+          "heap_in_use_kb": 36837,
+          "heap_free_kb": 80822
+        },
+        {
+          "rss_kb": 146664,
+          "rss_anon_kb": 95704,
+          "heap_in_use_kb": 36837,
+          "heap_free_kb": 80822
+        },
+        {
+          "rss_kb": 146708,
+          "rss_anon_kb": 95748,
+          "heap_in_use_kb": 36873,
+          "heap_free_kb": 80830
+        },
+        {
+          "rss_kb": 147776,
+          "rss_anon_kb": 96816,
+          "heap_in_use_kb": 37017,
+          "heap_free_kb": 81038
+        },
+        {
+          "rss_kb": 147780,
+          "rss_anon_kb": 96820,
+          "heap_in_use_kb": 37028,
+          "heap_free_kb": 81071
+        },
+        {
+          "rss_kb": 148012,
+          "rss_anon_kb": 97052,
+          "heap_in_use_kb": 37105,
+          "heap_free_kb": 81071
+        },
+        {
+          "rss_kb": 150176,
+          "rss_anon_kb": 99216,
+          "heap_in_use_kb": 37221,
+          "heap_free_kb": 82694
+        },
+        {
+          "rss_kb": 150176,
+          "rss_anon_kb": 99216,
+          "heap_in_use_kb": 37201,
+          "heap_free_kb": 82714
+        },
+        {
+          "rss_kb": 150284,
+          "rss_anon_kb": 99324,
+          "heap_in_use_kb": 37258,
+          "heap_free_kb": 82665
+        },
+        {
+          "rss_kb": 151284,
+          "rss_anon_kb": 100324,
+          "heap_in_use_kb": 37287,
+          "heap_free_kb": 83748
+        },
+        {
+          "rss_kb": 151312,
+          "rss_anon_kb": 100352,
+          "heap_in_use_kb": 37376,
+          "heap_free_kb": 83671
+        },
+        {
+          "rss_kb": 151312,
+          "rss_anon_kb": 100352,
+          "heap_in_use_kb": 37350,
+          "heap_free_kb": 83697
+        },
+        {
+          "rss_kb": 151668,
+          "rss_anon_kb": 100708,
+          "heap_in_use_kb": 37399,
+          "heap_free_kb": 84016
+        },
+        {
+          "rss_kb": 151672,
+          "rss_anon_kb": 100712,
+          "heap_in_use_kb": 37363,
+          "heap_free_kb": 84056
+        },
+        {
+          "rss_kb": 151884,
+          "rss_anon_kb": 100924,
+          "heap_in_use_kb": 37406,
+          "heap_free_kb": 84229
+        },
+        {
+          "rss_kb": 151960,
+          "rss_anon_kb": 101000,
+          "heap_in_use_kb": 37495,
+          "heap_free_kb": 84240
+        },
+        {
+          "rss_kb": 151964,
+          "rss_anon_kb": 101004,
+          "heap_in_use_kb": 37547,
+          "heap_free_kb": 84188
+        },
+        {
+          "rss_kb": 152084,
+          "rss_anon_kb": 101124,
+          "heap_in_use_kb": 37488,
+          "heap_free_kb": 84247
+        },
+        {
+          "rss_kb": 152084,
+          "rss_anon_kb": 101124,
+          "heap_in_use_kb": 37643,
+          "heap_free_kb": 84092
+        },
+        {
+          "rss_kb": 152092,
+          "rss_anon_kb": 101132,
+          "heap_in_use_kb": 37622,
+          "heap_free_kb": 84121
+        },
+        {
+          "rss_kb": 152224,
+          "rss_anon_kb": 101264,
+          "heap_in_use_kb": 37683,
+          "heap_free_kb": 84060
+        },
+        {
+          "rss_kb": 152300,
+          "rss_anon_kb": 101340,
+          "heap_in_use_kb": 37659,
+          "heap_free_kb": 84092
+        },
+        {
+          "rss_kb": 152300,
+          "rss_anon_kb": 101340,
+          "heap_in_use_kb": 37730,
+          "heap_free_kb": 84021
+        },
+        {
+          "rss_kb": 152300,
+          "rss_anon_kb": 101340,
+          "heap_in_use_kb": 37641,
+          "heap_free_kb": 84110
+        },
+        {
+          "rss_kb": 152340,
+          "rss_anon_kb": 101380,
+          "heap_in_use_kb": 37634,
+          "heap_free_kb": 84125
+        },
+        {
+          "rss_kb": 152368,
+          "rss_anon_kb": 101408,
+          "heap_in_use_kb": 37777,
+          "heap_free_kb": 83982
+        },
+        {
+          "rss_kb": 152368,
+          "rss_anon_kb": 101408,
+          "heap_in_use_kb": 37797,
+          "heap_free_kb": 83962
+        },
+        {
+          "rss_kb": 152368,
+          "rss_anon_kb": 101408,
+          "heap_in_use_kb": 37901,
+          "heap_free_kb": 83858
+        },
+        {
+          "rss_kb": 152396,
+          "rss_anon_kb": 101436,
+          "heap_in_use_kb": 37776,
+          "heap_free_kb": 83983
+        },
+        {
+          "rss_kb": 152396,
+          "rss_anon_kb": 101436,
+          "heap_in_use_kb": 37848,
+          "heap_free_kb": 83911
+        },
+        {
+          "rss_kb": 152424,
+          "rss_anon_kb": 101464,
+          "heap_in_use_kb": 38136,
+          "heap_free_kb": 83623
+        },
+        {
+          "rss_kb": 152748,
+          "rss_anon_kb": 101788,
+          "heap_in_use_kb": 37979,
+          "heap_free_kb": 84252
+        },
+        {
+          "rss_kb": 152752,
+          "rss_anon_kb": 101792,
+          "heap_in_use_kb": 38020,
+          "heap_free_kb": 84211
+        },
+        {
+          "rss_kb": 152752,
+          "rss_anon_kb": 101792,
+          "heap_in_use_kb": 38098,
+          "heap_free_kb": 84133
+        },
+        {
+          "rss_kb": 152752,
+          "rss_anon_kb": 101792,
+          "heap_in_use_kb": 38057,
+          "heap_free_kb": 84174
+        },
+        {
+          "rss_kb": 152768,
+          "rss_anon_kb": 101808,
+          "heap_in_use_kb": 38080,
+          "heap_free_kb": 84159
+        },
+        {
+          "rss_kb": 152776,
+          "rss_anon_kb": 101816,
+          "heap_in_use_kb": 38119,
+          "heap_free_kb": 84120
+        },
+        {
+          "rss_kb": 153004,
+          "rss_anon_kb": 102044,
+          "heap_in_use_kb": 38115,
+          "heap_free_kb": 84600
+        },
+        {
+          "rss_kb": 153012,
+          "rss_anon_kb": 102052,
+          "heap_in_use_kb": 38080,
+          "heap_free_kb": 84643
+        },
+        {
+          "rss_kb": 153508,
+          "rss_anon_kb": 102548,
+          "heap_in_use_kb": 38188,
+          "heap_free_kb": 84783
+        },
+        {
+          "rss_kb": 153632,
+          "rss_anon_kb": 102672,
+          "heap_in_use_kb": 38130,
+          "heap_free_kb": 84897
+        },
+        {
+          "rss_kb": 153636,
+          "rss_anon_kb": 102676,
+          "heap_in_use_kb": 38131,
+          "heap_free_kb": 84896
+        },
+        {
+          "rss_kb": 153636,
+          "rss_anon_kb": 102676,
+          "heap_in_use_kb": 38204,
+          "heap_free_kb": 84823
+        },
+        {
+          "rss_kb": 153716,
+          "rss_anon_kb": 102756,
+          "heap_in_use_kb": 38349,
+          "heap_free_kb": 84754
+        },
+        {
+          "rss_kb": 153720,
+          "rss_anon_kb": 102760,
+          "heap_in_use_kb": 38170,
+          "heap_free_kb": 84933
+        },
+        {
+          "rss_kb": 153724,
+          "rss_anon_kb": 102764,
+          "heap_in_use_kb": 38205,
+          "heap_free_kb": 84902
+        },
+        {
+          "rss_kb": 153724,
+          "rss_anon_kb": 102764,
+          "heap_in_use_kb": 38224,
+          "heap_free_kb": 84883
+        },
+        {
+          "rss_kb": 153728,
+          "rss_anon_kb": 102768,
+          "heap_in_use_kb": 38134,
+          "heap_free_kb": 84973
+        },
+        {
+          "rss_kb": 153744,
+          "rss_anon_kb": 102784,
+          "heap_in_use_kb": 38236,
+          "heap_free_kb": 84875
+        },
+        {
+          "rss_kb": 154028,
+          "rss_anon_kb": 103068,
+          "heap_in_use_kb": 38149,
+          "heap_free_kb": 85214
+        },
+        {
+          "rss_kb": 154036,
+          "rss_anon_kb": 103076,
+          "heap_in_use_kb": 38228,
+          "heap_free_kb": 85143
+        },
+        {
+          "rss_kb": 154036,
+          "rss_anon_kb": 103076,
+          "heap_in_use_kb": 38369,
+          "heap_free_kb": 85002
+        },
+        {
+          "rss_kb": 154080,
+          "rss_anon_kb": 103120,
+          "heap_in_use_kb": 38270,
+          "heap_free_kb": 85269
+        },
+        {
+          "rss_kb": 154116,
+          "rss_anon_kb": 103156,
+          "heap_in_use_kb": 38560,
+          "heap_free_kb": 85167
+        },
+        {
+          "rss_kb": 154320,
+          "rss_anon_kb": 103360,
+          "heap_in_use_kb": 38433,
+          "heap_free_kb": 85678
+        },
+        {
+          "rss_kb": 155108,
+          "rss_anon_kb": 104148,
+          "heap_in_use_kb": 38360,
+          "heap_free_kb": 86551
+        },
+        {
+          "rss_kb": 155112,
+          "rss_anon_kb": 104152,
+          "heap_in_use_kb": 38374,
+          "heap_free_kb": 86541
+        },
+        {
+          "rss_kb": 155112,
+          "rss_anon_kb": 104152,
+          "heap_in_use_kb": 38513,
+          "heap_free_kb": 86402
+        },
+        {
+          "rss_kb": 155112,
+          "rss_anon_kb": 104152,
+          "heap_in_use_kb": 38372,
+          "heap_free_kb": 86543
+        },
+        {
+          "rss_kb": 155280,
+          "rss_anon_kb": 104320,
+          "heap_in_use_kb": 38410,
+          "heap_free_kb": 86509
+        },
+        {
+          "rss_kb": 155324,
+          "rss_anon_kb": 104364,
+          "heap_in_use_kb": 38592,
+          "heap_free_kb": 86363
+        },
+        {
+          "rss_kb": 155332,
+          "rss_anon_kb": 104372,
+          "heap_in_use_kb": 38456,
+          "heap_free_kb": 86503
+        },
+        {
+          "rss_kb": 155376,
+          "rss_anon_kb": 104416,
+          "heap_in_use_kb": 38518,
+          "heap_free_kb": 86441
+        },
+        {
+          "rss_kb": 155404,
+          "rss_anon_kb": 104444,
+          "heap_in_use_kb": 38682,
+          "heap_free_kb": 86289
+        },
+        {
+          "rss_kb": 155404,
+          "rss_anon_kb": 104444,
+          "heap_in_use_kb": 38547,
+          "heap_free_kb": 86424
+        },
+        {
+          "rss_kb": 155408,
+          "rss_anon_kb": 104448,
+          "heap_in_use_kb": 38568,
+          "heap_free_kb": 86407
+        },
+        {
+          "rss_kb": 155584,
+          "rss_anon_kb": 104624,
+          "heap_in_use_kb": 38733,
+          "heap_free_kb": 86562
+        },
+        {
+          "rss_kb": 155584,
+          "rss_anon_kb": 104624,
+          "heap_in_use_kb": 38610,
+          "heap_free_kb": 86685
+        },
+        {
+          "rss_kb": 155584,
+          "rss_anon_kb": 104624,
+          "heap_in_use_kb": 38604,
+          "heap_free_kb": 86691
+        },
+        {
+          "rss_kb": 155584,
+          "rss_anon_kb": 104624,
+          "heap_in_use_kb": 38761,
+          "heap_free_kb": 86534
+        },
+        {
+          "rss_kb": 155668,
+          "rss_anon_kb": 104708,
+          "heap_in_use_kb": 38811,
+          "heap_free_kb": 86484
+        },
+        {
+          "rss_kb": 155680,
+          "rss_anon_kb": 104720,
+          "heap_in_use_kb": 38841,
+          "heap_free_kb": 86466
+        },
+        {
+          "rss_kb": 155680,
+          "rss_anon_kb": 104720,
+          "heap_in_use_kb": 38832,
+          "heap_free_kb": 86475
+        },
+        {
+          "rss_kb": 155684,
+          "rss_anon_kb": 104724,
+          "heap_in_use_kb": 38741,
+          "heap_free_kb": 86566
+        },
+        {
+          "rss_kb": 155688,
+          "rss_anon_kb": 104728,
+          "heap_in_use_kb": 38786,
+          "heap_free_kb": 86521
+        },
+        {
+          "rss_kb": 155844,
+          "rss_anon_kb": 104884,
+          "heap_in_use_kb": 38895,
+          "heap_free_kb": 86412
+        },
+        {
+          "rss_kb": 155852,
+          "rss_anon_kb": 104892,
+          "heap_in_use_kb": 38734,
+          "heap_free_kb": 86577
+        },
+        {
+          "rss_kb": 155984,
+          "rss_anon_kb": 105024,
+          "heap_in_use_kb": 38748,
+          "heap_free_kb": 86563
+        },
+        {
+          "rss_kb": 156048,
+          "rss_anon_kb": 105088,
+          "heap_in_use_kb": 38925,
+          "heap_free_kb": 86402
+        },
+        {
+          "rss_kb": 156048,
+          "rss_anon_kb": 105088,
+          "heap_in_use_kb": 38783,
+          "heap_free_kb": 86544
+        },
+        {
+          "rss_kb": 156060,
+          "rss_anon_kb": 105100,
+          "heap_in_use_kb": 38782,
+          "heap_free_kb": 86557
+        },
+        {
+          "rss_kb": 157116,
+          "rss_anon_kb": 106156,
+          "heap_in_use_kb": 38981,
+          "heap_free_kb": 87570
+        },
+        {
+          "rss_kb": 157116,
+          "rss_anon_kb": 106156,
+          "heap_in_use_kb": 38821,
+          "heap_free_kb": 87730
+        },
+        {
+          "rss_kb": 157180,
+          "rss_anon_kb": 106220,
+          "heap_in_use_kb": 38840,
+          "heap_free_kb": 87711
+        }
+      ],
+      "stats_ready": {
+        "rss_kb": 128932,
+        "peak_rss_kb": 285352,
+        "rss_anon_kb": 78676,
+        "rss_file_kb": 50096,
+        "heap_in_use_kb": 33232,
+        "heap_free_kb": 65320,
+        "cpu_user_ms": 1553,
+        "cpu_sys_ms": 372,
+        "threads": 45,
+        "data_bytes": 13683548,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_after_workload": {
+        "rss_kb": 157208,
+        "peak_rss_kb": 285352,
+        "rss_anon_kb": 106248,
+        "rss_file_kb": 50800,
+        "heap_in_use_kb": 37110,
+        "heap_free_kb": 89441,
+        "cpu_user_ms": 8055,
+        "cpu_sys_ms": 1747,
+        "threads": 46,
+        "data_bytes": 23459756,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_idle_start": {
+        "rss_kb": 157296,
+        "peak_rss_kb": 285352,
+        "rss_anon_kb": 106144,
+        "rss_file_kb": 51024,
+        "heap_in_use_kb": 31819,
+        "heap_free_kb": 94732,
+        "cpu_user_ms": 8072,
+        "cpu_sys_ms": 1753,
+        "threads": 41,
+        "data_bytes": 17102756,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "stats_after_idle": {
+        "rss_kb": 157312,
+        "peak_rss_kb": 285352,
+        "rss_anon_kb": 106144,
+        "rss_file_kb": 51072,
+        "heap_in_use_kb": 29579,
+        "heap_free_kb": 96972,
+        "cpu_user_ms": 8118,
+        "cpu_sys_ms": 1771,
+        "threads": 32,
+        "data_bytes": 13036404,
+        "link_sent": 0,
+        "link_received": 0,
+        "link_connects": 0
+      },
+      "settle_secs": 30,
+      "idle_secs": 60,
+      "idle_cpu_samples": [
+        64.0
+      ],
+      "idle_threads": [
+        {
+          "name": "tokio-rt-worker",
+          "threads": 13,
+          "cpu_ms_per_min": 34.163,
+          "wakeups_per_min": 886.0
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 12,
+          "cpu_ms_per_min": 20.612000000000002,
+          "wakeups_per_min": 636.0
+        },
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 6,
+          "cpu_ms_per_min": 5.257000000000001,
+          "wakeups_per_min": 92.0
+        },
+        {
+          "name": "h2hc-phone",
+          "threads": 1,
+          "cpu_ms_per_min": 1.63,
+          "wakeups_per_min": 3.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": null,
+      "idle_frames": {},
+      "errors": []
+    },
+    {
+      "network": "h2hc",
+      "wasm": "cranelift",
+      "env": [],
+      "keystore": "lair",
+      "iterations": 100,
+      "startup_ms": 1453.408814,
+      "install_ms": 503.80306,
+      "enable_ms": 50.450813,
+      "first_call_ms": 778.799858,
+      "network_ready_ms": 1982.7852670000002,
+      "latency": {
+        "create note (local commit)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 18.174595,
+          "p95": 22.624939,
+          "min": 15.788256,
+          "max": 25.243605,
+          "mean": 18.61328411
+        },
+        "get authority's note (first fetch)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 4.720613999999999,
+          "p95": 6.536677999999999,
+          "min": 3.521347,
+          "max": 7.2801,
+          "mean": 4.8862287900000005
+        },
+        "get links (authority's notes)": {
+          "n": 100,
+          "failures": 0,
+          "p50": 20.27835,
+          "p95": 32.833394,
+          "min": 17.103302,
+          "max": 40.132929,
+          "mean": 23.7747662
+        },
+        "get own note": {
+          "n": 100,
+          "failures": 0,
+          "p50": 3.470851,
+          "p95": 4.753747,
+          "min": 2.1791359999999997,
+          "max": 5.175958,
+          "mean": 3.4792354000000016
+        },
+        "phone note visible at an authority": {
+          "n": 2,
+          "failures": 0,
+          "p50": 59.837258999999996,
+          "p95": 59.837258999999996,
+          "min": 36.763289,
+          "max": 59.837258999999996,
+          "mean": 48.300274
+        },
+        "remote call authority to phone": {
+          "n": 100,
+          "failures": 0,
+          "p50": 9.814543,
+          "p95": 13.146474,
+          "min": 7.80124,
+          "max": 40.325556,
+          "mean": 10.453181610000001
+        },
+        "remote call phone to authority": {
+          "n": 100,
+          "failures": 0,
+          "p50": 10.354135,
+          "p95": 13.288078,
+          "min": 8.304069,
+          "max": 22.290633,
+          "mean": 10.759575690000002
+        },
+        "signal round trip authority to phone": {
+          "n": 100,
+          "failures": 0,
+          "p50": 14.248189,
+          "p95": 20.365157,
+          "min": 10.947378,
+          "max": 123.765343,
+          "mean": 16.125053969999996
+        },
+        "signal round trip phone to authority": {
+          "n": 100,
+          "failures": 0,
+          "p50": 12.751371,
+          "p95": 17.612279,
+          "min": 9.460987,
+          "max": 26.511885,
+          "mean": 13.129732649999996
+        },
+        "validation receipts for every op": {
+          "n": 2,
+          "failures": 0,
+          "p50": 9608.525653,
+          "p95": 9608.525653,
+          "min": 8045.632083999999,
+          "max": 9608.525653,
+          "mean": 8827.0788685
+        }
+      },
+      "memory": [
+        {
+          "rss_kb": 445548,
+          "rss_anon_kb": 401360,
+          "heap_in_use_kb": 77779,
+          "heap_free_kb": 314872
+        },
+        {
+          "rss_kb": 446472,
+          "rss_anon_kb": 402284,
+          "heap_in_use_kb": 78027,
+          "heap_free_kb": 315544
+        },
+        {
+          "rss_kb": 447288,
+          "rss_anon_kb": 403100,
+          "heap_in_use_kb": 78826,
+          "heap_free_kb": 315557
+        },
+        {
+          "rss_kb": 447748,
+          "rss_anon_kb": 403560,
+          "heap_in_use_kb": 78371,
+          "heap_free_kb": 316472
+        },
+        {
+          "rss_kb": 447916,
+          "rss_anon_kb": 403728,
+          "heap_in_use_kb": 78588,
+          "heap_free_kb": 316375
+        },
+        {
+          "rss_kb": 447964,
+          "rss_anon_kb": 403776,
+          "heap_in_use_kb": 78499,
+          "heap_free_kb": 316492
+        },
+        {
+          "rss_kb": 448060,
+          "rss_anon_kb": 403872,
+          "heap_in_use_kb": 78674,
+          "heap_free_kb": 316409
+        },
+        {
+          "rss_kb": 448356,
+          "rss_anon_kb": 404168,
+          "heap_in_use_kb": 78988,
+          "heap_free_kb": 316391
+        },
+        {
+          "rss_kb": 448364,
+          "rss_anon_kb": 404176,
+          "heap_in_use_kb": 79343,
+          "heap_free_kb": 316044
+        },
+        {
+          "rss_kb": 448692,
+          "rss_anon_kb": 404504,
+          "heap_in_use_kb": 79191,
+          "heap_free_kb": 316524
+        },
+        {
+          "rss_kb": 448712,
+          "rss_anon_kb": 404524,
+          "heap_in_use_kb": 79178,
+          "heap_free_kb": 316557
+        },
+        {
+          "rss_kb": 448952,
+          "rss_anon_kb": 404764,
+          "heap_in_use_kb": 79497,
+          "heap_free_kb": 316478
+        },
+        {
+          "rss_kb": 449020,
+          "rss_anon_kb": 404832,
+          "heap_in_use_kb": 79474,
+          "heap_free_kb": 316569
+        },
+        {
+          "rss_kb": 449052,
+          "rss_anon_kb": 404864,
+          "heap_in_use_kb": 79330,
+          "heap_free_kb": 316745
+        },
+        {
+          "rss_kb": 449056,
+          "rss_anon_kb": 404868,
+          "heap_in_use_kb": 79595,
+          "heap_free_kb": 316480
+        },
+        {
+          "rss_kb": 449064,
+          "rss_anon_kb": 404876,
+          "heap_in_use_kb": 79665,
+          "heap_free_kb": 316418
+        },
+        {
+          "rss_kb": 449208,
+          "rss_anon_kb": 405020,
+          "heap_in_use_kb": 79822,
+          "heap_free_kb": 316405
+        },
+        {
+          "rss_kb": 449212,
+          "rss_anon_kb": 405024,
+          "heap_in_use_kb": 79604,
+          "heap_free_kb": 316627
+        },
+        {
+          "rss_kb": 449212,
+          "rss_anon_kb": 405024,
+          "heap_in_use_kb": 79374,
+          "heap_free_kb": 316857
+        },
+        {
+          "rss_kb": 449252,
+          "rss_anon_kb": 405064,
+          "heap_in_use_kb": 79796,
+          "heap_free_kb": 316475
+        },
+        {
+          "rss_kb": 449252,
+          "rss_anon_kb": 405064,
+          "heap_in_use_kb": 79525,
+          "heap_free_kb": 316746
+        },
+        {
+          "rss_kb": 449252,
+          "rss_anon_kb": 405064,
+          "heap_in_use_kb": 79808,
+          "heap_free_kb": 316463
+        },
+        {
+          "rss_kb": 449252,
+          "rss_anon_kb": 405064,
+          "heap_in_use_kb": 79716,
+          "heap_free_kb": 316555
+        },
+        {
+          "rss_kb": 449256,
+          "rss_anon_kb": 405068,
+          "heap_in_use_kb": 79971,
+          "heap_free_kb": 316300
+        },
+        {
+          "rss_kb": 449268,
+          "rss_anon_kb": 405080,
+          "heap_in_use_kb": 79696,
+          "heap_free_kb": 316587
+        },
+        {
+          "rss_kb": 449304,
+          "rss_anon_kb": 405116,
+          "heap_in_use_kb": 80031,
+          "heap_free_kb": 316280
+        },
+        {
+          "rss_kb": 449456,
+          "rss_anon_kb": 405268,
+          "heap_in_use_kb": 79854,
+          "heap_free_kb": 316609
+        },
+        {
+          "rss_kb": 449592,
+          "rss_anon_kb": 405404,
+          "heap_in_use_kb": 80063,
+          "heap_free_kb": 316548
+        },
+        {
+          "rss_kb": 449672,
+          "rss_anon_kb": 405484,
+          "heap_in_use_kb": 79979,
+          "heap_free_kb": 316736
+        },
+        {
+          "rss_kb": 449760,
+          "rss_anon_kb": 405572,
+          "heap_in_use_kb": 80174,
+          "heap_free_kb": 316629
+        },
+        {
+          "rss_kb": 449784,
+          "rss_anon_kb": 405596,
+          "heap_in_use_kb": 80709,
+          "heap_free_kb": 316118
+        },
+        {
+          "rss_kb": 449792,
+          "rss_anon_kb": 405604,
+          "heap_in_use_kb": 80235,
+          "heap_free_kb": 316600
+        },
+        {
+          "rss_kb": 449844,
+          "rss_anon_kb": 405656,
+          "heap_in_use_kb": 80284,
+          "heap_free_kb": 316603
+        },
+        {
+          "rss_kb": 449884,
+          "rss_anon_kb": 405696,
+          "heap_in_use_kb": 80814,
+          "heap_free_kb": 316113
+        },
+        {
+          "rss_kb": 449912,
+          "rss_anon_kb": 405724,
+          "heap_in_use_kb": 80310,
+          "heap_free_kb": 316645
+        },
+        {
+          "rss_kb": 449916,
+          "rss_anon_kb": 405728,
+          "heap_in_use_kb": 80316,
+          "heap_free_kb": 316643
+        },
+        {
+          "rss_kb": 449940,
+          "rss_anon_kb": 405752,
+          "heap_in_use_kb": 80097,
+          "heap_free_kb": 316886
+        },
+        {
+          "rss_kb": 449952,
+          "rss_anon_kb": 405764,
+          "heap_in_use_kb": 80390,
+          "heap_free_kb": 316605
+        },
+        {
+          "rss_kb": 449972,
+          "rss_anon_kb": 405784,
+          "heap_in_use_kb": 79554,
+          "heap_free_kb": 317461
+        },
+        {
+          "rss_kb": 449972,
+          "rss_anon_kb": 405784,
+          "heap_in_use_kb": 80386,
+          "heap_free_kb": 316629
+        },
+        {
+          "rss_kb": 449976,
+          "rss_anon_kb": 405788,
+          "heap_in_use_kb": 80749,
+          "heap_free_kb": 316270
+        },
+        {
+          "rss_kb": 450004,
+          "rss_anon_kb": 405816,
+          "heap_in_use_kb": 80027,
+          "heap_free_kb": 317020
+        },
+        {
+          "rss_kb": 450020,
+          "rss_anon_kb": 405832,
+          "heap_in_use_kb": 80464,
+          "heap_free_kb": 316599
+        },
+        {
+          "rss_kb": 450052,
+          "rss_anon_kb": 405864,
+          "heap_in_use_kb": 80429,
+          "heap_free_kb": 316670
+        },
+        {
+          "rss_kb": 450060,
+          "rss_anon_kb": 405872,
+          "heap_in_use_kb": 80062,
+          "heap_free_kb": 317041
+        },
+        {
+          "rss_kb": 450108,
+          "rss_anon_kb": 405920,
+          "heap_in_use_kb": 80491,
+          "heap_free_kb": 316660
+        },
+        {
+          "rss_kb": 450120,
+          "rss_anon_kb": 405932,
+          "heap_in_use_kb": 79921,
+          "heap_free_kb": 317242
+        },
+        {
+          "rss_kb": 450132,
+          "rss_anon_kb": 405944,
+          "heap_in_use_kb": 80549,
+          "heap_free_kb": 316626
+        },
+        {
+          "rss_kb": 450140,
+          "rss_anon_kb": 405952,
+          "heap_in_use_kb": 80743,
+          "heap_free_kb": 316440
+        },
+        {
+          "rss_kb": 450152,
+          "rss_anon_kb": 405964,
+          "heap_in_use_kb": 80379,
+          "heap_free_kb": 316816
+        },
+        {
+          "rss_kb": 450176,
+          "rss_anon_kb": 405988,
+          "heap_in_use_kb": 80607,
+          "heap_free_kb": 316612
+        },
+        {
+          "rss_kb": 450332,
+          "rss_anon_kb": 406144,
+          "heap_in_use_kb": 80131,
+          "heap_free_kb": 317244
+        },
+        {
+          "rss_kb": 450332,
+          "rss_anon_kb": 406144,
+          "heap_in_use_kb": 80588,
+          "heap_free_kb": 316787
+        },
+        {
+          "rss_kb": 450340,
+          "rss_anon_kb": 406152,
+          "heap_in_use_kb": 79716,
+          "heap_free_kb": 317667
+        },
+        {
+          "rss_kb": 450348,
+          "rss_anon_kb": 406160,
+          "heap_in_use_kb": 80592,
+          "heap_free_kb": 316799
+        },
+        {
+          "rss_kb": 450416,
+          "rss_anon_kb": 406228,
+          "heap_in_use_kb": 79693,
+          "heap_free_kb": 317766
+        },
+        {
+          "rss_kb": 450416,
+          "rss_anon_kb": 406228,
+          "heap_in_use_kb": 80614,
+          "heap_free_kb": 316845
+        },
+        {
+          "rss_kb": 450440,
+          "rss_anon_kb": 406252,
+          "heap_in_use_kb": 80749,
+          "heap_free_kb": 316734
+        },
+        {
+          "rss_kb": 450452,
+          "rss_anon_kb": 406264,
+          "heap_in_use_kb": 80457,
+          "heap_free_kb": 317038
+        },
+        {
+          "rss_kb": 450500,
+          "rss_anon_kb": 406312,
+          "heap_in_use_kb": 80639,
+          "heap_free_kb": 316904
+        },
+        {
+          "rss_kb": 450532,
+          "rss_anon_kb": 406344,
+          "heap_in_use_kb": 79403,
+          "heap_free_kb": 318208
+        },
+        {
+          "rss_kb": 450532,
+          "rss_anon_kb": 406344,
+          "heap_in_use_kb": 80540,
+          "heap_free_kb": 317071
+        },
+        {
+          "rss_kb": 450600,
+          "rss_anon_kb": 406412,
+          "heap_in_use_kb": 80702,
+          "heap_free_kb": 316941
+        },
+        {
+          "rss_kb": 451304,
+          "rss_anon_kb": 407116,
+          "heap_in_use_kb": 79882,
+          "heap_free_kb": 318301
+        },
+        {
+          "rss_kb": 451304,
+          "rss_anon_kb": 407116,
+          "heap_in_use_kb": 80805,
+          "heap_free_kb": 317378
+        },
+        {
+          "rss_kb": 451500,
+          "rss_anon_kb": 407312,
+          "heap_in_use_kb": 81049,
+          "heap_free_kb": 317330
+        },
+        {
+          "rss_kb": 451548,
+          "rss_anon_kb": 407360,
+          "heap_in_use_kb": 80394,
+          "heap_free_kb": 318033
+        },
+        {
+          "rss_kb": 451588,
+          "rss_anon_kb": 407400,
+          "heap_in_use_kb": 80844,
+          "heap_free_kb": 317623
+        },
+        {
+          "rss_kb": 451592,
+          "rss_anon_kb": 407404,
+          "heap_in_use_kb": 80399,
+          "heap_free_kb": 318068
+        },
+        {
+          "rss_kb": 451600,
+          "rss_anon_kb": 407412,
+          "heap_in_use_kb": 81156,
+          "heap_free_kb": 317319
+        },
+        {
+          "rss_kb": 451604,
+          "rss_anon_kb": 407416,
+          "heap_in_use_kb": 80713,
+          "heap_free_kb": 317766
+        },
+        {
+          "rss_kb": 451604,
+          "rss_anon_kb": 407416,
+          "heap_in_use_kb": 80883,
+          "heap_free_kb": 317596
+        },
+        {
+          "rss_kb": 451604,
+          "rss_anon_kb": 407416,
+          "heap_in_use_kb": 80621,
+          "heap_free_kb": 317858
+        },
+        {
+          "rss_kb": 451604,
+          "rss_anon_kb": 407416,
+          "heap_in_use_kb": 81009,
+          "heap_free_kb": 317470
+        },
+        {
+          "rss_kb": 451616,
+          "rss_anon_kb": 407428,
+          "heap_in_use_kb": 81185,
+          "heap_free_kb": 317306
+        },
+        {
+          "rss_kb": 451628,
+          "rss_anon_kb": 407440,
+          "heap_in_use_kb": 80308,
+          "heap_free_kb": 318195
+        },
+        {
+          "rss_kb": 451656,
+          "rss_anon_kb": 407468,
+          "heap_in_use_kb": 80812,
+          "heap_free_kb": 317719
+        },
+        {
+          "rss_kb": 451688,
+          "rss_anon_kb": 407500,
+          "heap_in_use_kb": 81043,
+          "heap_free_kb": 317520
+        },
+        {
+          "rss_kb": 451716,
+          "rss_anon_kb": 407528,
+          "heap_in_use_kb": 80668,
+          "heap_free_kb": 317923
+        },
+        {
+          "rss_kb": 451728,
+          "rss_anon_kb": 407540,
+          "heap_in_use_kb": 81143,
+          "heap_free_kb": 317460
+        },
+        {
+          "rss_kb": 451752,
+          "rss_anon_kb": 407564,
+          "heap_in_use_kb": 80922,
+          "heap_free_kb": 317705
+        },
+        {
+          "rss_kb": 451760,
+          "rss_anon_kb": 407572,
+          "heap_in_use_kb": 81123,
+          "heap_free_kb": 317512
+        },
+        {
+          "rss_kb": 451852,
+          "rss_anon_kb": 407664,
+          "heap_in_use_kb": 80135,
+          "heap_free_kb": 318592
+        },
+        {
+          "rss_kb": 451852,
+          "rss_anon_kb": 407664,
+          "heap_in_use_kb": 81212,
+          "heap_free_kb": 317515
+        },
+        {
+          "rss_kb": 452140,
+          "rss_anon_kb": 407952,
+          "heap_in_use_kb": 81247,
+          "heap_free_kb": 317768
+        },
+        {
+          "rss_kb": 452248,
+          "rss_anon_kb": 408060,
+          "heap_in_use_kb": 79925,
+          "heap_free_kb": 319198
+        },
+        {
+          "rss_kb": 452260,
+          "rss_anon_kb": 408072,
+          "heap_in_use_kb": 81268,
+          "heap_free_kb": 317867
+        },
+        {
+          "rss_kb": 452376,
+          "rss_anon_kb": 408188,
+          "heap_in_use_kb": 81196,
+          "heap_free_kb": 318055
+        },
+        {
+          "rss_kb": 452444,
+          "rss_anon_kb": 408256,
+          "heap_in_use_kb": 80807,
+          "heap_free_kb": 318512
+        },
+        {
+          "rss_kb": 452492,
+          "rss_anon_kb": 408304,
+          "heap_in_use_kb": 81361,
+          "heap_free_kb": 318006
+        },
+        {
+          "rss_kb": 452512,
+          "rss_anon_kb": 408324,
+          "heap_in_use_kb": 81163,
+          "heap_free_kb": 318224
+        },
+        {
+          "rss_kb": 452640,
+          "rss_anon_kb": 408452,
+          "heap_in_use_kb": 80856,
+          "heap_free_kb": 318659
+        },
+        {
+          "rss_kb": 452852,
+          "rss_anon_kb": 408664,
+          "heap_in_use_kb": 81486,
+          "heap_free_kb": 318233
+        },
+        {
+          "rss_kb": 452888,
+          "rss_anon_kb": 408700,
+          "heap_in_use_kb": 81265,
+          "heap_free_kb": 318490
+        },
+        {
+          "rss_kb": 452940,
+          "rss_anon_kb": 408752,
+          "heap_in_use_kb": 81653,
+          "heap_free_kb": 318154
+        },
+        {
+          "rss_kb": 452956,
+          "rss_anon_kb": 408768,
+          "heap_in_use_kb": 81389,
+          "heap_free_kb": 318435
+        },
+        {
+          "rss_kb": 452992,
+          "rss_anon_kb": 408804,
+          "heap_in_use_kb": 81590,
+          "heap_free_kb": 318269
+        },
+        {
+          "rss_kb": 453000,
+          "rss_anon_kb": 408812,
+          "heap_in_use_kb": 81495,
+          "heap_free_kb": 318372
+        },
+        {
+          "rss_kb": 453032,
+          "rss_anon_kb": 408844,
+          "heap_in_use_kb": 81147,
+          "heap_free_kb": 318752
+        },
+        {
+          "rss_kb": 453052,
+          "rss_anon_kb": 408864,
+          "heap_in_use_kb": 81628,
+          "heap_free_kb": 318291
+        }
+      ],
+      "stats_ready": {
+        "rss_kb": 443184,
+        "peak_rss_kb": 450332,
+        "rss_anon_kb": 399484,
+        "rss_file_kb": 43508,
+        "heap_in_use_kb": 76688,
+        "heap_free_kb": 314327,
+        "cpu_user_ms": 9474,
+        "cpu_sys_ms": 517,
+        "threads": 52,
+        "data_bytes": 75560948,
+        "link_sent": 6452,
+        "link_received": 4232,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 453076,
+        "peak_rss_kb": 454468,
+        "rss_anon_kb": 408888,
+        "rss_file_kb": 43996,
+        "heap_in_use_kb": 79780,
+        "heap_free_kb": 320163,
+        "cpu_user_ms": 15591,
+        "cpu_sys_ms": 3595,
+        "threads": 53,
+        "data_bytes": 85809684,
+        "link_sent": 539804,
+        "link_received": 6054035,
+        "link_connects": 1
+      },
+      "stats_idle_start": {
+        "rss_kb": 453148,
+        "peak_rss_kb": 454468,
+        "rss_anon_kb": 408852,
+        "rss_file_kb": 44232,
+        "heap_in_use_kb": 73328,
+        "heap_free_kb": 326615,
+        "cpu_user_ms": 15596,
+        "cpu_sys_ms": 3600,
+        "threads": 45,
+        "data_bytes": 54802996,
+        "link_sent": 539817,
+        "link_received": 6055733,
+        "link_connects": 1
+      },
+      "stats_after_idle": {
+        "rss_kb": 453148,
+        "peak_rss_kb": 454468,
+        "rss_anon_kb": 408852,
+        "rss_file_kb": 44232,
+        "heap_in_use_kb": 72171,
+        "heap_free_kb": 327772,
+        "cpu_user_ms": 15605,
+        "cpu_sys_ms": 3600,
+        "threads": 40,
+        "data_bytes": 54802996,
+        "link_sent": 539817,
+        "link_received": 6055733,
+        "link_connects": 1
+      },
+      "settle_secs": 30,
+      "idle_secs": 60,
+      "idle_cpu_samples": [
+        9.0
+      ],
+      "idle_threads": [
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 2,
+          "cpu_ms_per_min": 3.606,
+          "wakeups_per_min": 6.0
+        },
+        {
+          "name": "tokio-rt-worker",
+          "threads": 25,
+          "cpu_ms_per_min": 3.404,
+          "wakeups_per_min": 77.0
+        },
+        {
+          "name": "h2hc-phone",
+          "threads": 1,
+          "cpu_ms_per_min": 2.074,
+          "wakeups_per_min": 3.0
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 12,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": 0,
+      "idle_frames": {},
+      "errors": []
+    }
+  ],
+  "scenarios": []
+}

@@ -1,0 +1,802 @@
+{
+  "started": "20261023-190414",
+  "baseline": {
+    "authority note visible at another authority": {
+      "n": 30,
+      "failures": 0,
+      "p50": 30.352273999999998,
+      "p95": 31.50377,
+      "min": 2.6165580000000004,
+      "max": 31.528275,
+      "mean": 29.528496800000006
+    },
+    "remote call": {
+      "n": 30,
+      "failures": 0,
+      "p50": 5.4236249999999995,
+      "p95": 6.190948,
+      "min": 4.8172429999999995,
+      "max": 9.663813000000001,
+      "mean": 5.5604686999999995
+    },
+    "signal round trip": {
+      "n": 30,
+      "failures": 0,
+      "p50": 6.413473000000001,
+      "p95": 7.079117,
+      "min": 5.523607,
+      "max": 8.312853,
+      "mean": 6.4732258666666675
+    }
+  },
+  "target": "local",
+  "phone_builds": "target",
+  "host": "Linux 7.0.0-38-generic x86_64",
+  "authorities": 3,
+  "iterations": 30,
+  "configs": [
+    {
+      "network": "h2hc",
+      "wasm": "wasmi",
+      "env": [],
+      "keystore": "lair",
+      "iterations": 30,
+      "startup_ms": 1536.319889,
+      "install_ms": 83.97631899999999,
+      "enable_ms": 891.312586,
+      "first_call_ms": 63.337928000000005,
+      "network_ready_ms": 136.00930499999998,
+      "latency": {
+        "create note (local commit)": {
+          "n": 30,
+          "failures": 0,
+          "p50": 16.625656999999997,
+          "p95": 19.160641,
+          "min": 13.929991,
+          "max": 19.678905,
+          "mean": 16.610739100000004
+        },
+        "get authority's note (first fetch)": {
+          "n": 30,
+          "failures": 0,
+          "p50": 3.939224,
+          "p95": 4.691499,
+          "min": 3.4551529999999997,
+          "max": 7.387327,
+          "mean": 4.073079666666667
+        },
+        "get links (authority's notes)": {
+          "n": 30,
+          "failures": 0,
+          "p50": 6.618762,
+          "p95": 11.280097,
+          "min": 3.952333,
+          "max": 14.135072,
+          "mean": 7.307304533333333
+        },
+        "get own note": {
+          "n": 30,
+          "failures": 0,
+          "p50": 2.501922,
+          "p95": 3.120003,
+          "min": 1.883474,
+          "max": 3.4538770000000003,
+          "mean": 2.5355113666666673
+        },
+        "phone note visible at an authority": {
+          "n": 2,
+          "failures": 0,
+          "p50": 572.247335,
+          "p95": 572.247335,
+          "min": 60.550504999999994,
+          "max": 572.247335,
+          "mean": 316.39892000000003
+        },
+        "remote call authority to phone": {
+          "n": 30,
+          "failures": 0,
+          "p50": 6.437196,
+          "p95": 7.449161,
+          "min": 5.130338,
+          "max": 9.3711,
+          "mean": 6.524548833333333
+        },
+        "remote call phone to authority": {
+          "n": 30,
+          "failures": 0,
+          "p50": 6.551557000000001,
+          "p95": 7.431458999999999,
+          "min": 5.579068,
+          "max": 7.761552,
+          "mean": 6.569700666666666
+        },
+        "signal round trip authority to phone": {
+          "n": 30,
+          "failures": 0,
+          "p50": 8.626025,
+          "p95": 17.328789,
+          "min": 6.625034,
+          "max": 28.341872000000002,
+          "mean": 9.497456166666668
+        },
+        "signal round trip phone to authority": {
+          "n": 30,
+          "failures": 0,
+          "p50": 8.117132000000002,
+          "p95": 9.019096,
+          "min": 6.812295000000001,
+          "max": 9.523617,
+          "mean": 8.095378866666668
+        },
+        "validation receipts for every op": {
+          "n": 2,
+          "failures": 0,
+          "p50": 2905.033654,
+          "p95": 2905.033654,
+          "min": 2901.1815260000003,
+          "max": 2905.033654,
+          "mean": 2903.10759
+        }
+      },
+      "memory": [
+        {
+          "rss_kb": 178144,
+          "rss_anon_kb": 138156,
+          "heap_in_use_kb": 159669,
+          "heap_free_kb": 39514
+        },
+        {
+          "rss_kb": 216596,
+          "rss_anon_kb": 176608,
+          "heap_in_use_kb": 224608,
+          "heap_free_kb": 39435
+        },
+        {
+          "rss_kb": 253288,
+          "rss_anon_kb": 213300,
+          "heap_in_use_kb": 289368,
+          "heap_free_kb": 38939
+        },
+        {
+          "rss_kb": 292656,
+          "rss_anon_kb": 252668,
+          "heap_in_use_kb": 354216,
+          "heap_free_kb": 39555
+        },
+        {
+          "rss_kb": 329916,
+          "rss_anon_kb": 289928,
+          "heap_in_use_kb": 418932,
+          "heap_free_kb": 39115
+        },
+        {
+          "rss_kb": 367268,
+          "rss_anon_kb": 327280,
+          "heap_in_use_kb": 483696,
+          "heap_free_kb": 40703
+        },
+        {
+          "rss_kb": 403888,
+          "rss_anon_kb": 363900,
+          "heap_in_use_kb": 548397,
+          "heap_free_kb": 40742
+        },
+        {
+          "rss_kb": 442384,
+          "rss_anon_kb": 402396,
+          "heap_in_use_kb": 613145,
+          "heap_free_kb": 40490
+        },
+        {
+          "rss_kb": 479576,
+          "rss_anon_kb": 439588,
+          "heap_in_use_kb": 677740,
+          "heap_free_kb": 40596
+        },
+        {
+          "rss_kb": 518308,
+          "rss_anon_kb": 478320,
+          "heap_in_use_kb": 742363,
+          "heap_free_kb": 41472
+        },
+        {
+          "rss_kb": 555536,
+          "rss_anon_kb": 515548,
+          "heap_in_use_kb": 807070,
+          "heap_free_kb": 39961
+        },
+        {
+          "rss_kb": 591232,
+          "rss_anon_kb": 551244,
+          "heap_in_use_kb": 871678,
+          "heap_free_kb": 39773
+        },
+        {
+          "rss_kb": 629432,
+          "rss_anon_kb": 589444,
+          "heap_in_use_kb": 936224,
+          "heap_free_kb": 40679
+        },
+        {
+          "rss_kb": 669076,
+          "rss_anon_kb": 629088,
+          "heap_in_use_kb": 1000812,
+          "heap_free_kb": 40559
+        },
+        {
+          "rss_kb": 707088,
+          "rss_anon_kb": 667100,
+          "heap_in_use_kb": 1065408,
+          "heap_free_kb": 41579
+        },
+        {
+          "rss_kb": 745304,
+          "rss_anon_kb": 705316,
+          "heap_in_use_kb": 1130180,
+          "heap_free_kb": 42535
+        },
+        {
+          "rss_kb": 782980,
+          "rss_anon_kb": 742992,
+          "heap_in_use_kb": 1194521,
+          "heap_free_kb": 41331
+        },
+        {
+          "rss_kb": 820708,
+          "rss_anon_kb": 780720,
+          "heap_in_use_kb": 1259264,
+          "heap_free_kb": 42599
+        },
+        {
+          "rss_kb": 857228,
+          "rss_anon_kb": 817240,
+          "heap_in_use_kb": 1323646,
+          "heap_free_kb": 41925
+        },
+        {
+          "rss_kb": 894540,
+          "rss_anon_kb": 854552,
+          "heap_in_use_kb": 1388438,
+          "heap_free_kb": 41509
+        },
+        {
+          "rss_kb": 933608,
+          "rss_anon_kb": 893620,
+          "heap_in_use_kb": 1453266,
+          "heap_free_kb": 40589
+        },
+        {
+          "rss_kb": 969656,
+          "rss_anon_kb": 929668,
+          "heap_in_use_kb": 1517586,
+          "heap_free_kb": 41301
+        },
+        {
+          "rss_kb": 1009040,
+          "rss_anon_kb": 969052,
+          "heap_in_use_kb": 1582529,
+          "heap_free_kb": 41858
+        },
+        {
+          "rss_kb": 1046092,
+          "rss_anon_kb": 1006104,
+          "heap_in_use_kb": 1647001,
+          "heap_free_kb": 41271
+        },
+        {
+          "rss_kb": 1081816,
+          "rss_anon_kb": 1041828,
+          "heap_in_use_kb": 1711601,
+          "heap_free_kb": 41454
+        },
+        {
+          "rss_kb": 1120168,
+          "rss_anon_kb": 1080180,
+          "heap_in_use_kb": 1776164,
+          "heap_free_kb": 40387
+        },
+        {
+          "rss_kb": 1159188,
+          "rss_anon_kb": 1119200,
+          "heap_in_use_kb": 1840960,
+          "heap_free_kb": 40407
+        },
+        {
+          "rss_kb": 1196888,
+          "rss_anon_kb": 1156900,
+          "heap_in_use_kb": 1905688,
+          "heap_free_kb": 42451
+        },
+        {
+          "rss_kb": 1234124,
+          "rss_anon_kb": 1194136,
+          "heap_in_use_kb": 1970275,
+          "heap_free_kb": 43084
+        },
+        {
+          "rss_kb": 1270392,
+          "rss_anon_kb": 1230404,
+          "heap_in_use_kb": 2035093,
+          "heap_free_kb": 40706
+        }
+      ],
+      "stats_ready": {
+        "rss_kb": 138544,
+        "peak_rss_kb": 285100,
+        "rss_anon_kb": 98908,
+        "rss_file_kb": 39476,
+        "heap_in_use_kb": 94156,
+        "heap_free_kb": 35379,
+        "cpu_user_ms": 1381,
+        "cpu_sys_ms": 324,
+        "threads": 40,
+        "data_bytes": 13518736,
+        "link_sent": 7196,
+        "link_received": 4806,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 1314508,
+        "peak_rss_kb": 1314508,
+        "rss_anon_kb": 1274520,
+        "rss_file_kb": 39828,
+        "heap_in_use_kb": 2112002,
+        "heap_free_kb": 42393,
+        "cpu_user_ms": 2583,
+        "cpu_sys_ms": 948,
+        "threads": 40,
+        "data_bytes": 21508584,
+        "link_sent": 168062,
+        "link_received": 436955,
+        "link_connects": 1
+      },
+      "stats_idle_start": {
+        "rss_kb": 1282044,
+        "peak_rss_kb": 1313252,
+        "rss_anon_kb": 1274468,
+        "rss_file_kb": 7448,
+        "heap_in_use_kb": 2111252,
+        "heap_free_kb": 43143,
+        "cpu_user_ms": 2675,
+        "cpu_sys_ms": 978,
+        "threads": 36,
+        "data_bytes": 21573824,
+        "link_sent": 168086,
+        "link_received": 493439,
+        "link_connects": 1
+      },
+      "stats_after_idle": {
+        "rss_kb": 1288780,
+        "peak_rss_kb": 1313252,
+        "rss_anon_kb": 1274468,
+        "rss_file_kb": 14248,
+        "heap_in_use_kb": 2104048,
+        "heap_free_kb": 50347,
+        "cpu_user_ms": 2685,
+        "cpu_sys_ms": 989,
+        "threads": 28,
+        "data_bytes": 7420160,
+        "link_sent": 168086,
+        "link_received": 493439,
+        "link_connects": 1
+      },
+      "settle_secs": 30,
+      "idle_secs": 60,
+      "idle_cpu_samples": [
+        21.0
+      ],
+      "idle_threads": [
+        {
+          "name": "tokio-rt-worker",
+          "threads": 13,
+          "cpu_ms_per_min": 10.611000000000002,
+          "wakeups_per_min": 259.0
+        },
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 2,
+          "cpu_ms_per_min": 3.648,
+          "wakeups_per_min": 47.0
+        },
+        {
+          "name": "h2hc-phone",
+          "threads": 1,
+          "cpu_ms_per_min": 2.022,
+          "wakeups_per_min": 12.0
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 12,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": 0,
+      "idle_frames": {},
+      "errors": []
+    },
+    {
+      "network": "h2hc",
+      "wasm": "cranelift",
+      "env": [],
+      "keystore": "lair",
+      "iterations": 30,
+      "startup_ms": 1594.543978,
+      "install_ms": 610.327422,
+      "enable_ms": 67.502522,
+      "first_call_ms": 851.464017,
+      "network_ready_ms": 1072.009521,
+      "latency": {
+        "create note (local commit)": {
+          "n": 30,
+          "failures": 0,
+          "p50": 17.506507000000003,
+          "p95": 21.334081,
+          "min": 15.834105,
+          "max": 22.063896999999997,
+          "mean": 17.726964266666673
+        },
+        "get authority's note (first fetch)": {
+          "n": 30,
+          "failures": 0,
+          "p50": 3.960005,
+          "p95": 7.382307,
+          "min": 3.381524,
+          "max": 9.685516,
+          "mean": 4.375094399999999
+        },
+        "get links (authority's notes)": {
+          "n": 30,
+          "failures": 0,
+          "p50": 8.17333,
+          "p95": 18.959044,
+          "min": 6.766106,
+          "max": 26.789499000000003,
+          "mean": 9.958004533333332
+        },
+        "get own note": {
+          "n": 30,
+          "failures": 0,
+          "p50": 2.5244690000000003,
+          "p95": 3.035647,
+          "min": 2.01235,
+          "max": 3.687967,
+          "mean": 2.516897466666667
+        },
+        "phone note visible at an authority": {
+          "n": 2,
+          "failures": 0,
+          "p50": 104.620944,
+          "p95": 104.620944,
+          "min": 32.291875,
+          "max": 104.620944,
+          "mean": 68.45640949999999
+        },
+        "remote call authority to phone": {
+          "n": 30,
+          "failures": 0,
+          "p50": 7.069863,
+          "p95": 17.082498,
+          "min": 5.517595,
+          "max": 17.160405,
+          "mean": 8.374893800000002
+        },
+        "remote call phone to authority": {
+          "n": 30,
+          "failures": 0,
+          "p50": 7.216249,
+          "p95": 17.747394,
+          "min": 5.968203,
+          "max": 24.056237,
+          "mean": 8.927252733333331
+        },
+        "signal round trip authority to phone": {
+          "n": 30,
+          "failures": 0,
+          "p50": 9.221532,
+          "p95": 21.000623,
+          "min": 6.954533,
+          "max": 40.704516000000005,
+          "mean": 11.493412133333333
+        },
+        "signal round trip phone to authority": {
+          "n": 30,
+          "failures": 0,
+          "p50": 9.059048,
+          "p95": 24.684982,
+          "min": 7.159567,
+          "max": 63.467231,
+          "mean": 11.772676466666667
+        },
+        "validation receipts for every op": {
+          "n": 2,
+          "failures": 0,
+          "p50": 8624.584726000001,
+          "p95": 8624.584726000001,
+          "min": 32.607743,
+          "max": 8624.584726000001,
+          "mean": 4328.596234500001
+        }
+      },
+      "memory": [
+        {
+          "rss_kb": 446388,
+          "rss_anon_kb": 406656,
+          "heap_in_use_kb": 77946,
+          "heap_free_kb": 320121
+        },
+        {
+          "rss_kb": 446904,
+          "rss_anon_kb": 407172,
+          "heap_in_use_kb": 78218,
+          "heap_free_kb": 320353
+        },
+        {
+          "rss_kb": 447416,
+          "rss_anon_kb": 407676,
+          "heap_in_use_kb": 78710,
+          "heap_free_kb": 320365
+        },
+        {
+          "rss_kb": 447616,
+          "rss_anon_kb": 407876,
+          "heap_in_use_kb": 78772,
+          "heap_free_kb": 320499
+        },
+        {
+          "rss_kb": 447816,
+          "rss_anon_kb": 408076,
+          "heap_in_use_kb": 78789,
+          "heap_free_kb": 320666
+        },
+        {
+          "rss_kb": 447848,
+          "rss_anon_kb": 408108,
+          "heap_in_use_kb": 78860,
+          "heap_free_kb": 320627
+        },
+        {
+          "rss_kb": 447952,
+          "rss_anon_kb": 408212,
+          "heap_in_use_kb": 79111,
+          "heap_free_kb": 320480
+        },
+        {
+          "rss_kb": 448088,
+          "rss_anon_kb": 408348,
+          "heap_in_use_kb": 78973,
+          "heap_free_kb": 320750
+        },
+        {
+          "rss_kb": 448164,
+          "rss_anon_kb": 408424,
+          "heap_in_use_kb": 79076,
+          "heap_free_kb": 320703
+        },
+        {
+          "rss_kb": 448240,
+          "rss_anon_kb": 408500,
+          "heap_in_use_kb": 79305,
+          "heap_free_kb": 320546
+        },
+        {
+          "rss_kb": 448240,
+          "rss_anon_kb": 408500,
+          "heap_in_use_kb": 79172,
+          "heap_free_kb": 320679
+        },
+        {
+          "rss_kb": 448424,
+          "rss_anon_kb": 408684,
+          "heap_in_use_kb": 79287,
+          "heap_free_kb": 320748
+        },
+        {
+          "rss_kb": 448540,
+          "rss_anon_kb": 408800,
+          "heap_in_use_kb": 79239,
+          "heap_free_kb": 320912
+        },
+        {
+          "rss_kb": 448668,
+          "rss_anon_kb": 408928,
+          "heap_in_use_kb": 79724,
+          "heap_free_kb": 320555
+        },
+        {
+          "rss_kb": 448672,
+          "rss_anon_kb": 408932,
+          "heap_in_use_kb": 79267,
+          "heap_free_kb": 321016
+        },
+        {
+          "rss_kb": 448688,
+          "rss_anon_kb": 408948,
+          "heap_in_use_kb": 79329,
+          "heap_free_kb": 320970
+        },
+        {
+          "rss_kb": 448764,
+          "rss_anon_kb": 409024,
+          "heap_in_use_kb": 79431,
+          "heap_free_kb": 320944
+        },
+        {
+          "rss_kb": 448832,
+          "rss_anon_kb": 409092,
+          "heap_in_use_kb": 79953,
+          "heap_free_kb": 320486
+        },
+        {
+          "rss_kb": 448924,
+          "rss_anon_kb": 409184,
+          "heap_in_use_kb": 79917,
+          "heap_free_kb": 320614
+        },
+        {
+          "rss_kb": 448976,
+          "rss_anon_kb": 409236,
+          "heap_in_use_kb": 79867,
+          "heap_free_kb": 320716
+        },
+        {
+          "rss_kb": 449052,
+          "rss_anon_kb": 409312,
+          "heap_in_use_kb": 79980,
+          "heap_free_kb": 320679
+        },
+        {
+          "rss_kb": 449068,
+          "rss_anon_kb": 409328,
+          "heap_in_use_kb": 80045,
+          "heap_free_kb": 320630
+        },
+        {
+          "rss_kb": 449164,
+          "rss_anon_kb": 409424,
+          "heap_in_use_kb": 80062,
+          "heap_free_kb": 320709
+        },
+        {
+          "rss_kb": 449444,
+          "rss_anon_kb": 409704,
+          "heap_in_use_kb": 79450,
+          "heap_free_kb": 321601
+        },
+        {
+          "rss_kb": 449528,
+          "rss_anon_kb": 409788,
+          "heap_in_use_kb": 79395,
+          "heap_free_kb": 321744
+        },
+        {
+          "rss_kb": 449592,
+          "rss_anon_kb": 409852,
+          "heap_in_use_kb": 79762,
+          "heap_free_kb": 321441
+        },
+        {
+          "rss_kb": 449628,
+          "rss_anon_kb": 409888,
+          "heap_in_use_kb": 80240,
+          "heap_free_kb": 320999
+        },
+        {
+          "rss_kb": 449668,
+          "rss_anon_kb": 409928,
+          "heap_in_use_kb": 80276,
+          "heap_free_kb": 321003
+        },
+        {
+          "rss_kb": 449672,
+          "rss_anon_kb": 409932,
+          "heap_in_use_kb": 80260,
+          "heap_free_kb": 321023
+        },
+        {
+          "rss_kb": 449776,
+          "rss_anon_kb": 410036,
+          "heap_in_use_kb": 79942,
+          "heap_free_kb": 321445
+        }
+      ],
+      "stats_ready": {
+        "rss_kb": 445440,
+        "peak_rss_kb": 451424,
+        "rss_anon_kb": 406132,
+        "rss_file_kb": 39116,
+        "heap_in_use_kb": 77470,
+        "heap_free_kb": 320077,
+        "cpu_user_ms": 9952,
+        "cpu_sys_ms": 543,
+        "threads": 54,
+        "data_bytes": 75952348,
+        "link_sent": 8611,
+        "link_received": 16977,
+        "link_connects": 1
+      },
+      "stats_after_workload": {
+        "rss_kb": 450100,
+        "peak_rss_kb": 451424,
+        "rss_anon_kb": 410348,
+        "rss_file_kb": 39560,
+        "heap_in_use_kb": 80210,
+        "heap_free_kb": 321485,
+        "cpu_user_ms": 11118,
+        "cpu_sys_ms": 1324,
+        "threads": 54,
+        "data_bytes": 83797036,
+        "link_sent": 167650,
+        "link_received": 629186,
+        "link_connects": 1
+      },
+      "stats_idle_start": {
+        "rss_kb": 450052,
+        "peak_rss_kb": 451424,
+        "rss_anon_kb": 410300,
+        "rss_file_kb": 39560,
+        "heap_in_use_kb": 79596,
+        "heap_free_kb": 322099,
+        "cpu_user_ms": 11193,
+        "cpu_sys_ms": 1338,
+        "threads": 52,
+        "data_bytes": 83797036,
+        "link_sent": 168310,
+        "link_received": 669945,
+        "link_connects": 1
+      },
+      "stats_after_idle": {
+        "rss_kb": 425948,
+        "peak_rss_kb": 451424,
+        "rss_anon_kb": 410300,
+        "rss_file_kb": 15584,
+        "heap_in_use_kb": 70592,
+        "heap_free_kb": 331103,
+        "cpu_user_ms": 11201,
+        "cpu_sys_ms": 1344,
+        "threads": 40,
+        "data_bytes": 49060108,
+        "link_sent": 168310,
+        "link_received": 669945,
+        "link_connects": 1
+      },
+      "settle_secs": 30,
+      "idle_secs": 60,
+      "idle_cpu_samples": [
+        14.0
+      ],
+      "idle_threads": [
+        {
+          "name": "tokio-rt-worker",
+          "threads": 25,
+          "cpu_ms_per_min": 4.353000000000001,
+          "wakeups_per_min": 131.0
+        },
+        {
+          "name": "sqlx-sqlite-wor",
+          "threads": 2,
+          "cpu_ms_per_min": 3.082,
+          "wakeups_per_min": 31.0
+        },
+        {
+          "name": "h2hc-phone",
+          "threads": 1,
+          "cpu_ms_per_min": 2.314,
+          "wakeups_per_min": 3.0
+        },
+        {
+          "name": "holochain-tokio",
+          "threads": 12,
+          "cpu_ms_per_min": 0.0,
+          "wakeups_per_min": 0.0
+        }
+      ],
+      "profile": null,
+      "idle_linker_acceptances": 0,
+      "idle_frames": {},
+      "errors": []
+    }
+  ],
+  "scenarios": []
+}

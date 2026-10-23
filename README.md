@@ -4,7 +4,7 @@ Working repo for the v4 plan: https://claude.ai/artifact/QzfGayyLzmZmhPsGc4zKtS.
 
 | Step | Deliverable | Status |
 |---|---|---|
-| 1 | Physical arm64 baseline, Cranelift and wasmi | Desktop and Galaxy S23+ results in [benchmarks/](benchmarks/README.md); phone idle CPU with H2HC cut from 2.2 s/min to 12–20 ms/min |
+| 1 | Physical arm64 baseline, Cranelift and wasmi | Desktop and Galaxy S23+ results in [benchmarks/](benchmarks/README.md); phone idle CPU with H2HC cut from 2.2 s/min to 12–20 ms/min; wasmi memory leak fixed on the desktop, phone re-run pending |
 | 2 | HcP2p and HcP2pHandler compatibility matrix; injectable network factory | Done: [matrix](research/hcp2p-compat-matrix.md), [factory patch](patches/holochain-0.7.1-p2p-factory.patch) |
 | 3 | Durable linker acceptance, truthful status, receipt inbox | Done in the local linker fork |
 | 4 | End-to-end H2HC conductor | Runs against a real local network: reads, writes, receipts, remote calls and signals both ways |
@@ -23,7 +23,7 @@ Pinned sources: Holochain 0.7.1 (HDK 0.7.1, HDI 0.8.1) for conductors, 0.7.0 for
 | [prototypes/h2hc-linker](prototypes/h2hc-linker) | Local fork of h2hc-linker (CAL-1.0) with `/conductor/v1`: admission checks, SQLite acceptance store and inbox, sourced queries, remote calls and signals both ways |
 | [prototypes/h2hc-conductor](prototypes/h2hc-conductor/src/lib.rs) | `build_phone_conductor`, and the `h2hc-phone` binary the benchmarks drive |
 | [prototypes/h2hc-bench](prototypes/h2hc-bench/src/main.rs) | Starts a local network (bootstrap and relay, full-arc authorities, linker), runs `h2hc-phone` in each configuration, writes a report |
-| [patches/](patches) | Holochain 0.7.1 changes: `ConductorBuilder::with_p2p_factory`; app signals and DHT store reads without `test_utils`, for in-process embedding; a scheduler that sleeps until a function is due instead of polling SQLite every 100 ms |
+| [patches/](patches) | Holochain 0.7.1 changes: `ConductorBuilder::with_p2p_factory`; app signals and DHT store reads without `test_utils`, for in-process embedding; a scheduler that sleeps until a function is due instead of polling SQLite every 100 ms. wasmer 7.1.0: its wasmi backend frees each store when the store is dropped, instead of leaking every zome call's memory |
 | [tests/fixtures/notes](tests/fixtures/notes) | Test-only DNA with deliberately restrictive validation, links, remote calls and signals |
 
 ## Run the benchmarks

@@ -17,6 +17,102 @@ All runs so far are on a desktop (Linux x86_64), with the "phone" as an ordinary
 | [20261023-175527-android](results/20261023-175527-android.md) | Galaxy S23+ after the fix: H2HC with both engines; Kitsune2 cut off by Auto Blocker |
 | [20261023-183136-android](results/20261023-183136-android.md) | Galaxy S23+ before the fix, H2HC + Cranelift, same protocol |
 | [20261023-184334-android](results/20261023-184334-android.md) | Galaxy S23+ after the fix, Kitsune2 + Cranelift |
+| [20261023-190414-local](results/20261023-190414-local.md) | Before the wasmi fix: H2HC with both engines, memory after every iteration |
+| [20261023-192829-local](results/20261023-192829-local.md) | After the wasmi fix: the same |
+| [20261023-195136-local](results/20261023-195136-local.md) | After the wasmi fix: 100 iterations of H2HC and Kitsune2 with wasmi, and H2HC with Cranelift |
+| [20261023-195814-local](results/20261023-195814-local.md) | After the wasmi fix: all four configurations at 20 iterations, 5 minutes idle, scenarios |
+
+## Memory: wasmi leaked the store of every zome call
+
+H2HC + wasmi grew from 96 MB to 575 MB after 10 iterations on the phone, and to 2.4 GB after 60 on the desktop. Holochain was not the cause. **wasmer 7.1.0's wasmi backend never frees a store**, so every zome call left its instance and linear memory behind. A patch to the vendored wasmer ([`wasmer-7.1.0-wasmi-store-ownership.patch`](../patches/wasmer-7.1.0-wasmi-store-ownership.patch)) fixes it.
+
+On the desktop, live heap growth fell from **63 MB per iteration to 13 KB**. H2HC + wasmi now holds 104–128 MB of RSS over 100 iterations, against about 435 MB for Cranelift. The phone has not been re-measured.
+
+### What grew
+
+The phone's `stats` now also report the allocator's live bytes (`mallinfo2` on glibc), so live allocations can be told apart from memory the allocator keeps after a free. Before the fix ([190414](results/20261023-190414-local.md), memory after every iteration):
+
+| H2HC + wasmi, desktop | Ready | Iteration 1 | Iteration 10 | Iteration 30 | After 60 s idle |
+|---|---|---|---|---|---|
+| Live heap | 91 MB | 155 MB | 724 MB | 1,987 MB | 2,054 MB |
+| Allocator's free pool | – | 38 MB | 40 MB | 39 MB | – |
+| RSS | 135 MB | 173 MB | 506 MB | 1,240 MB | 1,258 MB |
+
+- **Live heap grew 62.8–63.4 MB in every iteration.** It never levelled off, and idle released nothing.
+- **The free pool stayed flat**, so this was not fragmentation or allocator retention: the memory was genuinely still allocated.
+- **Live heap exceeded RSS by 750 MB.** Much of each leaked linear memory was allocated but never touched, so RSS understated the leak.
+- **Cranelift's live heap stayed at 75–78 MB** over the same 30 iterations.
+
+### Why
+
+A reproduction with only wasmer and no Holochain code, the same program as the [`wasm_store_memory`](../prototypes/h2hc-conductor/tests/wasm_store_memory.rs) test, instantiates a module with a 2 MiB memory 300 times, dropping its store each time:
+
+| What the module does | Live heap left per instantiation |
+|---|---|
+| Nothing exported, no imports | 0 |
+| Exports its memory and a function | 2,055 KiB |
+| A host function exists in the store, nothing exported | 2,054 KiB |
+| Exports and an imported host function (as every zome does) | 2,055 KiB |
+
+wasmer's wasmi backend drives wasmi through its C API (`wasmi_c_api_impl` 1.1.0). There the store is reference-counted, and every extern, function and instance handle holds a reference to it. wasmer never deletes two kinds of handle:
+- the export handles it gets from `wasm_instance_exports`, when building every instance's exports;
+- the host-function handles it creates with `wasm_func_new_with_env`.
+
+Either one keeps the whole wasmi store alive after `wasm_store_delete`: the instance, its linear memory, its tables and its host functions. Holochain builds a fresh store for every zome call, with about 70 host functions and an instance that exports its memory. So every call leaked one: about 14 MB per create-note round, including the validation callbacks.
+
+Holochain itself releases what it should: it drops each call's store and instance, caches compiled modules (one per zome), and removes each call's context. The patch also fixes smaller per-call leaks in the same backend:
+- each host function's type, and its callback environment, which holds an `Arc<Ribosome>`;
+- each instance's import and export vectors;
+- the type copy from `Function::ty`;
+- each call's argument and result vectors.
+
+### The fix
+
+The backend's `Store` now **owns every handle it creates** (exports, host functions, and created memories, globals and tables) and deletes them when it is dropped. wasmer's own model already says externs are valid exactly as long as their store. Host functions get a finalizer for their callback environment, and the smaller leaks above are freed where they occur. Cranelift uses wasmer's `sys` backend, which the patch does not touch.
+
+After the fix, the reproduction leaks 0.0 KiB per round over 2,000 rounds. Two regression tests in `h2hc-conductor` run on both engines:
+
+| Test | What it does | Without the fix | With it |
+|---|---|---|---|
+| `wasm_store_memory` | 200 wasmer instantiations | +411 MB, fails | under 4 MB |
+| `zome_call_memory` | 40 rounds of create, get and echo through a phone conductor | +1,712 MB, fails | +1.0–1.4 MB |
+
+### After the fix (desktop)
+
+[192829](results/20261023-192829-local.md) repeats the 30-iteration run; [195136](results/20261023-195136-local.md) runs 100 iterations:
+
+| | Live heap at ready → last iteration | Growth per iteration, second half | RSS at ready → last iteration |
+|---|---|---|---|
+| H2HC + wasmi, 30 iterations, before | 91 → 1,987 MB | 63.1 MB | 135 → 1,240 MB |
+| H2HC + wasmi, 30 iterations, after | 26 → 28 MB | 0.01 MB | 101 → 116 MB |
+| H2HC + wasmi, 100 iterations | 25 → 30 MB | 13 KB | 104 → 128 MB |
+| Kitsune2 + wasmi, 100 iterations | 32 → 37 MB | 16 KB | 125 → 153 MB |
+| H2HC + Cranelift, 100 iterations | 74 → 79 MB | 20 KB | 432 → 442 MB |
+
+The small growth left is the same on Cranelift, so it comes from the data the workload writes, not from wasm.
+
+The full benchmark with 20 iterations on every engine ([195814](results/20261023-195814-local.md)) checks everything else: writes, reads, link queries, remote calls and signals both ways, publishing and validation receipts all work, and all three scenarios pass. Idle CPU is unchanged: 4 ms/min for H2HC on both engines. In that run, Kitsune2 + wasmi was 4–8× slower than in every other run, with a 5× slower install; the 100-iteration run of the same configuration was normal, so the machine was busy.
+
+Freeing stores also made **wasmi faster**. Desktop local writes went from about 16 ms to 9 ms (p50), because each call now reuses freed memory instead of mapping and zeroing new pages:
+
+| H2HC, desktop (195814) | Cranelift | wasmi |
+|---|---|---|
+| Install | 514 ms | 81 ms |
+| First zome call | 783 ms | 58 ms |
+| Network ready | 806 ms | 118 ms |
+| Create note, p50 | 16.4 ms | 9.0 ms |
+| Read an authority's note, p50 | 3.7 ms | 3.3 ms |
+| Remote call, phone to authority, p50 | 6.4 ms | 5.5 ms |
+| RSS after the workload | 436 MB | 119 MB |
+| Data on disk | 46.6 MB | 6.9 MB |
+
+### What is left
+
+- **The phone has not been re-measured.** The fix is in platform-independent code, but Android's allocator and arm64 performance decide whether wasmi is the better choice there. Before the fix, the phone's wasmi latencies were already close to Cranelift's.
+- **wasmi zome calls are not metered.** `holochain_wasmer_host` meters Cranelift calls but has no metering for wasmi. A zome stuck in a loop runs until Holochain's call timeout, rather than being stopped by a metering limit.
+- **Every conductor start allocates about 256 MB for a moment, on both engines.** `holochain_data` derives the database key with Argon2id at its moderate memory limit. Peak RSS is about 270 MB even though the conductor settles at 30–100 MB; on a low-memory phone that could get the process killed at startup.
+- **Cranelift's desktop RSS is mostly allocator retention.** Live heap is about 75 MB, but glibc keeps about 310 MB freed after compiling, so RSS stays near 435 MB. On the phone Cranelift was about 145 MB.
+- **A few wasmi-backend paths Holochain does not use still leak a type copy per call:** `Memory::ty`, `Global::ty` and `Table::ty`.
 
 ## Idle CPU: Holochain's scheduler polled SQLite ten times a second
 
@@ -186,7 +282,7 @@ How it was run:
 What the phone run shows:
 
 - **Idle CPU is about 2.2–2.4 s of CPU per minute** in every configuration, roughly 4% of a core all the time, with or without Kitsune2. This was the conductor's own background work, not networking: the scheduler polling described above, before the fix.
-- **The wasmi leak reproduces on arm64:** 96 MB to 575 MB after 10 iterations. Cranelift holds steady at about 145 MB, far below the desktop's 430 MB.
+- **The wasmi leak reproduces on arm64:** 96 MB to 575 MB after 10 iterations. Cranelift holds steady at about 145 MB, far below the desktop's 430 MB. The leak has since been fixed in wasmer's wasmi backend ([above](#memory-wasmi-leaked-the-store-of-every-zome-call)); the phone has not been re-measured.
 - **Writes cost about 100–145 ms on the phone**, against 16 ms on the desktop. This is local commit and validation, the same with either network.
 - **H2HC still gets receipts in under a second**, against about 10 s for Kitsune2.
 - **Over this USB link, H2HC reads and remote calls are about the same as Kitsune2.**
@@ -235,7 +331,7 @@ An idle minute straight after a heavy workload measures higher, because receipts
 - 11 MB on disk vs 51 MB;
 - less than half the CPU over the same workload.
 
-But RSS grows with every zome call: 971 MB after 20 iterations and 2.4 GB after 60, and it is not released while idle. As shipped in Holochain 0.7.1, wasmi is not usable on a phone. A plausible cause, not verified: the process-wide shared wasmi engine in `holochain_wasmer_host` 0.0.103 keeps per-instance state.
+But RSS grows with every zome call: 971 MB after 20 iterations and 2.4 GB after 60, and it is not released while idle. As shipped in Holochain 0.7.1, wasmi is not usable on a phone. The cause turned out to be wasmer's wasmi backend never freeing a store; it is fixed ([above](#memory-wasmi-leaked-the-store-of-every-zome-call)), and wasmi now holds about 120 MB.
 
 ## Scenarios
 
@@ -256,5 +352,7 @@ These are behaviours of Holochain 0.7.1 or the upstream linker that the prototyp
 - Authorities only send validation receipts for ops published with bit 0 of the Kitsune2 publish metadata set. The upstream linker never set it, so linker publishes never got receipts.
 - Without `TCP_NODELAY`, Nagle's algorithm with delayed ACKs added about 40 ms to some round trips over the phone–linker WebSocket.
 - Holochain 0.7.1 cannot run wasmi when Cranelift is also compiled in: it reads wasmer's metering global and panics. Each engine needs its own build.
+- wasmer 7.1.0's wasmi backend never frees a store whose instance has exports or host functions, so every zome call leaked its linear memory (`patches/wasmer-7.1.0-wasmi-store-ownership.patch`).
+- `holochain_data` derives the database key with Argon2id at its moderate memory limit, so every conductor start briefly allocates about 256 MB.
 - An app embedding the conductor in-process needs `subscribe_to_app_signals`, which 0.7.1 only compiles with `test_utils` (`patches/holochain-0.7.1-embedder-access.patch`).
 - Lair's in-process keystore puts a Unix socket inside the data directory, so long data paths fail (`SUN_LEN`, about 108 bytes).
