@@ -59,6 +59,7 @@ fn parse() -> anyhow::Result<Opts> {
         .map(String::as_str)
         .unwrap_or("h2hc:cranelift,h2hc:wasmi,kitsune2:cranelift,kitsune2:wasmi")
         .split(',')
+        .filter(|c| *c != "none")
         .map(|c| {
             let (n, w) = c.split_once(':').context("config is network:wasm")?;
             Ok((n.to_string(), w.to_string()))
@@ -419,15 +420,24 @@ async fn offline_receipts(net: &Net, target: &Target, args: &[String], log: &Pat
         linker_accepted(&net.linker, &hash).await
     })
     .await;
-    if let Err(e) = accepted {
-        return (Err(e.context("linker never accepted the note")), Some(phone));
-    }
+    let accepted_ms = match accepted {
+        Ok(ms) => ms,
+        Err(e) => return (Err(e.context("linker never accepted the note")), Some(phone)),
+    };
+    // Diagnostic: receipts the phone already held when it was killed.
+    let before_kill = phone
+        .cmd(&Cmd::Receipts { hash: hash.clone() })
+        .await
+        .ok()
+        .and_then(|r| r["receipts"].as_u64())
+        .unwrap_or(0);
     let _ = phone.kill().await;
     let killed_at = Instant::now();
 
     let result = async {
         let h = hash_from(&hash)?;
         let mut metrics = BTreeMap::new();
+        metrics.insert("linker acceptance after create returned".to_string(), accepted_ms);
         metrics.insert(
             "authority read with phone killed".to_string(),
             net.authority(0).wait_for_note(&h, Duration::from_secs(60)).await?,
@@ -435,8 +445,11 @@ async fn offline_receipts(net: &Net, target: &Target, args: &[String], log: &Pat
         let held = poll(Duration::from_secs(30), Duration::from_millis(50), async || {
             Ok(linker_number(&net.linker, "inbox").await? > 0)
         })
-        .await
-        .is_ok();
+        .await;
+        if let Ok(ms) = held {
+            metrics.insert("first receipt held after the kill".into(), ms);
+        }
+        let held = held.is_ok();
         metrics.insert("phone offline for".into(), killed_at.elapsed().as_secs_f64() * 1000.0);
         let mut back = Phone::spawn(target, SCENARIO_PHONE, "cranelift", args, log).await?;
         back.cmd(&Cmd::Resume).await?;
@@ -452,7 +465,10 @@ async fn offline_receipts(net: &Net, target: &Target, args: &[String], log: &Pat
         })
         .await
         .context("linker inbox not drained after acknowledgement")?;
-        anyhow::ensure!(held, "receipts arrived before the kill, so the inbox was not exercised");
+        anyhow::ensure!(
+            held,
+            "no receipts reached the linker in the 30 s after the kill; the phone held {before_kill} receipts for the note when killed"
+        );
         anyhow::Ok((
             "authorities fetched the note from the linker with the phone killed; their receipts waited in the linker's inbox and were delivered after restart".to_string(),
             metrics,
