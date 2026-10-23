@@ -23,7 +23,7 @@ use h2hc_protocol::*;
 use holochain_p2p::WireMessage;
 use holochain_types::prelude::*;
 use kitsune2_api::{AgentInfo, DynSpace, Url};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
@@ -41,16 +41,61 @@ fn internal(e: impl std::fmt::Display) -> ProtocolError {
     ProtocolError::new(ErrorKind::Internal, e.to_string())
 }
 
+/// Frames sent or received, by kind, since startup.
+type Counts = Arc<Mutex<BTreeMap<&'static str, u64>>>;
+
+fn count(counts: &Counts, kind: &'static str) {
+    *counts.lock().unwrap().entry(kind).or_default() += 1;
+}
+
+fn request_kind(req: &Request) -> &'static str {
+    match req {
+        Request::Join { .. } => "Join",
+        Request::Leave { .. } => "Leave",
+        Request::Publish(_) => "Publish",
+        Request::Get { .. } => "Get",
+        Request::GetLinks { .. } => "GetLinks",
+        Request::CountLinks { .. } => "CountLinks",
+        Request::GetAgentActivity { .. } => "GetAgentActivity",
+        Request::GetAgentActivityMulti { .. } => "GetAgentActivityMulti",
+        Request::MustGetAgentActivity { .. } => "MustGetAgentActivity",
+        Request::CallRemote { .. } => "CallRemote",
+        Request::SendRemoteSignal { .. } => "SendRemoteSignal",
+        Request::SendRemoteSignalDirect { .. } => "SendRemoteSignalDirect",
+        Request::Block(_) => "Block",
+    }
+}
+
+fn pushed_kind(frame: &Frame) -> &'static str {
+    match frame {
+        Frame::Call {
+            body: Call::SignAgentInfo { .. },
+            ..
+        } => "SignAgentInfo",
+        Frame::Call {
+            body: Call::CallRemote { .. },
+            ..
+        } => "CallRemote",
+        Frame::Notify(Notification::RemoteSignal { .. }) => "RemoteSignal",
+        Frame::Notify(Notification::RemoteSignalDirect { .. }) => "RemoteSignalDirect",
+        Frame::Deliver { .. } => "Deliver",
+        Frame::Response { .. } => "Response",
+        _ => "Other",
+    }
+}
+
 /// One phone connection.
 pub(crate) struct Conn {
     id: u64,
     tx: mpsc::Sender<Frame>,
     calls: Mutex<HashMap<u64, oneshot::Sender<Result<Reply, ProtocolError>>>>,
     next_call: AtomicU64,
+    to_phone: Counts,
 }
 
 impl Conn {
     async fn send(&self, frame: Frame) -> bool {
+        count(&self.to_phone, pushed_kind(&frame));
         self.tx.send(frame).await.is_ok()
     }
 
@@ -105,6 +150,8 @@ struct Inner {
     /// Actions whose ops were most recently accepted, newest last, so tests
     /// can tell when a specific write is in the linker's custody.
     recent_actions: Mutex<VecDeque<ActionHash>>,
+    from_phone: Counts,
+    to_phone: Counts,
     next_conn: AtomicU64,
 }
 
@@ -140,6 +187,8 @@ impl ConductorLinks {
                 known: Default::default(),
                 blocked: Default::default(),
                 recent_actions: Default::default(),
+                from_phone: Default::default(),
+                to_phone: Default::default(),
                 next_conn: AtomicU64::new(1),
             }),
         }
@@ -241,6 +290,7 @@ impl ConductorLinks {
             tx: tx.clone(),
             calls: Mutex::new(HashMap::new()),
             next_call: AtomicU64::new(1),
+            to_phone: self.inner.to_phone.clone(),
         });
         let _ = tx
             .send(Frame::Welcome(Welcome {
@@ -253,6 +303,7 @@ impl ConductorLinks {
         while let Some(frame) = next_frame(&mut stream).await {
             match frame {
                 Frame::Request { id, body } => {
+                    count(&self.inner.from_phone, request_kind(&body));
                     let (links, conn) = (self.clone(), conn.clone());
                     tokio::spawn(async move {
                         let body = links.handle_request(&conn, body).await;
@@ -836,6 +887,8 @@ impl ConductorLinks {
             "known_agents": self.inner.known.read().unwrap().len(),
             "acceptances": self.inner.store.acceptance_count().unwrap_or(0),
             "inbox": self.inner.store.inbox_len().unwrap_or(0),
+            "from_phone": *self.inner.from_phone.lock().unwrap(),
+            "to_phone": *self.inner.to_phone.lock().unwrap(),
             "recent_actions": self
                 .inner
                 .recent_actions
