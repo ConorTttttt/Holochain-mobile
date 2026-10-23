@@ -5,12 +5,25 @@ version.workspace = true
 edition.workspace = true
 publish.workspace = true
 
+[[bin]]
+name = "h2hc-phone"
+
 [dependencies]
+anyhow = "1"
+base64 = "0.22"
 h2hc-p2p.workspace = true
 h2hc-protocol.workspace = true
-holochain.workspace = true
+# Both engines, so one binary can benchmark Cranelift and wasmi.
+holochain = { workspace = true, features = ["wasmer-wasmi"] }
 kitsune2_api.workspace = true
 lair_keystore_api = "=0.7.1"
+libc = "0.2"
+serde.workspace = true
+serde_json.workspace = true
+sodoken = "0.1"
+tokio = { workspace = true, features = ["io-std", "io-util"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+url2 = "0.0.6"
 
 [dev-dependencies]
 ed25519-dalek.workspace = true
@@ -18,7 +31,4 @@ futures.workspace = true
 holochain_types.workspace = true
 holochain_keystore.workspace = true
 rand.workspace = true
-sodoken = "0.1"
 tempfile = "3"
-kitsune2_api.workspace = true
-tokio.workspace = true
