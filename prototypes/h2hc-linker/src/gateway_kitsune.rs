@@ -906,6 +906,30 @@ impl GatewayKitsune {
         op_ids: Vec<kitsune2_api::OpId>,
         basis_loc: u32,
     ) -> Result<usize, String> {
+        self.publish_ops_with_metadata(dna_hash, op_ids, basis_loc, None)
+            .await
+    }
+
+    /// Publish ops and ask authorities for validation receipts. Holochain
+    /// only sends receipts for ops published with bit 0 of the Kitsune2
+    /// publish metadata set (`holochain_p2p::publish_metadata`).
+    pub(crate) async fn publish_ops_requesting_receipts(
+        &self,
+        dna_hash: &DnaHash,
+        op_ids: Vec<kitsune2_api::OpId>,
+        basis_loc: u32,
+    ) -> Result<usize, String> {
+        self.publish_ops_with_metadata(dna_hash, op_ids, basis_loc, Some(Bytes::from_static(&[1])))
+            .await
+    }
+
+    async fn publish_ops_with_metadata(
+        &self,
+        dna_hash: &DnaHash,
+        op_ids: Vec<kitsune2_api::OpId>,
+        basis_loc: u32,
+        metadata: Option<Bytes>,
+    ) -> Result<usize, String> {
         use kitsune2_core::get_responsive_remote_agents_near_location;
 
         // Get or create the space
@@ -1001,7 +1025,7 @@ impl GatewayKitsune {
             .cloned()
             .map(|op_id| PublishOp {
                 op_id,
-                metadata: None,
+                metadata: metadata.clone(),
             })
             .collect();
         let mut success_count = 0;

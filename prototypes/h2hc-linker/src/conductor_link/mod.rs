@@ -540,7 +540,10 @@ impl ConductorLinks {
             req.basis.get_loc(),
         );
         tokio::spawn(async move {
-            match gateway.publish_ops(&dna, op_ids, loc).await {
+            match gateway
+                .publish_ops_requesting_receipts(&dna, op_ids, loc)
+                .await
+            {
                 Ok(0) => debug!("no authorities reachable yet; the conductor will republish"),
                 Ok(n) => debug!(peers = n, "published accepted ops"),
                 Err(e) => warn!(%e, "publishing accepted ops failed"),
