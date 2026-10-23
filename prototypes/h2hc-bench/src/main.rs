@@ -309,16 +309,26 @@ async fn run_config_inner(net: &Net, target: &Target, run_dir: &Path, opts: &Opt
     r.stats_after_workload = phone.stats().await?;
     progress(format!("{}: workload done; idling {} s", r.label(), opts.idle_secs));
     let idle_from = match r.network.as_str() {
-        "h2hc" => linker_number(&net.linker, "acceptances").await.ok(),
+        "h2hc" => net.linker.status().await.ok(),
         _ => None,
     };
     tokio::time::sleep(Duration::from_secs(opts.idle_secs)).await;
     r.stats_after_idle = phone.stats().await?;
-    if let Some(from) = idle_from {
-        r.idle_linker_acceptances = linker_number(&net.linker, "acceptances")
-            .await
-            .ok()
-            .map(|to| to.saturating_sub(from));
+    if let (Some(from), Ok(to)) = (idle_from, net.linker.status().await) {
+        r.idle_linker_acceptances = Some(
+            to["acceptances"].as_u64().unwrap_or(0).saturating_sub(from["acceptances"].as_u64().unwrap_or(0)),
+        );
+        for (dir, label) in [("from_phone", "phone to linker"), ("to_phone", "linker to phone")] {
+            if let Some(after) = to[dir].as_object() {
+                for (kind, n) in after {
+                    let before = from[dir][kind].as_u64().unwrap_or(0);
+                    let delta = n.as_u64().unwrap_or(0).saturating_sub(before);
+                    if delta > 0 {
+                        r.idle_frames.insert(format!("{label}: {kind}"), delta);
+                    }
+                }
+            }
+        }
     }
     phone.quit().await?;
     Ok(())

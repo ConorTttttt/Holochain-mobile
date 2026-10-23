@@ -78,6 +78,8 @@ pub struct ConfigResult {
     /// Publish batches the linker accepted while the phone sat idle (H2HC):
     /// the conductor republishing ops that lack enough receipts.
     pub idle_linker_acceptances: Option<u64>,
+    /// Protocol frames by kind while the phone sat idle (H2HC).
+    pub idle_frames: BTreeMap<String, u64>,
     pub errors: Vec<String>,
 }
 
@@ -238,6 +240,30 @@ impl Report {
                 republish,
                 c.stats_after_idle.data_bytes as f64 / 1_048_576.0
             );
+        }
+
+        let h2hc: Vec<&ConfigResult> = self.configs.iter().filter(|c| c.network == "h2hc").collect();
+        let mut kinds: Vec<&String> = h2hc.iter().flat_map(|c| c.idle_frames.keys()).collect();
+        kinds.sort();
+        kinds.dedup();
+        if !kinds.is_empty() {
+            let _ = writeln!(md, "\n## Linker traffic while idle\n");
+            let _ = write!(md, "| Frames in {} s |", self.configs.first().map(|c| c.idle_secs).unwrap_or(0));
+            for c in &h2hc {
+                let _ = write!(md, " {} |", c.label());
+            }
+            let _ = write!(md, "\n|---|");
+            for _ in &h2hc {
+                let _ = write!(md, "---|");
+            }
+            let _ = writeln!(md);
+            for kind in kinds {
+                let _ = write!(md, "| {kind} |");
+                for c in &h2hc {
+                    let _ = write!(md, " {} |", c.idle_frames.get(kind).copied().unwrap_or(0));
+                }
+                let _ = writeln!(md);
+            }
         }
 
         if !self.scenarios.is_empty() {
