@@ -1,0 +1,66 @@
+{
+  "started": "20261023-121834",
+  "baseline": {
+    "authority note visible at another authority": {
+      "n": 3,
+      "failures": 0,
+      "p50": 30.92149,
+      "p95": 32.129425000000005,
+      "min": 30.88686,
+      "max": 32.129425000000005,
+      "mean": 31.312591666666666
+    },
+    "remote call": {
+      "n": 3,
+      "failures": 0,
+      "p50": 5.789012,
+      "p95": 5.809271000000001,
+      "min": 5.698075,
+      "max": 5.809271000000001,
+      "mean": 5.765452666666666
+    },
+    "signal round trip": {
+      "n": 3,
+      "failures": 0,
+      "p50": 7.2066609999999995,
+      "p95": 7.3220209999999994,
+      "min": 7.084164,
+      "max": 7.3220209999999994,
+      "mean": 7.204281999999999
+    }
+  },
+  "target": "local",
+  "host": "Linux 7.0.0-38-generic x86_64",
+  "authorities": 3,
+  "iterations": 3,
+  "configs": [],
+  "scenarios": [
+    {
+      "name": "invalid note is rejected on the phone",
+      "passed": true,
+      "detail": "rejected by the phone's own validation before publishing",
+      "metrics": {}
+    },
+    {
+      "name": "receipts wait in the linker while the phone is killed",
+      "passed": true,
+      "detail": "authorities fetched the note from the linker with the phone killed; their receipts waited in the linker's inbox and were delivered after restart",
+      "metrics": {
+        "authority read with phone killed": 2.2531320000000004,
+        "first receipt held after the kill": 309.046596,
+        "linker acceptance after create returned": 51.872271,
+        "phone offline for": 311.30634899999995,
+        "receipts complete after restart": 102.812609
+      }
+    },
+    {
+      "name": "linker crash and restart",
+      "passed": true,
+      "detail": "12 acceptances survived the crash; the note written during the outage was published after reconnecting",
+      "metrics": {
+        "outage note visible after restart": 58726.159218,
+        "phone reconnected after restart": 306.65157700000003
+      }
+    }
+  ]
+}
