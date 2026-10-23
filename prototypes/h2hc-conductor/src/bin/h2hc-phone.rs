@@ -16,6 +16,7 @@ use h2hc_protocol::LinkerId;
 use holochain::conductor::config::{ConductorConfig, KeystoreConfig, NetworkConfig, WasmBackend};
 use holochain::conductor::{ConductorBuilder, ConductorHandle};
 use holochain::prelude::*;
+use holochain_conductor_api::CellInfo;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -161,6 +162,26 @@ impl Phone {
                 self.spawn_signal_listener();
                 json!({ "agent": AgentPubKeyB64::from(agent).to_string(),
                         "install_ms": install_ms, "enable_ms": enable_ms })
+            }
+            Command::Resume => {
+                let info = self
+                    .conductor
+                    .get_app_info(&APP_ID.into())
+                    .await?
+                    .ok_or_else(|| anyhow::anyhow!("no installed app to resume"))?;
+                let cell_id = info
+                    .cell_info
+                    .values()
+                    .flatten()
+                    .find_map(|c| match c {
+                        CellInfo::Provisioned(p) => Some(p.cell_id.clone()),
+                        _ => None,
+                    })
+                    .ok_or_else(|| anyhow::anyhow!("app has no provisioned cell"))?;
+                let agent = info.agent_pub_key.clone();
+                *self.cell.lock().unwrap() = Some((agent.clone(), cell_id));
+                self.spawn_signal_listener();
+                json!({ "agent": AgentPubKeyB64::from(agent).to_string() })
             }
             Command::CreateNote { text } => {
                 let start = Instant::now();

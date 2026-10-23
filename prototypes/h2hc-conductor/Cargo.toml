@@ -15,6 +15,7 @@ h2hc-p2p.workspace = true
 h2hc-protocol.workspace = true
 # Both engines, so one binary can benchmark Cranelift and wasmi.
 holochain = { workspace = true, features = ["wasmer-wasmi"] }
+holochain_conductor_api = "=0.7.1"
 kitsune2_api.workspace = true
 lair_keystore_api = "=0.7.1"
 libc = "0.2"

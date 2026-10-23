@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 pub enum Command {
     /// Install and enable the fixture hApp.
     Install,
+    /// Attach to the hApp installed by an earlier run on the same data.
+    Resume,
     CreateNote { text: String },
     GetNote { hash: String },
     GetNotes { agent: String },

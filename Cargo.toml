@@ -5,6 +5,7 @@ members = [
     "prototypes/h2hc-protocol",
     "prototypes/h2hc-p2p",
     "prototypes/h2hc-conductor",
+    "prototypes/h2hc-bench",
 ]
 
 [workspace.package]

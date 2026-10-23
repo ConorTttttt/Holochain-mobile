@@ -1,52 +1,75 @@
 # Lightweight Holochain Nodes for Mobile v4
 
-Working repo for the v4 plan: https://claude.ai/artifact/QzfGayyLzmZmhPsGc4zKtS
+Working repo for the v4 plan: https://claude.ai/artifact/QzfGayyLzmZmhPsGc4zKtS. Everything here is a private local test; nothing is pushed to Holo.
 
 | Step | Deliverable | Status |
 |---|---|---|
-| 1 | Physical arm64 baseline, Cranelift and wasmi | Blocked: needs an arm64 phone over adb |
+| 1 | Physical arm64 baseline, Cranelift and wasmi | Bench ready (`scripts/bench-android.sh`); waiting for the Android tools and a phone |
 | 2 | HcP2p and HcP2pHandler compatibility matrix; injectable network factory | Done: [matrix](research/hcp2p-compat-matrix.md), [factory patch](patches/holochain-0.7.1-p2p-factory.patch) |
-| 3 | Durable linker acceptance, truthful status, receipt inbox | Protocol and phone side done; linker side not started |
-| 4 | End-to-end H2HC conductor | Phone conductor runs end to end against a mock linker; real linker not started |
-| 5 | Suspension, restart and recovery | Not started |
+| 3 | Durable linker acceptance, truthful status, receipt inbox | Done in the local linker fork |
+| 4 | End-to-end H2HC conductor | Runs against a real local network |
+| 5 | Suspension, restart and recovery | Reconnection, linker crash and phone kill covered; command idempotency not started |
 | 6 | Checkpoints and reconciliation | Not started |
 | 7 | Authority-workflow reduction | Not started |
 
-Pinned sources: Holochain 0.7.1 (HDK 0.7.1, HDI 0.8.1), h2hc-linker `cab242d` (github.com/Holo-Host/h2hc-linker).
+Pinned sources: Holochain 0.7.1 (HDK 0.7.1, HDI 0.8.1) for conductors, 0.7.0 for the linker, h2hc-linker `cab242d`.
 
 ## What is built
 
 | Path | What it is |
 |---|---|
-| [prototypes/h2hc-protocol](prototypes/h2hc-protocol/src/lib.rs) | Conductor-facing linker protocol v1. Carries Holochain wire types unflattened, labels each answer's source (authority, linker buffer, linker cache), delivers validation receipts through an acknowledged inbox, and defines signed acceptance receipts |
-| [prototypes/h2hc-p2p](prototypes/h2hc-p2p/src/lib.rs) | `HcP2p` for a zero-arc phone, implementing every row of the matrix. Drops buffer-sourced data by default, signs agent infos only for joined, zero-arc agents with a lifetime of at most 21 minutes, and returns `Ok` from `publish` only after verifying a receipt from the pinned linker |
-| [prototypes/h2hc-conductor](prototypes/h2hc-conductor/src/lib.rs) | `build_phone_conductor`: a Holochain conductor that runs no Kitsune2 |
-| [patches/holochain-0.7.1-p2p-factory.patch](patches/holochain-0.7.1-p2p-factory.patch) | Adds `ConductorBuilder::with_p2p_factory`; the upstream change to propose |
-| [tests/fixtures/notes](tests/fixtures/notes) | Test-only DNA with deliberately restrictive validation |
+| [prototypes/h2hc-protocol](prototypes/h2hc-protocol/src/lib.rs) | Conductor-facing linker protocol v1: unflattened wire types, source labels, an acknowledged receipt inbox, signed acceptance receipts |
+| [prototypes/h2hc-p2p](prototypes/h2hc-p2p/src/lib.rs) | `HcP2p` for a zero-arc phone, implementing the matrix, with a WebSocket transport and automatic reconnection |
+| [prototypes/h2hc-linker](prototypes/h2hc-linker) | Local fork of h2hc-linker (CAL-1.0) with `/conductor/v1`: admission checks, SQLite acceptance store and inbox, sourced queries, remote calls and signals both ways |
+| [prototypes/h2hc-conductor](prototypes/h2hc-conductor/src/lib.rs) | `build_phone_conductor`, and the `h2hc-phone` binary the benchmarks drive |
+| [prototypes/h2hc-bench](prototypes/h2hc-bench/src/main.rs) | Starts a local network (bootstrap and relay, full-arc authorities, linker), runs `h2hc-phone` in each configuration, writes a report |
+| [patches/](patches) | Holochain 0.7.1 changes: `ConductorBuilder::with_p2p_factory`, and app signals and DHT store reads without `test_utils` for in-process embedding |
+| [tests/fixtures/notes](tests/fixtures/notes) | Test-only DNA with deliberately restrictive validation, links, remote calls and signals |
 
-## Build and test
+## Run the benchmarks
+
+On this machine (the phone is an ordinary process):
 
 ```sh
-./scripts/vendor-holochain.sh   # published holochain 0.7.1 plus the factory patch, into vendor/
-./scripts/build-fixtures.sh     # fixture zomes to wasm, packed into notes.happ
-cargo test --workspace
+./scripts/bench.sh                                   # all four configurations and the scenarios
+./scripts/bench.sh --configs h2hc:cranelift --iterations 5 --idle-secs 10 --no-scenarios
 ```
 
-The end-to-end test (`prototypes/h2hc-conductor/tests/phone_conductor.rs`) installs the fixture app on a conductor whose only network is an in-memory linker. It then checks:
+On an Android phone over USB (needs `~/Android/Sdk/platform-tools` and `~/Android/Sdk/android-ndk-r27c`):
 
-- the conductor joins and signs a zero-arc agent info;
-- a note is authored and its ops are published, each with a verified acceptance receipt;
+```sh
+./scripts/bench-android.sh
+```
+
+Reports are written to `benchmarks/results/<time>-<target>.md` and `.json`; process logs go to `target/bench-runs/<time>/`.
+
+Configurations are `network:wasm` pairs: `h2hc` (through the linker, no Kitsune2 on the phone) or `kitsune2` (a zero-arc Kitsune2 node), with `cranelift` or `wasmi`. Each run measures:
+
+- startup, install, first zome call, and time until the phone can read authority data;
+- p50 and p95 latency of local writes, reads, link queries, remote calls and signals in both directions, publish-to-visible and publish-to-receipts;
+- the phone process's memory, threads, idle CPU, idle linker traffic and data on disk.
+
+Scenarios (H2HC with Cranelift):
+
 - an invalid note is rejected on the phone;
-- the author reads its note back;
-- a validation receipt delivered through the linker inbox is acknowledged after the conductor stores it.
+- the phone is killed after publishing, and receipts wait in the linker until it restarts;
+- the linker crashes and restarts, keeping its acceptance log, and the phone reconnects and publishes what it wrote during the outage.
 
-The fixture build sets two wasm flags in `tests/fixtures/notes/.cargo/config.toml`, because this machine's Rust 1.99 is newer than Holonix's:
+`--long` adds a phone sleep longer than the 20-minute agent-info lifetime.
 
-- `getrandom_backend="custom"`
-- `--import-undefined`, which is needed for Holochain host functions.
+## Tests
+
+```sh
+./scripts/vendor-holochain.sh && ./scripts/build-fixtures.sh
+cargo test --workspace
+(cd prototypes/h2hc-linker && cargo test)
+```
+
+Building zomes with this machine's Rust 1.99 outside Holonix needs two wasm flags, set in `tests/fixtures/notes/.cargo/config.toml`.
 
 ## Not built yet
 
-- The linker side of the protocol: a conductor-facing endpoint in h2hc-linker with a durable acceptance store, admission checks and the receipt inbox.
-- A real byte transport. Sessions run over an in-memory frame channel; a WebSocket transport comes with the linker work.
-- Reconnection, and durable phone-side storage of acceptance receipts (step 5).
+- Command idempotency for retried zome calls (step 5).
+- Durable phone-side storage of acceptance receipts.
+- Checkpoints, reconciliation and authority-workflow reduction (steps 6 and 7).
+- An installable Android app, needed to test Android's background limits and measure battery properly.
