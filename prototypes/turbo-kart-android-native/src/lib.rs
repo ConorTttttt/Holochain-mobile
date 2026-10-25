@@ -264,6 +264,51 @@ fn get_locked_race(lobby_id: String) -> Result<Value> {
     }))
 }
 
+/// Fetch the authoritative locked race and each participant's exact
+/// signed endpoint binding using the original Turbo Kart + gaming directory
+/// zomes. This returns an UNTRUSTED envelope for independent verification
+/// with the desktop's RaceAdmission::from_locked in the realtime JNI module.
+/// This function never starts a race and never changes a player identity.
+fn locked_admission_bundle(lobby_id: String) -> Result<Value> {
+    ensure!(!lobby_id.is_empty() && lobby_id.len() <= 128, "invalid lobby ID length");
+    let locked = slot().lock()
+        .map_err(|_| anyhow::anyhow!("native host lock poisoned"))?;
+    let host = locked.as_ref().context("start the conductor first")?;
+    let record: Option<Value> = host.runtime.block_on(host.conductor.easy_call_zome(
+        &host.agent, None, host.kart.clone(), KART_ZOME, "get_race", lobby_id.clone()
+    )).context("original turbo_kart.get_race")?;
+    let record = record.context("desktop host has not locked a race for this lobby")?;
+    let setup = record.get("setup").context("race record missing setup")?;
+    ensure!(setup.get("lobby").and_then(Value::as_str) == Some(lobby_id.as_str()),
+        "locked race refers to a different lobby");
+    let participants = setup.get("participants").and_then(Value::as_array)
+        .context("locked race has no participants")?;
+    ensure!((1..=8).contains(&participants.len()),
+        "invalid locked race participant count");
+    let mut bindings = Vec::with_capacity(participants.len());
+    for participant in participants {
+        let binding = participant.get("binding").and_then(Value::as_str)
+            .context("locked race participant missing binding action")?;
+        // holo_hash's parser can panic on malformed text: screen the canonical
+        // ActionHashB64 shape before passing it to the actual hash parser.
+        ensure!(binding.len() == 53 && binding.starts_with("uhCkk")
+            && binding.is_ascii() && binding.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_'),
+            "race contains malformed signed binding action");
+        let action = ActionHash::try_from(binding).context("parse race binding action hash")?;
+        ensure!(action.to_string() == binding, "noncanonical race binding action hash");
+        let presence: Option<Value> = host.runtime.block_on(host.conductor.easy_call_zome(
+            &host.agent, None, host.directory.clone(), DIRECTORY_ZOME,
+            "get_endpoint_binding", action
+        )).context("original moq_directory.get_endpoint_binding for race")?;
+        bindings.push(presence.context("locked race references a missing signed presence action")?);
+    }
+    Ok(json!({
+        "record": record,
+        "signed_bindings": bindings,
+        "local_agent": AgentPubKeyB64::from(host.agent.clone()).to_string(),
+    }))
+}
+
 fn join_lobby(lobby_id: String, character_id: String) -> Result<Value> {
     ensure!(!lobby_id.is_empty() && lobby_id.len() <= 128, "invalid lobby ID length");
     ensure!(
@@ -504,6 +549,23 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_getLocke
     result_as_jstring(&mut env, match response {
         Ok(v) => v,
         Err(_) => Err(anyhow::anyhow!("native panic during get_race")),
+    })
+}
+
+/// Hand the realtime JNI library the untrusted locked race + exact signed
+/// directory records so the original desktop validation can run unchanged.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_lockedAdmissionBundle(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    lobby_id: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        locked_admission_bundle(str_arg(&mut env, lobby_id)?)
+    }));
+    result_as_jstring(&mut env, match response {
+        Ok(v) => v,
+        Err(_) => Err(anyhow::anyhow!("native panic reading locked race directory bindings")),
     })
 }
 
