@@ -38,16 +38,18 @@ wireless/production networking have not been implemented.
 WP3 42-byte kart codec **compiled and passed on the Galaxy S23** using
 `scripts/build-turbo-kart-realtime-probe.sh`. The user saw matching golden
 bytes, a bound Iroh EndpointId and direct IP addresses, and `complete/ok:true`.
-A separate `libturbo_kart_realtime_jni.so` with Android Keystore-protected
-**persistent Iroh identity** and an APK **Start / Resume Iroh Endpoint**
-button has now been added in source, but the new APK **has not yet been
-compiled or tested**. The updated `scripts/build-turbo-kart-apk.sh` builds
-both JNI libraries.
+The updated APK's second JNI library uses Android Keystore-protected
+**persistent Iroh identity**, and the user verified that **both the Iroh
+EndpointId and the original Holochain agent survive app process restart**.
+A subsequent build adds buttons to **Publish signed Iroh presence** and
+**Verify directory Iroh bindings** using the desktop's original signature
+format and existing Holochain `moq_directory` zome. This new signed-presence
+feature is **in source but has not yet been built or phone-tested**.
 
 See [docs/turbo-kart-android-realtime.md](docs/turbo-kart-android-realtime.md)
-for the required two-restart endpoint identity test and the subsequent
-signed presence / race admission gate. Android real-time peer connectivity
-and race sessions remain unimplemented.
+for the exact on-phone signed-presence acceptance test and next authenticated
+race admission gate. Android real-time peer connectivity and MoQ races
+remain unimplemented.
 
 
 ## What is built
