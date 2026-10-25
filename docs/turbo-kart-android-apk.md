@@ -2,16 +2,20 @@
 
 **Status (25 October 2026):** the JNI Rust library compiled for Android
 arm64 with NDK r27c, the Kotlin/Gradle 8.9 debug APK built, and the Galaxy S23
-ran the app successfully: the **Discover desktop lobbies** button returned
-`ok:true` with desktop lobby `MobileHolochainTest`. This establishes the
-APK's Kotlin → JNI → H2HC/Wasmi → desktop lobby read path. The app is still
-not a playable mobile game, and its **persistent identity across Android app
-process restarts has not yet been verified**.
+ran the app successfully: **Discover desktop lobbies** returned `ok:true`
+and found `MobileHolochainTest`. The user subsequently confirmed that
+**all Android identity-restart checks passed**, including the same persistent
+Holochain agent, hApp resume, and a successful post-restart lobby query.
 
-The device also reported that the `libturbo_kart_android_native.so` ELF
-LOAD segments were not 16 KiB-aligned. An APK build-script fix has been
-committed using both NDK r27-compatible linker flags and an llvm-readelf
-alignment check. **Rebuild and device verification of this fix remain pending.**
+The native library's ELF LOAD segments and the APK's ZIP placement passed
+the 16 KiB alignment checks. After reinstalling the corrected APK, the user
+also confirmed the previous Android **16 KiB compatibility warning was gone**.
+This demonstrates alignment success on the tested device, not exhaustive
+coverage of all 16 KiB-page hardware.
+
+The next APK feature—**View Lobby, Join as Zippy, and Leave Lobby buttons**—
+is committed as source but **has not yet been compiled or device-tested**.
+This is still a control-plane prototype, not a playable racing game.
 
 ## Scope
 
@@ -23,13 +27,14 @@ identity across process restarts, including a working post-resume network read.
 This APK prototype combines the ingredients in an **app-private Android
 process** rather than starting a standalone executable under `adb shell`:
 
-- `prototypes/turbo-kart-android-native`: Rust `cdylib` with JNI start and
-  `listOpenLobbies` methods, an in-process H2HC/Wasmi conductor and guarded
+- `prototypes/turbo-kart-android-native`: Rust `cdylib` with JNI start,
+  `listOpenLobbies`, `getLobby`, `joinLobby` and `leaveLobby` methods;
+  an in-process H2HC/Wasmi conductor and guarded
   install/resume logic. Never installs/re-enables hApps before verifying both
   production DNA hashes and a shared agent.
-- `android/turbo-kart-mobile`: simple Kotlin Android Activity with Start /
-  Resume and Discover Lobbies buttons. Not a racing UI or an APK port of the
-  desktop game's front end.
+- `android/turbo-kart-mobile`: Kotlin Android Activity with Start / Resume,
+  Discover Lobbies, lobby selection, View Lobby, Join as Zippy and Leave Lobby
+  controls. Not a racing UI or an APK port of the desktop game's front end.
 - `PassphraseStore.kt`: generates a random 48-byte Lair secret, encrypts it
   using a non-exportable Android Keystore AES-GCM key, and stores only the
   ciphertext/nonce in app-private SharedPreferences. Does not silently mint
@@ -157,15 +162,43 @@ Do **not** run `adb shell pm clear` or uninstall the APK between persistence
 tests. Those operations can destroy app-private conductor data and the
 unlocking material. `adb install -r` is intended to keep app data.
 
+## New APK lobby membership controls (not yet device-verified)
+
+After pulling this branch and rebuilding with `scripts/build-turbo-kart-apk.sh`,
+install the new APK using `adb install -r` (without clearing data), then:
+
+1. Keep the desktop game in an open **public** lobby with a free player slot.
+2. On Android, tap **Start / Resume Holochain**. Confirm `resumed:true`
+   and the **same** Holochain agent as before.
+3. Tap **Discover desktop lobbies** and select the intended lobby in the
+   spinner (do not assume the first lobby is the right one).
+4. Tap **View selected lobby** and check status/membership.
+5. Tap **Join as Zippy**, check the returned `action` and independently
+   confirm Zippy appears in the desktop game.
+6. Tap **Leave joined lobby**, verify the action and confirm the desktop
+   game removes Zippy.
+7. Optionally force-stop/reopen the APK without clearing data, then select
+   the lobby and tap **View selected lobby**. This also restores local
+   knowledge of membership if the restarted app is still a member.
+
+The native bridge reuses the exact `join_lobby` payload shape from the
+successful adb-shell smoke test, including `invite_code: null`. Join/leave
+results are decoded as Holochain `ActionHash` and returned as strings.
+All JNI calls run on a background thread. The APK supports public lobbies
+only; private invite codes are not yet implemented.
+
+Do not assume successful installation proves these new buttons work: test
+actual UI, native calls, zome writes and desktop display changes on the
+Galaxy S23.
+
 ## Current limitations / safety
 
-- **Not yet compiled or tested.** JNI symbol naming, Android Lair socket
-  binding, app process lifecycle and battery/background handling require
-  actual device verification. Never claim Android persistence is proven from
-  the previous Linux result alone.
-- Only `start` and read-only `listOpenLobbies` are exposed to Kotlin.
-  There is no APK UI for join/leave yet. The separate ADB-shell harness
-  already proved Android join/leave.
+- The APK's persistent-agent restart and post-resume lobby read have
+  **passed on the Galaxy S23**. The new APK's join/leave controls are
+  **not yet built or device-verified**, despite the earlier adb-shell
+  join/leave success. More lifecycle and battery/background tests remain.
+- The UI supports public lobby join/leave using character `zippy` only.
+  It does not implement private invites, character selection or race start.
 - `ws://` cleartext and the test linker key are for local development only.
 - The secret is held in process memory while unlocking Lair; Kotlin clears
   its temporary byte array afterward. Secrets are not committed or logged.
