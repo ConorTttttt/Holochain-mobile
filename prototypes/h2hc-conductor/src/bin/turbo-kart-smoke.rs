@@ -415,6 +415,13 @@ impl Smoke {
 async fn main() -> Result<()> {
     let args = args()?;
     std::fs::create_dir_all(&args.data_dir)?;
+    // An access-restricted root prevents other local users from traversing
+    // into the persistent keystore and conductor state.
+    #[cfg(unix)]
+    if args.keystore == KeystoreMode::Lair {
+        std::fs::set_permissions(&args.data_dir, std::fs::Permissions::from_mode(0o700))
+            .context("restrict persistent data directory")?;
+    }
 
     // The original disposable in-memory keystore is the default. Persistent
     // Lair is opt-in and intended for Linux verification before Android APK work.
