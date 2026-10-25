@@ -81,6 +81,33 @@
       transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.4);
       filter: brightness(1.35);
     }
+    /*
+     * The desktop character-select layout was designed for tall monitors.
+     * On a landscape phone shrink only its menu chrome; preserve the
+     * game canvas, physics, and original on-screen button behaviour.
+     */
+    @media (orientation: landscape) and (max-height: 520px) {
+      .select-screen { padding: 6px 12px; }
+      .sel-body { gap: 8px; margin-top: 4px; }
+      .sel-title { font-size: 25px; }
+      .sel-grid { gap: 5px; width: min(49vw, 450px); }
+      .card { grid-template-columns: 34px 1fr; column-gap: 4px; padding: 3px 5px; border-width: 2px; border-radius: 9px; }
+      .card-portrait { width: 32px; height: 32px; border-width: 2px; border-radius: 7px; }
+      .card-name { font-size: 15px; }
+      .card-stats { gap: 0 2px; }
+      .sel-side { width: min(44vw, 350px); gap: 4px; }
+      .preview { padding: 6px; gap: 3px; border-width: 2px; }
+      .pv-portrait { width: 58px; height: 58px; border-width: 3px; }
+      .pv-name { font-size: 23px; }
+      .pv-kart { margin: 0; font-size: 10px; }
+      .opts { gap: 3px; }
+      .opt { padding: 3px 5px; gap: 3px; grid-template-columns: 48px 18px 1fr 18px; }
+      .opt-lbl { font-size: 11px; }
+      .opt-val { font-size: 14px; }
+      .race-btn { font-size: 20px; padding: 7px; margin: 0; }
+      .controls-help { display: none; }
+      #game-canvas { touch-action: none; }
+    }
     @media (max-height: 430px) {
       #tk-touch-controls button {
         width: clamp(50px, 12vh, 68px);
