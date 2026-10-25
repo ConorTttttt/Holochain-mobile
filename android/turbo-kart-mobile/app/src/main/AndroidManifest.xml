@@ -13,5 +13,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Touch racing preview is separate from the proven multiplayer
+             test Activity; no data reset, JNI API or conductor change. -->
+        <activity
+            android:name=".TouchGameActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|keyboardHidden"/>
     </application>
 </manifest>
