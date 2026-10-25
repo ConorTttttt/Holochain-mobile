@@ -20,4 +20,10 @@ object NativeBridge {
     ): String
 
     external fun listOpenLobbies(limit: Int): String
+
+    external fun getLobby(lobbyId: String): String
+
+    external fun joinLobby(lobbyId: String, characterId: String): String
+
+    external fun leaveLobby(lobbyId: String): String
 }
