@@ -20,6 +20,13 @@ export CXX_aarch64_linux_android="$BIN/aarch64-linux-android$API-clang++"
 export AR_aarch64_linux_android="$BIN/llvm-ar"
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$CC_aarch64_linux_android"
 
+# NDK r27c defaults to 4 KiB ELF LOAD alignment. Android 15+ can use
+# 16 KiB pages; link Rust's JNI .so with both 16 KiB page-size settings.
+# Target-specific flags avoid changing the Linux build or CLI benchmarks.
+# A changed rustflags fingerprint can require Cargo to rebuild target deps.
+export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS="-C link-arg=-Wl,-z,max-page-size=16384 -C link-arg=-Wl,-z,common-page-size=16384"
+echo "Building 16 KiB-aligned Android JNI library (NDK r27 compatibility)."
+
 if [ ! -d vendor/holochain-0.7.1 ] || [ ! -d vendor/wasmer-7.1.0 ]; then
   ./scripts/vendor-holochain.sh
 fi
@@ -27,6 +34,30 @@ fi
 cargo build --release --target aarch64-linux-android \
   -p turbo-kart-android-native \
   --target-dir target/wasmi
+
+LIB="$ROOT/target/wasmi/aarch64-linux-android/release/libturbo_kart_android_native.so"
+# Fail before APK packaging if a linker/toolchain change regresses alignment.
+# NDK llvm-readelf's "LOAD" segment Align column should be 0x4000 (16 KiB).
+if ! "$BIN/llvm-readelf" -lW "$LIB" | awk '
+  $1 == "LOAD" {
+    n++
+    if ($NF != "0x4000") {
+      print "ERROR: Android ELF LOAD segment is not 16 KiB aligned: " $0 > "/dev/stderr"
+      bad = 1
+    }
+  }
+  END {
+    if (n == 0) {
+      print "ERROR: no ELF LOAD segments found" > "/dev/stderr"
+      bad = 1
+    }
+    exit bad
+  }
+'; then
+  echo "Refusing to package a JNI library with incorrect ELF alignment." >&2
+  exit 1
+fi
+echo "Verified: all JNI library ELF LOAD segments use 16 KiB alignment."
 
 APP="$ROOT/android/turbo-kart-mobile/app"
 mkdir -p "$APP/src/main/jniLibs/arm64-v8a" "$APP/src/main/assets"
