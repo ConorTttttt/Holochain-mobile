@@ -229,7 +229,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-175527/phone-h2hc-cranelift-profile.folded",
+      "profile": "target/bench-runs/20261023-175527/phone-h2hc-cranelift-profile.folded",
       "idle_linker_acceptances": 0,
       "idle_frames": {},
       "errors": []
@@ -428,7 +428,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-175527/phone-h2hc-wasmi-profile.folded",
+      "profile": "target/bench-runs/20261023-175527/phone-h2hc-wasmi-profile.folded",
       "idle_linker_acceptances": 0,
       "idle_frames": {},
       "errors": []

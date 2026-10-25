@@ -215,7 +215,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-141859/phone-h2hc-cranelift-profile.folded",
+      "profile": "target/bench-runs/20261023-141859/phone-h2hc-cranelift-profile.folded",
       "idle_linker_acceptances": 0,
       "idle_frames": {},
       "errors": []
@@ -400,7 +400,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-141859/phone-h2hc-cranelift-2b4447-profile.folded",
+      "profile": "target/bench-runs/20261023-141859/phone-h2hc-cranelift-2b4447-profile.folded",
       "idle_linker_acceptances": 0,
       "idle_frames": {},
       "errors": []
@@ -591,7 +591,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-141859/phone-h2hc-cranelift-ec321f-profile.folded",
+      "profile": "target/bench-runs/20261023-141859/phone-h2hc-cranelift-ec321f-profile.folded",
       "idle_linker_acceptances": 0,
       "idle_frames": {},
       "errors": []
@@ -782,7 +782,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-141859/phone-h2hc-cranelift-42625e-profile.folded",
+      "profile": "target/bench-runs/20261023-141859/phone-h2hc-cranelift-42625e-profile.folded",
       "idle_linker_acceptances": 0,
       "idle_frames": {},
       "errors": []
@@ -971,7 +971,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-141859/phone-h2hc-cranelift-61ecb1-profile.folded",
+      "profile": "target/bench-runs/20261023-141859/phone-h2hc-cranelift-61ecb1-profile.folded",
       "idle_linker_acceptances": 0,
       "idle_frames": {},
       "errors": []
@@ -1162,7 +1162,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-141859/phone-kitsune2-cranelift-2b4447-profile.folded",
+      "profile": "target/bench-runs/20261023-141859/phone-kitsune2-cranelift-2b4447-profile.folded",
       "idle_linker_acceptances": null,
       "idle_frames": {},
       "errors": []

@@ -281,7 +281,7 @@
           "wakeups_per_min": 0.0
         }
       ],
-      "profile": "/mnt/holochain/lightweight-holochain-mobile-v4/target/bench-runs/20261023-140623/phone-kitsune2-cranelift-profile.folded",
+      "profile": "target/bench-runs/20261023-140623/phone-kitsune2-cranelift-profile.folded",
       "idle_linker_acceptances": null,
       "idle_frames": {},
       "errors": []
