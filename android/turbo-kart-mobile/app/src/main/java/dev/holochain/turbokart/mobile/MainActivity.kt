@@ -41,6 +41,7 @@ class MainActivity : Activity() {
     private lateinit var connectRaceButton: Button
     private lateinit var raceStatusButton: Button
     private lateinit var sendTestKartButton: Button
+    private lateinit var streamKartButton: Button
     private lateinit var disconnectRaceButton: Button
     private lateinit var joinButton: Button
     private lateinit var leaveButton: Button
@@ -50,6 +51,8 @@ class MainActivity : Activity() {
     private var irohStarted = false
     private var raceActive = false
     private var raceAuthenticated = false
+    private var streamRequested = false
+    private var streamRunning = false
     private var busy = false
     private var agentId: String? = null
     private var joinedLobbyId: String? = null
@@ -188,6 +191,8 @@ class MainActivity : Activity() {
                         raceActive = true
                         raceAuthenticated = it.optJSONObject("result")
                             ?.optBoolean("authenticated_moq_peer_session") == true
+                        streamRequested = false
+                        streamRunning = false
                     }
                 ) {
                     val bundle = JSONObject(NativeBridge.lockedAdmissionBundle(lobby))
@@ -205,8 +210,12 @@ class MainActivity : Activity() {
                     "Checking remote Iroh identity and frozen race admission digest…",
                     onSuccess = {
                         raceActive = true
-                        raceAuthenticated = it.optJSONObject("result")
+                        val status = it.optJSONObject("result")
+                        raceAuthenticated = status
                             ?.optBoolean("authenticated_moq_peer_session") == true
+                        val stream = status?.optJSONObject("diagnostic_wp3_stream")
+                        streamRequested = stream?.optBoolean("requested") == true
+                        streamRunning = stream?.optBoolean("running") == true
                     }
                 ) {
                     IrohBridge.raceStatus()
@@ -221,6 +230,20 @@ class MainActivity : Activity() {
                 }
             }
         }
+        streamKartButton = Button(this).apply {
+            text = "Send 20 Hz kart test (5s / 100 frames)"
+            setOnClickListener {
+                submit(
+                    "Starting bounded 20 Hz synthetic WP3 stream (NOT race physics)…",
+                    onSuccess = {
+                        streamRequested = true
+                        streamRunning = true
+                    }
+                ) {
+                    IrohBridge.startTestStream()
+                }
+            }
+        }
         disconnectRaceButton = Button(this).apply {
             text = "Disconnect MoQ test (keep identity)"
             setOnClickListener {
@@ -229,6 +252,8 @@ class MainActivity : Activity() {
                     onSuccess = {
                         raceActive = false
                         raceAuthenticated = false
+                        streamRequested = false
+                        streamRunning = false
                     }
                 ) {
                     IrohBridge.disconnectRace()
@@ -265,6 +290,7 @@ class MainActivity : Activity() {
         column.addView(connectRaceButton)
         column.addView(raceStatusButton)
         column.addView(sendTestKartButton)
+        column.addView(streamKartButton)
         column.addView(disconnectRaceButton)
         column.addView(joinButton)
         column.addView(leaveButton)
@@ -348,7 +374,8 @@ class MainActivity : Activity() {
         connectRaceButton.isEnabled = !busy && started && irohStarted && !raceActive &&
             (joinedLobbyId != null || lobbyChoices.isNotEmpty())
         raceStatusButton.isEnabled = !busy && irohStarted
-        sendTestKartButton.isEnabled = !busy && raceActive && raceAuthenticated
+        sendTestKartButton.isEnabled = !busy && raceActive && raceAuthenticated && !streamRunning
+        streamKartButton.isEnabled = !busy && raceActive && raceAuthenticated && !streamRequested
         disconnectRaceButton.isEnabled = !busy && raceActive
         joinButton.isEnabled = !busy && started && lobbyChoices.isNotEmpty() && joinedLobbyId == null
         leaveButton.isEnabled = !busy && started && joinedLobbyId != null
