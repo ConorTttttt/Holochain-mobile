@@ -247,7 +247,9 @@ impl Smoke {
                 let cells = self.cells.as_ref().context("install hApps first")?;
                 // Only public lobbies are supported by this smoke command.
                 // The zome's JoinLobbyInput needs an explicit invite_code field.
-                let action: Value = self
+                // The zome returns a Holochain ActionHash encoded as MessagePack
+                // bytes, not a JSON value. Decode it as ActionHash first.
+                let action: ActionHash = self
                     .conductor
                     .easy_call_zome(
                         &cells.agent,
@@ -263,12 +265,12 @@ impl Smoke {
                     )
                     .await
                     .context("Turbo Kart join_lobby")?;
-                Ok(json!({"action": action}))
+                Ok(json!({"action": ActionHashB64::from(action).to_string()}))
             }
             Command::LeaveLobby { id } => {
                 ensure!(id.len() <= 128, "lobby ID too long");
                 let cells = self.cells.as_ref().context("install hApps first")?;
-                let action: Value = self
+                let action: ActionHash = self
                     .conductor
                     .easy_call_zome(
                         &cells.agent,
@@ -280,7 +282,7 @@ impl Smoke {
                     )
                     .await
                     .context("Turbo Kart leave_lobby")?;
-                Ok(json!({"action": action}))
+                Ok(json!({"action": ActionHashB64::from(action).to_string()}))
             }
             Command::Quit => std::process::exit(0),
         }
