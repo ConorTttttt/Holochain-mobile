@@ -2,9 +2,10 @@
 //! IrohMeshTransport/MoQ implementation and KartState wire codec by referencing
 //! the desktop Rust crates directly from the generated build manifest.
 //!
-//! This component deliberately does NOT advertise Holochain signed presence,
-//! establish an admitted race, or transmit game snapshots. The existing APK's
-//! H2HC/Wasmi conductor and Lair identity remain a separate JNI library.
+//! The existing APK's H2HC/Wasmi conductor and Lair identity remain a
+//! separate JNI library. Gate 2c.2 optionally opens a pinned, digest-checked
+//! MoQ mesh and sends one synthetic WP3 diagnostic frame, but deliberately
+//! does not run the host/clock controller or a playable race.
 //!
 //! The 32-byte Iroh endpoint seed is provided from Android Keystore-protected
 //! app storage by Kotlin, never persisted or logged by this Rust library.
@@ -29,10 +30,14 @@ use serde_json::{json, Value};
 use tokio::runtime::{Builder, Runtime};
 use zeroize::Zeroize;
 
+mod race_session;
+use race_session::RunningRace;
+
 struct LiveEndpoint {
     // Keep Tokio alive: the iroh endpoint and MoQ drivers depend on its tasks.
     _runtime: Runtime,
     transport: IrohMeshTransport,
+    race: Option<RunningRace>,
 }
 
 static LIVE: OnceLock<Mutex<Option<LiveEndpoint>>> = OnceLock::new();
@@ -113,6 +118,7 @@ fn start(key: SecretKey) -> Result<Value> {
     *guard = Some(LiveEndpoint {
         _runtime: runtime,
         transport,
+        race: None,
     });
     Ok(status)
 }
@@ -185,52 +191,109 @@ struct AdmissionEnvelope {
     local_agent: String,
 }
 
-/// Gate 2c.1: verify the original immutable race admission without creating
-/// a network session. This runs exactly the desktop client's
-/// RaceAdmission::from_locked, not a second Android-only roster policy.
-fn validate_locked_admission(raw: String) -> Result<Value> {
+/// Never trust the Kotlin/JNI race envelope: it is checked by the exact
+/// original desktop validator and by comparing the running Iroh public key.
+/// This is shared by the read-only check and the connection entry point.
+fn verified_admission(raw: &str, live: &LiveEndpoint) -> Result<RaceAdmission> {
     ensure!(raw.len() <= 65536, "locked race payload exceeds 64 KiB");
-    let bundle: AdmissionEnvelope = serde_json::from_str(&raw)
+    let bundle: AdmissionEnvelope = serde_json::from_str(raw)
         .context("decode desktop race record and signed directory bindings")?;
-    let guard = live_slot().lock()
-        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
-    let live = guard.as_ref().context("start/resume the persistent Iroh endpoint first")?;
     let admission = RaceAdmission::from_locked(
         &bundle.record,
         &bundle.local_agent,
         bundle.signed_bindings,
     ).context("desktop RaceAdmission::from_locked rejected the locked race")?;
-    // The existing Holochain conductor's agent must be admitted, and the
-    // actual running Iroh key must be the exact one frozen for that agent.
+    // The local player's immutable roster binding must name the endpoint
+    // associated with this app-private Android Keystore seed.
     let member = admission.members.iter()
         .find(|m| m.agent == bundle.local_agent)
         .context("local Holochain agent is missing from locked race admission")?;
     let actual = live.transport.endpoint().id();
     ensure!(actual.as_bytes() == &member.endpoint_id,
         "persistent Iroh EndpointId does not match this agent's frozen signed binding");
-
-    // The original desktop transport parser must accept all frozen peer dial
-    // hints and derive the exact pinned identity, not an advertised alias.
+    // Original desktop address decoder verifies the frozen Iroh EndpointId.
     for peer in admission.peers() {
         let addr = iroh_addr_for(&peer.endpoints)
             .with_context(|| format!("invalid locked Iroh address for {}", peer.agent))?;
         ensure!(addr.id.as_bytes() == &peer.endpoint_id,
             "peer Iroh address differs from locked authenticated endpoint");
     }
+    Ok(admission)
+}
+
+/// Gate 2c.1 remains a read-only check. No network session is opened.
+fn validate_locked_admission(raw: String) -> Result<Value> {
+    let guard = live_slot().lock()
+        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
+    let live = guard.as_ref().context("start/resume the persistent Iroh endpoint first")?;
+    let admission = verified_admission(&raw, live)?;
     Ok(json!({
         "race_id": admission.race_id.as_str(),
         "lobby_id": admission.lobby,
         "host_agent": admission.host,
         "local_agent": admission.local,
-        "endpoint_id": actual.to_string(),
+        "endpoint_id": live.transport.endpoint().id().to_string(),
         "admitted_agents": admission.agents(),
         "admitted_human_count": admission.members.len(),
         "locked_roster_verified": true,
         "local_endpoint_matches_locked_binding": true,
         "peer_address_hints_verified": true,
         "authenticated_race_session": false,
-        "next": "Start authenticated MoQ mesh against this frozen roster; no peer connection yet"
+        "next": "Opt in to Connect Iroh/MoQ (test), then check the admission digest status"
     }))
+}
+
+/// Gate 2c.2: from the *same validated locked roster*, create an Iroh/MoQ
+/// mesh using the existing app-private endpoint, publish desktop-compatible
+/// race tracks/hello and authenticate the desktop hello asynchronously.
+fn connect_locked_race(raw: String) -> Result<Value> {
+    let mut guard = live_slot().lock()
+        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
+    let live = guard.as_mut().context("start/resume the persistent Iroh endpoint first")?;
+    let admission = verified_admission(&raw, live)?;
+    if let Some(ref old) = live.race {
+        ensure!(old.race_id() == admission.race_id.as_str(),
+            "another race is already running; disconnect that race first");
+        return Ok(old.status());
+    }
+    // MeshSession::start publishes origins and spawns driver tasks, and must
+    // be called within the Tokio runtime attached to this endpoint.
+    let race = {
+        let _entered = live._runtime.enter();
+        RunningRace::start(live.transport.endpoint(), admission)?
+    };
+    let status = race.status();
+    live.race = Some(race);
+    Ok(status)
+}
+
+fn race_status() -> Result<Value> {
+    let guard = live_slot().lock()
+        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
+    let live = guard.as_ref().context("start Iroh endpoint first")?;
+    let race = live.race.as_ref().context("connect an admitted race first")?;
+    Ok(race.status())
+}
+
+fn send_test_kart() -> Result<Value> {
+    let mut guard = live_slot().lock()
+        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
+    let live = guard.as_mut().context("start Iroh endpoint first")?;
+    let race = live.race.as_mut().context("connect an admitted race first")?;
+    race.send_test_kart()
+}
+
+fn disconnect_race() -> Result<Value> {
+    let mut guard = live_slot().lock()
+        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
+    let live = guard.as_mut().context("start Iroh endpoint first")?;
+    let Some(race) = live.race.take() else {
+        return Ok(json!({"race_disconnected": true, "already_stopped": true}));
+    };
+    let race_id = race.race_id().to_string();
+    live._runtime.block_on(race.stop());
+    Ok(json!({"race_disconnected": true, "race_id": race_id,
+        "persistent_iroh_endpoint_preserved": true}))
 }
 
 fn response_to_jstring(env: &mut JNIEnv<'_>, result: Result<Value>) -> jstring {
@@ -312,5 +375,63 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_validateLo
     response_to_jstring(&mut env, match response {
         Ok(value) => value,
         Err(_) => Err(anyhow::anyhow!("native panic validating race admission")),
+    })
+}
+
+/// Begin an opt-in E6.2 MoQ mesh using frozen Holochain-authorized peers.
+/// A successful return means "connecting", NOT "authenticated".
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_connectLockedRace(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    bundle_json: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> Result<Value> {
+        let raw: String = env.get_string(&bundle_json)
+            .context("read desktop immutable race admission")?.into();
+        connect_locked_race(raw)
+    }));
+    response_to_jstring(&mut env, match response {
+        Ok(value) => value,
+        Err(_) => Err(anyhow::anyhow!("native panic starting authenticated MoQ mesh")),
+    })
+}
+
+/// Query actual Iroh/QUIC state and the remote admission-digest verdict.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_raceStatus(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+) -> jstring {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(race_status));
+    response_to_jstring(&mut env, match result {
+        Ok(value) => value,
+        Err(_) => Err(anyhow::anyhow!("native panic reading MoQ session status")),
+    })
+}
+
+/// Send exactly one explicit synthetic desktop-compatible WP3 kart packet.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_sendTestKart(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+) -> jstring {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(send_test_kart));
+    response_to_jstring(&mut env, match result {
+        Ok(value) => value,
+        Err(_) => Err(anyhow::anyhow!("native panic sending test WP3 packet")),
+    })
+}
+
+/// Close the test race's MoQ mesh without closing/minting the saved endpoint.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_disconnectRace(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+) -> jstring {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(disconnect_race));
+    response_to_jstring(&mut env, match result {
+        Ok(value) => value,
+        Err(_) => Err(anyhow::anyhow!("native panic stopping MoQ race mesh")),
     })
 }
