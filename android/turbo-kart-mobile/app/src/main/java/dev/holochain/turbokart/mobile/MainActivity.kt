@@ -19,7 +19,9 @@ import java.util.concurrent.Executors
  * Android multiplayer control-plane prototype: H2HC/Wasmi install/resume,
  * discover, inspect, join and leave public desktop lobbies.
  * Includes persistent Iroh endpoint identity, signed directory presence and
- * read-only locked race admission validation. No realtime peer session or racing UI yet.
+ * read-only locked race admission validation. A separate opt-in MoQ mesh
+ * diagnostic can authenticate peer handshakes, but has no race physics,
+ * race controller, or renderer.
  */
 class MainActivity : Activity() {
     private data class LobbyChoice(val id: String, val label: String)
@@ -36,12 +38,18 @@ class MainActivity : Activity() {
     private lateinit var inspectButton: Button
     private lateinit var inspectRaceButton: Button
     private lateinit var verifyRaceButton: Button
+    private lateinit var connectRaceButton: Button
+    private lateinit var raceStatusButton: Button
+    private lateinit var sendTestKartButton: Button
+    private lateinit var disconnectRaceButton: Button
     private lateinit var joinButton: Button
     private lateinit var leaveButton: Button
     private lateinit var log: TextView
 
     private var started = false
     private var irohStarted = false
+    private var raceActive = false
+    private var raceAuthenticated = false
     private var busy = false
     private var agentId: String? = null
     private var joinedLobbyId: String? = null
@@ -170,6 +178,63 @@ class MainActivity : Activity() {
                 verifyRaceAdmission(lobby)
             }
         }
+        connectRaceButton = Button(this).apply {
+            text = "Connect Iroh/MoQ (test)"
+            setOnClickListener {
+                val lobby = joinedLobbyId ?: selectedLobby()?.id ?: return@setOnClickListener
+                submit(
+                    "Opening frozen-roster Iroh/MoQ mesh; waiting for desktop peer…",
+                    onSuccess = {
+                        raceActive = true
+                        raceAuthenticated = it.optJSONObject("result")
+                            ?.optBoolean("authenticated_moq_peer_session") == true
+                    }
+                ) {
+                    val bundle = JSONObject(NativeBridge.lockedAdmissionBundle(lobby))
+                    check(bundle.optBoolean("ok")) {
+                        bundle.optString("error", "No locked race or missing signed binding")
+                    }
+                    IrohBridge.connectLockedRace(bundle.getJSONObject("result").toString())
+                }
+            }
+        }
+        raceStatusButton = Button(this).apply {
+            text = "Check Iroh/MoQ connection status"
+            setOnClickListener {
+                submit(
+                    "Checking remote Iroh identity and frozen race admission digest…",
+                    onSuccess = {
+                        raceActive = true
+                        raceAuthenticated = it.optJSONObject("result")
+                            ?.optBoolean("authenticated_moq_peer_session") == true
+                    }
+                ) {
+                    IrohBridge.raceStatus()
+                }
+            }
+        }
+        sendTestKartButton = Button(this).apply {
+            text = "Send ONE test kart packet (42 bytes)"
+            setOnClickListener {
+                submit("Sending one synthetic WP3 packet via authenticated MoQ…") {
+                    IrohBridge.sendTestKart()
+                }
+            }
+        }
+        disconnectRaceButton = Button(this).apply {
+            text = "Disconnect MoQ test (keep identity)"
+            setOnClickListener {
+                submit(
+                    "Closing race-only MoQ tracks; preserving Iroh and Holochain identities…",
+                    onSuccess = {
+                        raceActive = false
+                        raceAuthenticated = false
+                    }
+                ) {
+                    IrohBridge.disconnectRace()
+                }
+            }
+        }
         joinButton = Button(this).apply {
             text = "Join as Zippy"
             setOnClickListener {
@@ -197,6 +262,10 @@ class MainActivity : Activity() {
         column.addView(inspectButton)
         column.addView(inspectRaceButton)
         column.addView(verifyRaceButton)
+        column.addView(connectRaceButton)
+        column.addView(raceStatusButton)
+        column.addView(sendTestKartButton)
+        column.addView(disconnectRaceButton)
         column.addView(joinButton)
         column.addView(leaveButton)
 
@@ -276,6 +345,11 @@ class MainActivity : Activity() {
         inspectRaceButton.isEnabled = !busy && started && (joinedLobbyId != null || lobbyChoices.isNotEmpty())
         verifyRaceButton.isEnabled = !busy && started && irohStarted &&
             (joinedLobbyId != null || lobbyChoices.isNotEmpty())
+        connectRaceButton.isEnabled = !busy && started && irohStarted && !raceActive &&
+            (joinedLobbyId != null || lobbyChoices.isNotEmpty())
+        raceStatusButton.isEnabled = !busy && irohStarted
+        sendTestKartButton.isEnabled = !busy && raceActive && raceAuthenticated
+        disconnectRaceButton.isEnabled = !busy && raceActive
         joinButton.isEnabled = !busy && started && lobbyChoices.isNotEmpty() && joinedLobbyId == null
         leaveButton.isEnabled = !busy && started && joinedLobbyId != null
     }
