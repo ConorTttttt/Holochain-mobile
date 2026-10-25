@@ -16,4 +16,7 @@ internal object IrohBridge {
 
     /** Signs the desktop domain-separated EndpointId -> agent binding. No zome write. */
     external fun signPresence(agent: String): String
+
+    /** Calls the desktop's exact locked race admission validator; no peer connection yet. */
+    external fun validateLockedAdmission(bundleJson: String): String
 }
