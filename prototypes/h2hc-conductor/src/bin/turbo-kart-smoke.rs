@@ -149,7 +149,7 @@ impl Smoke {
         ensure!(
             self.conductor.get_app_info(&DIRECTORY_APP_ID.into()).await?.is_none()
                 && self.conductor.get_app_info(&KART_APP_ID.into()).await?.is_none(),
-            "hApps already installed in this profile; run {\\"cmd\\":\\"resume\\"} instead"
+            "hApps already installed in this profile; use the resume command instead"
         );
         let expected: ExpectedHashes = serde_json::from_slice(
             &std::fs::read(&self.args.expected_hashes).context("read expected DNA hashes")?,
