@@ -19,4 +19,16 @@ internal object IrohBridge {
 
     /** Calls the desktop's exact locked race admission validator; no peer connection yet. */
     external fun validateLockedAdmission(bundleJson: String): String
+
+    /** Opt-in E6.2 MoQ smoke session: validates the locked roster before connecting. */
+    external fun connectLockedRace(bundleJson: String): String
+
+    /** Poll remote Iroh identity + matching admission digest; not race physics. */
+    external fun raceStatus(): String
+
+    /** Queue one synthetic 42-byte WP3 packet only after every peer authenticates. */
+    external fun sendTestKart(): String
+
+    /** Stop this race mesh without closing or regenerating the persistent endpoint. */
+    external fun disconnectRace(): String
 }
