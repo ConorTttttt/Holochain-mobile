@@ -62,6 +62,8 @@ jni = "0.21"
 zeroize = "1"
 holochain-moq-kart-wire = { path = "$GAME/crates/kart-wire" }
 holochain-moq-mesh-iroh = { path = "$GAME/crates/mesh-iroh" }
+# The same SignedPresence / binding payload / TTL definitions as desktop DNA.
+holochain-moq-protocol = { path = "$GAME/crates/protocol" }
 EOF
 
 echo "Building separate Android Iroh/MoQ JNI library (16 KiB aligned)..."
