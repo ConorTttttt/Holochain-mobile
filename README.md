@@ -34,13 +34,20 @@ limitations: [docs/turbo-kart-android-apk.md](docs/turbo-kart-android-apk.md).
 Android iroh/MoQ race sessions, graphics/physics, race UI and proper
 wireless/production networking have not been implemented.
 
-**Next integration gate:** cross-build and run the **desktop's original**
-Iroh/MoQ transport plus WP3 42-byte kart wire codec on Android arm64 using
-`scripts/build-turbo-kart-realtime-probe.sh`. This is an isolated
-test-only executable, not an APK modification or a race session.
+**Realtime progress:** the original desktop Iroh/MoQ transport plus
+WP3 42-byte kart codec **compiled and passed on the Galaxy S23** using
+`scripts/build-turbo-kart-realtime-probe.sh`. The user saw matching golden
+bytes, a bound Iroh EndpointId and direct IP addresses, and `complete/ok:true`.
+A separate `libturbo_kart_realtime_jni.so` with Android Keystore-protected
+**persistent Iroh identity** and an APK **Start / Resume Iroh Endpoint**
+button has now been added in source, but the new APK **has not yet been
+compiled or tested**. The updated `scripts/build-turbo-kart-apk.sh` builds
+both JNI libraries.
+
 See [docs/turbo-kart-android-realtime.md](docs/turbo-kart-android-realtime.md)
-for the on-device test and subsequent signed endpoint/race admission plan.
-The Android real-time transport probe has not yet been built or verified.
+for the required two-restart endpoint identity test and the subsequent
+signed presence / race admission gate. Android real-time peer connectivity
+and race sessions remain unimplemented.
 
 
 ## What is built
