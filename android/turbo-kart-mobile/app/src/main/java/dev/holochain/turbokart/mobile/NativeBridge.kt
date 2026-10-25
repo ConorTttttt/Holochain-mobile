@@ -26,6 +26,9 @@ object NativeBridge {
     /** Read original desktop locked race setup. Diagnostic only, not admission. */
     external fun getLockedRace(lobbyId: String): String
 
+    /** Fetch immutable race record plus original signed directory bindings for realtime JNI verification. */
+    external fun lockedAdmissionBundle(lobbyId: String): String
+
     external fun joinLobby(lobbyId: String, characterId: String): String
 
     external fun leaveLobby(lobbyId: String): String
