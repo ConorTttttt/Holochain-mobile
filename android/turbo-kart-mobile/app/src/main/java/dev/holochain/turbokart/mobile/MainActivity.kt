@@ -40,7 +40,6 @@ class MainActivity : Activity() {
 
     private var started = false
     private var irohStarted = false
-    private var presencePublishedThisRun = false
     private var busy = false
     private var agentId: String? = null
     private var joinedLobbyId: String? = null
@@ -324,10 +323,7 @@ class MainActivity : Activity() {
             log.text = "Start Holochain and verify the restored agent first."
             return
         }
-        submit(
-            "Signing Iroh endpoint and publishing to original gaming directory…",
-            onSuccess = { presencePublishedThisRun = true }
-        ) {
+        submit("Signing Iroh endpoint and publishing to original gaming directory…") {
             val signedResult = JSONObject(IrohBridge.signPresence(agent))
             check(signedResult.optBoolean("ok")) {
                 signedResult.optString("error", "Could not sign Iroh endpoint binding")
