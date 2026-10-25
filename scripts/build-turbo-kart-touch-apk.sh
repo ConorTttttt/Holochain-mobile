@@ -28,7 +28,15 @@ mkdir -p "$STAGED/mobile"
 # Android app's bundled hApps, Lair state or existing JNI libraries.
 rm -rf "$STAGED/game"
 mkdir -p "$STAGED/game"
-cp -R "$UI/." "$STAGED/game/"
+# Copy only runtime assets. If an explicit source checkout is supplied, do not
+# accidentally bundle its .git/, docs/, node_modules/ or developer secrets.
+cp "$UI/index.html" "$STAGED/game/"
+cp -R "$UI/src" "$STAGED/game/"
+for name in assets vendor LICENSE NOTICE icon.png; do
+  if [ -e "$UI/$name" ]; then
+    cp -R "$UI/$name" "$STAGED/game/"
+  fi
+done
 cp "$TOUCH" "$STAGED/mobile/touch-controls.js"
 
 # Fail rather than packaging a blank WebView.
