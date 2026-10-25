@@ -216,6 +216,54 @@ fn get_lobby(lobby_id: String) -> Result<Value> {
     Ok(json!({ "lobby": lobby }))
 }
 
+/// Read the original immutable E6.1 RaceRecord after the desktop host
+/// starts a race. This is a diagnostic only: it does NOT authorize a peer
+/// session. The separate realtime JNI must validate the frozen roster with
+/// RaceAdmission::from_locked and signed directory bindings before dialling.
+fn get_locked_race(lobby_id: String) -> Result<Value> {
+    ensure!(!lobby_id.is_empty() && lobby_id.len() <= 128, "invalid lobby ID length");
+    let locked = slot().lock()
+        .map_err(|_| anyhow::anyhow!("native host lock poisoned"))?;
+    let host = locked.as_ref().context("start the conductor first")?;
+    let record: Option<Value> = host.runtime.block_on(host.conductor.easy_call_zome(
+        &host.agent, None, host.kart.clone(), KART_ZOME, "get_race", lobby_id.clone()
+    )).context("original turbo_kart.get_race")?;
+    let own_agent = AgentPubKeyB64::from(host.agent.clone()).to_string();
+    let Some(record) = record else {
+        return Ok(json!({
+            "lobby_id": lobby_id,
+            "locked_race_exists": false,
+            "local_agent": own_agent,
+            "authenticated_race_session": false,
+            "next": "Desktop host must start a race after both players publish signed Iroh presence"
+        }));
+    };
+    let setup = record.get("setup").context("locked race has no setup")?;
+    ensure!(setup.get("lobby").and_then(Value::as_str) == Some(lobby_id.as_str()),
+        "locked race refers to a different lobby");
+    let members = setup.get("participants").and_then(Value::as_array)
+        .context("locked race has no participant array")?;
+    ensure!(!members.is_empty() && members.len() <= 8,
+        "unexpected locked-race participant count");
+    let agents = members.iter().map(|p| {
+        p.get("member").and_then(|m| m.get("player")).and_then(Value::as_str)
+            .context("locked race participant has no agent")
+    }).collect::<Result<Vec<_>>>()?;
+    let included = agents.contains(&own_agent.as_str());
+    Ok(json!({
+        "lobby_id": lobby_id,
+        "locked_race_exists": true,
+        "race_id": setup.get("race_id"),
+        "host_agent": setup.get("config").and_then(|c| c.get("host")),
+        "local_agent": own_agent,
+        "local_agent_in_locked_roster": included,
+        "roster_agents": agents,
+        "roster_size": members.len(),
+        "authenticated_race_session": false,
+        "next": "Validate signed participant bindings using desktop RaceAdmission::from_locked in realtime JNI before connecting"
+    }))
+}
+
 fn join_lobby(lobby_id: String, character_id: String) -> Result<Value> {
     ensure!(!lobby_id.is_empty() && lobby_id.len() <= 128, "invalid lobby ID length");
     ensure!(
@@ -439,6 +487,23 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_getLobby
     result_as_jstring(&mut env, match response {
         Ok(v) => v,
         Err(_) => Err(anyhow::anyhow!("native panic during get_lobby")),
+    })
+}
+
+/// Inspect the desktop's committed E6.1 race setup, without joining
+/// the race or treating the returned roster as authenticated admission.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_getLockedRace(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    lobby_id: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        get_locked_race(str_arg(&mut env, lobby_id)?)
+    }));
+    result_as_jstring(&mut env, match response {
+        Ok(v) => v,
+        Err(_) => Err(anyhow::anyhow!("native panic during get_race")),
     })
 }
 
