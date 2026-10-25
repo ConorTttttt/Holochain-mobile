@@ -41,6 +41,7 @@ TARGET="$ROOT/target/turbo-kart-realtime-probe-build"
 mkdir -p "$PROJECT/src" "$TARGET"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/lib.rs" "$PROJECT/src/lib.rs"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/race_session.rs" "$PROJECT/src/race_session.rs"
+cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/kart_stream.rs" "$PROJECT/src/kart_stream.rs"
 cat > "$PROJECT/Cargo.toml" <<EOF
 [workspace]
 resolver = "2"
