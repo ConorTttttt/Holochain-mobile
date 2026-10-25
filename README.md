@@ -14,6 +14,27 @@ Working repo for the v4 plan: https://claude.ai/artifact/QzfGayyLzmZmhPsGc4zKtS.
 
 Pinned sources: Holochain 0.7.1 (HDK 0.7.1, HDI 0.8.1) for conductors, 0.7.0 for the linker, h2hc-linker `cab242d`.
 
+## Turbo Kart Android APK milestone (25 October 2026)
+
+The `feat/turbo-kart-integration` branch now contains a real Android
+arm64 APK with in-process Holochain 0.7.1, Wasmi and H2HC, plus a
+persistent Lair-backed agent protected by Android Keystore. On a Galaxy S23,
+the user verified that the APK recovers **the same agent** and reopens both
+original Turbo Kart hApps across force-stop/relaunch, discovers desktop
+Holochain 0.7.0 lobbies, and can **join and leave a desktop public lobby
+as Zippy**. The desktop Turbo Kart UI independently displayed Zippy's
+arrival and departure. ELF and APK alignment checks passed, and Android
+no longer displayed the former 16 KiB alignment warning.
+
+Build via `scripts/build-turbo-kart-apk.sh`; source under
+`android/turbo-kart-mobile` and
+`prototypes/turbo-kart-android-native`. Detailed status and remaining
+limitations: [docs/turbo-kart-android-apk.md](docs/turbo-kart-android-apk.md).
+**This is multiplayer lobby control, not playable real-time racing**:
+Android iroh/MoQ race sessions, graphics/physics, race UI and proper
+wireless/production networking have not been implemented.
+
+
 ## What is built
 
 | Path | What it is |
