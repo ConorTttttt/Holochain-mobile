@@ -13,4 +13,7 @@ internal object IrohBridge {
     }
 
     external fun startEndpoint(seed: ByteArray): String
+
+    /** Signs the desktop domain-separated EndpointId -> agent binding. No zome write. */
+    external fun signPresence(agent: String): String
 }
