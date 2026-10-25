@@ -1,7 +1,17 @@
 # Turbo Kart Android APK host — first JNI integration milestone
 
-**Status:** initial source scaffold committed; not yet cross-compiled, Gradle
-built, or tested on the Galaxy S23. Do not treat it as a working mobile game.
+**Status (25 October 2026):** the JNI Rust library compiled for Android
+arm64 with NDK r27c, the Kotlin/Gradle 8.9 debug APK built, and the Galaxy S23
+ran the app successfully: the **Discover desktop lobbies** button returned
+`ok:true` with desktop lobby `MobileHolochainTest`. This establishes the
+APK's Kotlin → JNI → H2HC/Wasmi → desktop lobby read path. The app is still
+not a playable mobile game, and its **persistent identity across Android app
+process restarts has not yet been verified**.
+
+The device also reported that the `libturbo_kart_android_native.so` ELF
+LOAD segments were not 16 KiB-aligned. An APK build-script fix has been
+committed using both NDK r27-compatible linker flags and an llvm-readelf
+alignment check. **Rebuild and device verification of this fix remain pending.**
 
 ## Scope
 
@@ -72,6 +82,47 @@ APK output:
 ```text
 android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk
 ```
+
+## Resolve the 16 KiB ELF compatibility warning
+
+Android 15+ supports 16 KiB-page devices. NDK r27c normally generates
+4 KiB-aligned ELF LOAD segments unless the linker receives both:
+
+```text
+-Wl,-z,max-page-size=16384
+-Wl,-z,common-page-size=16384
+```
+
+The dedicated `scripts/build-turbo-kart-apk.sh` now sets these **only for
+the aarch64 Android target** through
+`CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS` and refuses to package
+`libturbo_kart_android_native.so` unless every LOAD segment has 0x4000
+alignment. This changes Cargo's build fingerprint and may require a
+longer one-time rebuild of Android target dependencies. It does not
+rebuild the benchmark harness.
+
+```sh
+git fetch origin feat/turbo-kart-integration
+git merge --ff-only FETCH_HEAD
+export PATH="$HOME/.local/opt/gradle-8.9/bin:$HOME/Android/Sdk/platform-tools:$PATH"
+bash scripts/build-turbo-kart-apk.sh
+
+NDK=${ANDROID_NDK_HOME:-$HOME/Android/Sdk/android-ndk-r27c}
+"$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -lW \
+  android/turbo-kart-mobile/app/src/main/jniLibs/arm64-v8a/libturbo_kart_android_native.so \
+  | grep LOAD
+
+# Reinstall without clearing app-private data:
+adb install -r android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Expect 0x4000 alignment in the last column of every LOAD row. The app's
+16 KiB page-size behavior is not fully proven until reinstalled and tested
+on an actual 16 KiB-page device; correcting ELF/ZIP alignment is necessary
+but not sufficient if any dependency assumes 4 KiB pages.
+
+The debug-build compatibility warning may still mention that the app is
+*debuggable*. That part is expected for this prototype.
 
 ## On the Galaxy S23
 
