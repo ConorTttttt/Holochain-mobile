@@ -14,7 +14,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{bail, ensure, Context, Result};
 use holochain_moq_kart_wire::{item, KartState, KART_STATE_LEN};
-use holochain_moq_mesh_iroh::{iroh_endpoint, IrohConfig, IrohMeshTransport, Reach, SecretKey};
+use holochain_moq_mesh_iroh::{iroh_addr_for, iroh_endpoint, IrohConfig, IrohMeshTransport, Reach, SecretKey};
+use holochain_moq_turbo_kart::race::RaceRecord;
+use holochain_moq_turbo_kart_client::race::RaceAdmission;
+use serde::Deserialize;
 use holochain_moq_protocol::{
     check_presence, iroh_binding_payload, BindingSignature, EndpointAdvertisement,
     PeerEndpoint, SignedPresence, PRESENCE_TTL_MS,
@@ -172,6 +175,64 @@ fn signed_presence(agent: String) -> Result<Value> {
     }))
 }
 
+/// The Wasmi JNI host obtained this from the *original* get_race and
+/// get_endpoint_binding zomes. Treat every field as untrusted until the
+/// unmodified desktop admission validator accepts the frozen roster.
+#[derive(Deserialize)]
+struct AdmissionEnvelope {
+    record: RaceRecord,
+    signed_bindings: Vec<SignedPresence>,
+    local_agent: String,
+}
+
+/// Gate 2c.1: verify the original immutable race admission without creating
+/// a network session. This runs exactly the desktop client's
+/// RaceAdmission::from_locked, not a second Android-only roster policy.
+fn validate_locked_admission(raw: String) -> Result<Value> {
+    ensure!(raw.len() <= 65536, "locked race payload exceeds 64 KiB");
+    let bundle: AdmissionEnvelope = serde_json::from_str(&raw)
+        .context("decode desktop race record and signed directory bindings")?;
+    let guard = live_slot().lock()
+        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
+    let live = guard.as_ref().context("start/resume the persistent Iroh endpoint first")?;
+    let admission = RaceAdmission::from_locked(
+        &bundle.record,
+        &bundle.local_agent,
+        bundle.signed_bindings,
+    ).context("desktop RaceAdmission::from_locked rejected the locked race")?;
+    // The existing Holochain conductor's agent must be admitted, and the
+    // actual running Iroh key must be the exact one frozen for that agent.
+    let member = admission.members.iter()
+        .find(|m| m.agent == bundle.local_agent)
+        .context("local Holochain agent is missing from locked race admission")?;
+    let actual = live.transport.endpoint().id();
+    ensure!(actual.as_bytes() == &member.endpoint_id,
+        "persistent Iroh EndpointId does not match this agent's frozen signed binding");
+
+    // The original desktop transport parser must accept all frozen peer dial
+    // hints and derive the exact pinned identity, not an advertised alias.
+    for peer in admission.peers() {
+        let addr = iroh_addr_for(&peer.endpoints)
+            .with_context(|| format!("invalid locked Iroh address for {}", peer.agent))?;
+        ensure!(addr.id.as_bytes() == &peer.endpoint_id,
+            "peer Iroh address differs from locked authenticated endpoint");
+    }
+    Ok(json!({
+        "race_id": admission.race_id.as_str(),
+        "lobby_id": admission.lobby,
+        "host_agent": admission.host,
+        "local_agent": admission.local,
+        "endpoint_id": actual.to_string(),
+        "admitted_agents": admission.agents(),
+        "admitted_human_count": admission.members.len(),
+        "locked_roster_verified": true,
+        "local_endpoint_matches_locked_binding": true,
+        "peer_address_hints_verified": true,
+        "authenticated_race_session": false,
+        "next": "Start authenticated MoQ mesh against this frozen roster; no peer connection yet"
+    }))
+}
+
 fn response_to_jstring(env: &mut JNIEnv<'_>, result: Result<Value>) -> jstring {
     let body = match result {
         Ok(value) => json!({ "ok": true, "result": value }),
@@ -231,5 +292,25 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_signPresen
     response_to_jstring(&mut env, match response {
         Ok(value) => value,
         Err(_) => Err(anyhow::anyhow!("native panic generating Iroh signed presence")),
+    })
+}
+
+/// Kotlin IrohBridge.validateLockedAdmission(bundleJson):
+/// verifies the original RaceAdmission using exact frozen signed bindings.
+/// Do not misreport this as an authenticated Iroh/MoQ session.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_validateLockedAdmission(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    bundle_json: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> Result<Value> {
+        let raw: String = env.get_string(&bundle_json)
+            .context("read locked admission envelope from Android")?.into();
+        validate_locked_admission(raw)
+    }));
+    response_to_jstring(&mut env, match response {
+        Ok(value) => value,
+        Err(_) => Err(anyhow::anyhow!("native panic validating race admission")),
     })
 }
