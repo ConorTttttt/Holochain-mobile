@@ -45,9 +45,7 @@ class MainActivity : Activity() {
                 top = insets.getInsets(WindowInsets.Type.statusBars()).top
                 bottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
             } else {
-                @Suppress("DEPRECATION")
                 top = insets.systemWindowInsetTop
-                @Suppress("DEPRECATION")
                 bottom = insets.systemWindowInsetBottom
             }
             view.setPadding(0, top, 0, bottom)
