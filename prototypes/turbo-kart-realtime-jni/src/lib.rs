@@ -30,6 +30,7 @@ use serde_json::{json, Value};
 use tokio::runtime::{Builder, Runtime};
 use zeroize::Zeroize;
 
+mod kart_stream;
 mod race_session;
 use race_session::RunningRace;
 
@@ -283,6 +284,17 @@ fn send_test_kart() -> Result<Value> {
     race.send_test_kart()
 }
 
+fn start_test_stream() -> Result<Value> {
+    let mut guard = live_slot().lock()
+        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
+    let live = guard.as_mut().context("start persistent Iroh endpoint first")?;
+    // The Tokio interval and task require this endpoint's existing
+    // background runtime, but no new networking identity is created.
+    let _entered = live._runtime.enter();
+    let race = live.race.as_mut().context("connect the frozen race first")?;
+    race.start_test_stream()
+}
+
 fn disconnect_race() -> Result<Value> {
     let mut guard = live_slot().lock()
         .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
@@ -433,5 +445,20 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_disconnect
     response_to_jstring(&mut env, match result {
         Ok(value) => value,
         Err(_) => Err(anyhow::anyhow!("native panic stopping MoQ race mesh")),
+    })
+}
+
+ 
+/// Start a BOUNDED opt-in 20 Hz synthetic WP3 stream for five seconds.
+/// Native code rechecks authentication at every send; it never runs physics.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_startTestStream(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+) -> jstring {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(start_test_stream));
+    response_to_jstring(&mut env, match result {
+        Ok(value) => value,
+        Err(_) => Err(anyhow::anyhow!("native panic during bounded WP3 stream test")),
     })
 }
