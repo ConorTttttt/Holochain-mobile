@@ -96,8 +96,8 @@ async fn install_or_resume(
                 restore_from_dht: false,
             }).await.context("install turbo_kart")?;
             ensure!(kart.agent_key() == &agent, "two installed apps have different agents");
-            let dc: Vec<_> = directory.all_cells().cloned().collect();
-            let kc: Vec<_> = kart.all_cells().cloned().collect();
+            let dc: Vec<_> = directory.all_cells().collect();
+            let kc: Vec<_> = kart.all_cells().collect();
             ensure!(dc.len() == 1 && kc.len() == 1, "expected one cell per app");
             (agent, dc[0].clone(), kc[0].clone(), false)
         },
