@@ -336,14 +336,92 @@ EndpointId equals the locked local member, then start
 `MeshSession<IrohMeshTransport>` on the shared endpoint. Require the
 same admission digest from the desktop before claiming authentication.
 
+## Gate 2c.1 — verify frozen signed race admission (source committed, untested)
+
+**New Android button:** **Verify signed race admission (no connection)**.
+
+The Android 0.7.1 Holochain JNI host reads the immutable
+`turbo_kart.get_race` record and then reads the **exact signed presence
+action** for every frozen participant from the original
+`moq_directory.get_endpoint_binding` zome. It passes the complete,
+untrusted record and ordered signed envelopes to the *separate* original
+desktop-linked realtime JNI module. There it calls the **unmodified**
+`holochain_moq_turbo_kart_client::race::RaceAdmission::from_locked`
+routine. It rejects bad signatures, mismatched identities/timestamps,
+missing roster membership, duplicate endpoints and an invalid setup.
+The module additionally checks that the **running Android Iroh
+EndpointId** is exactly the local player's frozen endpoint, and that
+each remote address decodes to the frozen identity using the original
+`iroh_addr_for`.
+
+The separate realtime JNI build now depends on the desktop game's
+`crates/turbo-kart-client` as well as its existing Iroh, protocol and
+kart-wire crates. That adds native desktop Holochain-client dependencies
+to the isolated build and **may substantially increase compile time**
+or expose Android-specific compilation issues. No compiled or device-
+verified result has been reported for this change yet.
+
+From the desktop Linux workstation, with your H2HC linker still running:
+
+```sh
+cd /mnt/holochain/TurboMobile/Holochain-mobile
+git fetch origin feat/turbo-kart-integration
+git merge --ff-only FETCH_HEAD
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$HOME/.local/opt/gradle-8.9/bin:$HOME/Android/Sdk/platform-tools:$PATH"
+bash scripts/build-turbo-kart-apk.sh
+adb reverse tcp:8090 tcp:8090
+adb install -r android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n dev.holochain.turbokart.mobile/.MainActivity
+```
+
+On the phone, resume **both existing identities**. Verify their IDs have
+not changed. If needed, join `MobileHolochainTest` as Zippy.
+Publish fresh signed Iroh presence while the desktop host has its own
+fresh signed presence. The desktop host must first commit a race
+using its normal start workflow: merely joining an open lobby is not
+a locked admission. Once the host commits the race, tap
+**Verify signed race admission (no connection)**.
+
+For a valid, locked roster that includes the phone, expect:
+
+```json
+{
+  "ok": true,
+  "result": {
+    "locked_roster_verified": true,
+    "local_endpoint_matches_locked_binding": true,
+    "peer_address_hints_verified": true,
+    "authenticated_race_session": false
+  }
+}
+```
+
+If the host has not committed a race, the button should return
+`ok:false` with a clear locked-race-not-found error. If the local
+agent is absent, a signature is invalid or the saved endpoint does
+not match the frozen binding, it **must fail closed**. Do not
+regenerate either key to get past such an error.
+
+**Scope limitation:** this is proof of *local validation* of a
+persisted, Holochain-returned race record, **not a connected,
+authenticated MoQ peer session**. A desktop host trying to enter a
+race may time out until the phone implements Gate 2c.2. The next step
+is to start `MeshSession<IrohMeshTransport>` on the already-running
+Android endpoint using this checked roster, exchange the original
+admission hello digest with the desktop, then prove a decoded 42-byte
+kart-state packet crosses the connection.
+
 ## Gate 2c — locked race admission and authenticated MoQ (future)
 
 Next, the desktop host's `start_race` can persist a locked roster
 only once the phone's signed, nonexpired endpoint binding is readable.
-Android must reuse `RaceAdmission::from_locked`, pinned endpoints,
-the original iroh/MoQ session and the 42-byte WP3 snapshots. A lobby
-join and valid signed presence are prerequisites, **not** proof of race
-admission or frame transport. None of Gate 2c is implemented.
+The Gate 2c.1 change adds the original `RaceAdmission::from_locked`
+validation and frozen identity checks; **it does not start Iroh/MoQ
+or transmit WP3 packets**. A lobby join and valid signed presence
+are prerequisites, not proof of an authenticated session or frame
+transport. Gate 2c.2 remains unimplemented.
 
-No Android race graphics, real-time peer session, host authority or
-gameplay physics have been tested.
+No Android race graphics, authenticated real-time peer session, host authority or
+gameplay physics have been tested. Gate 2c.1 is source-committed only; it
+requires compilation and physical device testing.
