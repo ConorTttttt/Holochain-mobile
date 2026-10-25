@@ -25,6 +25,8 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use tokio::task::{JoinHandle, JoinSet};
 
+use crate::kart_stream;
+
 type Mesh = MeshSession<IrohMeshTransport>;
 const PEER_SETUP_DEADLINE: Duration = Duration::from_secs(45);
 const DIAL_ATTEMPTS: u32 = 16;
@@ -94,6 +96,38 @@ async fn read_track(
     }
 }
 
+/// One publisher owns both the desktop latest-track send handle and its
+/// monotonically increasing tick. The opt-in burst and manual one-shot share
+/// this short-held mutex; no JNI call can reuse a tick within the race.
+struct TestKartPublisher {
+    track: TrackPublisher,
+    published: u64,
+}
+
+impl TestKartPublisher {
+    fn send(&mut self) -> Result<(u32, u64)> {
+        let tick: u32 = self.published.checked_add(1)
+            .context("synthetic kart-state tick overflow")?.try_into()
+            .context("synthetic kart-state tick outside u32 range")?;
+        let bytes = kart_stream::encode_sample(tick)?;
+        let seq = self.track.send(bytes.to_vec())
+            .context("publish original 42-byte WP3 on MoQ lane 4")?;
+        self.published += 1;
+        Ok((tick, seq))
+    }
+}
+
+#[derive(Default)]
+struct BurstProgress {
+    requested: bool,
+    running: bool,
+    completed: bool,
+    sent: u32,
+    last_error: Option<String>,
+    started_at: Option<Instant>,
+    ended_at: Option<Instant>,
+}
+
 /// Authentication lives outside the global JNI mutex: network tasks update
 /// these shared diagnostics without ever trying to acquire that mutex.
 pub struct RunningRace {
@@ -103,11 +137,12 @@ pub struct RunningRace {
     _latest: TrackPublisher,
     _events: TrackPublisher,
     _host: Option<TrackPublisher>,
-    kart: TrackPublisher,
+    kart: Arc<Mutex<TestKartPublisher>>,
     authenticated: Arc<Mutex<BTreeSet<String>>>,
     failures: Arc<Mutex<Vec<String>>>,
     received_kart: Arc<AtomicU64>,
-    published_kart: u64,
+    burst_progress: Arc<Mutex<BurstProgress>>,
+    burst_task: Option<JoinHandle<()>>,
     tasks: Vec<JoinHandle<()>>,
 }
 
@@ -150,7 +185,10 @@ impl RunningRace {
         } else {
             None
         };
-        let kart = mesh.publish(track(KART_LANE), mode(KART_LANE))?;
+        let kart = Arc::new(Mutex::new(TestKartPublisher {
+            track: mesh.publish(track(KART_LANE), mode(KART_LANE))?,
+            published: 0,
+        }));
         let mut hello = mesh.publish(track(0), mode(0))?;
         let digest = admission_digest(&admission)?;
         hello.send(digest.clone()).context("publish desktop-compatible admission digest")?;
@@ -240,13 +278,23 @@ impl RunningRace {
             authenticated,
             failures,
             received_kart,
-            published_kart: 0,
+            burst_progress: Arc::new(Mutex::new(BurstProgress::default())),
+            burst_task: None,
             tasks,
         })
     }
 
     pub fn race_id(&self) -> &str {
         self.admission.race_id.as_str()
+    }
+
+    /// Must be checked at *every* emission, not just at the start of a
+    /// bounded test burst: a link may drop or be revoked mid-stream.
+    fn all_peers_authenticated(mesh: &Mesh, authenticated: &Mutex<BTreeSet<String>>) -> bool {
+        let peers = mesh.peers();
+        let verified = authenticated.lock().expect("authenticated peer lock");
+        !peers.is_empty() && peers.iter()
+            .all(|peer| peer.connected && verified.contains(&peer.agent))
     }
 
     /// The socket is not a race. Report authenticated MoQ only after QUIC
@@ -264,6 +312,12 @@ impl RunningRace {
         } else {
             "connecting"
         };
+        let published = self.kart.lock().expect("kart publisher lock").published;
+        let burst = self.burst_progress.lock().expect("diagnostic burst lock");
+        let elapsed_ms = burst.started_at.map(|start| {
+            burst.ended_at.unwrap_or_else(Instant::now)
+                .saturating_duration_since(start).as_millis() as u64
+        });
         json!({
             "state": state,
             "race_id": self.race_id(),
@@ -288,40 +342,33 @@ impl RunningRace {
             })).collect::<Vec<_>>(),
             "setup_errors": *self.failures.lock().expect("mesh error lock"),
             "kart_wire_bytes": KART_STATE_LEN,
-            "synthetic_kart_packets_sent": self.published_kart,
+            "synthetic_kart_packets_sent": published,
             "remote_kart_packets_decoded": self.received_kart.load(Ordering::Relaxed),
+            "diagnostic_wp3_stream": {
+                "test_only": true,
+                "requested": burst.requested,
+                "running": burst.running,
+                "completed": burst.completed,
+                "nominal_hz": kart_stream::DIAGNOSTIC_HZ,
+                "target_frames": kart_stream::DIAGNOSTIC_FRAMES,
+                "sent": burst.sent,
+                "elapsed_ms": elapsed_ms,
+                "error": burst.last_error,
+                "desktop_receipt_confirmed": false,
+            },
         })
     }
 
-    /// A single explicit, synthetic 42-byte WP3 probe (not race physics).
-    /// Only allowed after every remote passed the *matching* admission hello.
+    /// One explicit synthetic WP3 snapshot. The same serialized tick counter
+    /// is shared with the bounded stream; no double publishing or replay.
     pub fn send_test_kart(&mut self) -> Result<Value> {
-        let peers = self.mesh.peers();
-        let verified = self.authenticated.lock().expect("authenticated peer lock");
-        ensure!(!peers.is_empty()
-            && peers.iter().all(|p| p.connected && verified.contains(&p.agent)),
+        ensure!(Self::all_peers_authenticated(&self.mesh, &self.authenticated),
             "cannot publish synthetic WP3 packet before ALL admitted peers authenticate");
-        drop(verified);
-        let tick: u32 = self.published_kart.checked_add(1)
-            .context("test-kart tick overflow")?.try_into()
-            .context("too many test kart frames")?;
-        let state = KartState {
-            flags: 0,
-            tick,
-            pos: [0.0, 0.0, 0.0],
-            vel: [0.0, 0.0, 0.0],
-            heading: 0.0,
-            drift: 0,
-            item: 0,
-            item_count: 0,
-            lap: 0,
-            track_t: 0.0,
-        };
-        let encoded = state.encode().context("encode original desktop WP3 state")?;
-        ensure!(encoded.len() == KART_STATE_LEN, "WP3 wire size changed");
-        let mesh_seq = self.kart.send(encoded.to_vec())
-            .context("send synthetic 42-byte WP3 state on MoQ lane 4")?;
-        self.published_kart += 1;
+        ensure!(!self.burst_progress.lock().expect("burst lock").running,
+            "single-frame probe cannot run during the 20 Hz diagnostic burst");
+        let (tick, mesh_seq) = self.kart.lock()
+            .map_err(|_| anyhow::anyhow!("kart publisher lock poisoned"))?
+            .send()?;
         Ok(json!({
             "synthetic_test_only": true,
             "race_id": self.race_id(),
@@ -334,9 +381,90 @@ impl RunningRace {
         }))
     }
 
+    /// Five seconds, 100 42-byte packets at 20 Hz. Explicit opt-in only.
+    /// Every tick checks the authenticated roster; QUIC loss or digest
+    /// rejection stops output immediately. Does not call Holochain at 20 Hz.
+    ///
+    /// Must be called from within the Iroh endpoint's Tokio runtime context.
+    pub fn start_test_stream(&mut self) -> Result<Value> {
+        ensure!(Self::all_peers_authenticated(&self.mesh, &self.authenticated),
+            "cannot start 20 Hz WP3 stream until ALL peers are authenticated");
+        {
+            let mut progress = self.burst_progress.lock()
+                .map_err(|_| anyhow::anyhow!("diagnostic stream lock poisoned"))?;
+            ensure!(!progress.requested,
+                "bounded WP3 test already requested this race; start a new verified mesh for a repeat");
+            progress.requested = true;
+            progress.running = true;
+            progress.completed = false;
+            progress.sent = 0;
+            progress.last_error = None;
+            progress.started_at = Some(Instant::now());
+            progress.ended_at = None;
+        }
+        let progress = self.burst_progress.clone();
+        let mesh = self.mesh.clone();
+        let authenticated = self.authenticated.clone();
+        let publisher = self.kart.clone();
+
+        self.burst_task = Some(tokio::spawn(async move {
+            let mut timer = tokio::time::interval(
+                Duration::from_millis(kart_stream::DIAGNOSTIC_INTERVAL_MS)
+            );
+            // Never produce a sudden catch-up burst after Android is paused.
+            timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+            let mut failure = None;
+            for _ in 0..kart_stream::DIAGNOSTIC_FRAMES {
+                timer.tick().await;
+                if !Self::all_peers_authenticated(&mesh, &authenticated) {
+                    failure = Some("authenticated peer disconnected; stopped WP3 burst".to_string());
+                    break;
+                }
+                // TrackPublisher::send is synchronous. Hold the mutex only
+                // while encoding/sending one packet; do not await inside it.
+                let sent = publisher.lock()
+                    .map_err(|_| anyhow::anyhow!("kart publisher lock poisoned"))
+                    .and_then(|mut guard| guard.send());
+                match sent {
+                    Ok(_) => {
+                        progress.lock().expect("diagnostic progress lock").sent += 1;
+                    }
+                    Err(error) => {
+                        failure = Some(format!("WP3 diagnostic send stopped: {error:#}"));
+                        break;
+                    }
+                }
+            }
+            let mut state = progress.lock().expect("diagnostic progress lock");
+            state.ended_at = Some(Instant::now());
+            state.running = false;
+            state.completed = failure.is_none()
+                && state.sent == kart_stream::DIAGNOSTIC_FRAMES;
+            state.last_error = failure;
+        }));
+        Ok(json!({
+            "synthetic_test_only": true,
+            "diagnostic_stream_started": true,
+            "race_id": self.race_id(),
+            "rate_hz": kart_stream::DIAGNOSTIC_HZ,
+            "duration_seconds": kart_stream::DIAGNOSTIC_SECONDS,
+            "max_frames": kart_stream::DIAGNOSTIC_FRAMES,
+            "wp3_bytes_each": KART_STATE_LEN,
+            "requires_matching_peer_admission": true,
+            "desktop_receipt_not_yet_verified": true,
+            "race_control_active": false,
+        }))
+    }
+
     /// Release all race-only tracks and MoQ sessions, keeping the original
     /// Keystore-owned endpoint and Holochain agent alive for another race.
     pub async fn stop(mut self) {
+        // Cancels any in-flight diagnostic emitter before the race mesh is
+        // closed, so no test kart packets escape a disconnected session.
+        if let Some(task) = self.burst_task.take() {
+            task.abort();
+            let _ = task.await;
+        }
         for task in &self.tasks { task.abort(); }
         for task in self.tasks.drain(..) { let _ = task.await; }
         let mut mesh = self.mesh;
