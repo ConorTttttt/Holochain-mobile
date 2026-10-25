@@ -14,8 +14,11 @@ the exact same **persistent Holochain agent and Iroh EndpointId**. Earlier
 Holochain lobby joins/leaves and the 16 KiB alignment checks remain the
 verified baseline.
 
-**Gate 2b signed presence is now implemented in source, not yet rebuilt or
-tested on the Galaxy S23.** It generates the exact original desktop
+**Gate 2b signed presence has been verified on the Galaxy S23** in the
+user's device screenshots: publication returned `signed_presence_published:
+true`, exact directory readback returned `readback_verified:true`, and
+the directory independently listed the signed Iroh binding. It generates
+the exact original desktop
 `SignedPresence` with a 120-second expiry, submits it through the
 persisted Holochain agent and original `moq_directory` zome, and reads back
 the action. A verified, admitted Iroh/MoQ peer session remains future work.
@@ -247,9 +250,10 @@ The implementation uses the desktop project's `holochain-moq-protocol`
   and displays its newest records. No new DNA or Holochain capability,
   no new Android agent, and no different wire format were introduced.
 
-**This version is not compiled or tested on the phone yet.** Rebuild and
-install the updated APK using the same script and `adb install -r`;
-never uninstall or clear saved data.
+**Device-verified:** signed Iroh presence publication/readback and the
+original directory lookup succeeded on the Galaxy S23. Subsequent
+APK source changes still require a new build and installation via
+`adb install -r`; never uninstall or clear saved data.
 
 ```sh
 cd /mnt/holochain/TurboMobile/Holochain-mobile
@@ -304,7 +308,8 @@ check: signed frozen directory bindings and the complete
 `RaceAdmission::from_locked` validation remain to be implemented in
 the separate realtime JNI component before a session can be opened.
 
-This change is **source committed but not yet device-built or tested**.
+The user confirmed that the expected unlocked-race diagnostic result
+was accurate; a **locked** race with Zippy has not yet been evidenced.
 
 On the Galaxy S23, after pulling and building the branch as above:
 
