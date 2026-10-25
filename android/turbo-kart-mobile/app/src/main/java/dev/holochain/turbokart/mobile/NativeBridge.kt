@@ -26,4 +26,10 @@ object NativeBridge {
     external fun joinLobby(lobbyId: String, characterId: String): String
 
     external fun leaveLobby(lobbyId: String): String
+
+    /** Publish a signed Iroh presence in the original gaming_platform.happ directory. */
+    external fun publishSignedPresence(signedPresenceJson: String): String
+
+    /** Independently query original directory entries; returns up to four newest bindings. */
+    external fun recentSignedBindings(): String
 }
