@@ -17,10 +17,12 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const DIRECTORY_APP: &str = "gaming_platform";
 const KART_APP: &str = "turbo_kart";
 const KART_ZOME: &str = "turbo_kart";
+const DIRECTORY_ZOME: &str = "moq_directory";
 static HOST: OnceLock<Mutex<Option<Host>>> = OnceLock::new();
 
 struct Host {
@@ -28,6 +30,7 @@ struct Host {
     conductor: ConductorHandle,
     agent: AgentPubKey,
     kart: CellId,
+    directory: CellId,
     summary: Value,
 }
 
@@ -63,7 +66,7 @@ async fn install_or_resume(
     dir_happ: &Path,
     kart_happ: &Path,
     hashes: &Path,
-) -> Result<(AgentPubKey, CellId, Value)> {
+) -> Result<(AgentPubKey, CellId, CellId, Value)> {
     let expected: ExpectedHashes = serde_json::from_slice(
         &std::fs::read(hashes).context("read expected DNA hashes")?
     )?;
@@ -122,7 +125,7 @@ async fn install_or_resume(
     conductor.clone().enable_app(KART_APP.into()).await
         .context("enable turbo_kart")?;
 
-    Ok((agent.clone(), kart_cell, json!({
+    Ok((agent.clone(), kart_cell, directory_cell, json!({
         "agent": AgentPubKeyB64::from(agent).to_string(),
         "gaming_directory_dna": dh,
         "turbo_kart_dna": kh,
@@ -171,20 +174,21 @@ fn start(
         let counters = counters.clone();
         Box::pin(async move { h2hc_p2p::ws::connect(&url, counters).await })
     });
-    let (conductor, agent, kart, summary) = runtime.block_on(async {
+    let (conductor, agent, kart, directory, summary) = runtime.block_on(async {
         let conductor = build_phone_conductor(config, passphrase, connector, H2hcOptions {
             expected_linker: Some(expected_linker),
             ..Default::default()
         }).await.context("build Android H2HC conductor")?;
-        let (agent, kart, summary) =
+        let (agent, kart, directory, summary) =
             install_or_resume(&conductor, &dir_happ, &kart_happ, &hashes).await?;
-        Ok::<_, anyhow::Error>((conductor, agent, kart, summary))
+        Ok::<_, anyhow::Error>((conductor, agent, kart, directory, summary))
     })?;
     *locked = Some(Host {
         runtime,
         conductor,
         agent,
         kart,
+        directory,
         summary: summary.clone(),
     });
     Ok(summary)
@@ -247,6 +251,119 @@ fn leave_lobby(lobby_id: String) -> Result<Value> {
         &host.agent, None, host.kart.clone(), KART_ZOME, "leave_lobby", lobby_id
     )).context("leave_lobby")?;
     Ok(json!({ "action": ActionHashB64::from(action).to_string() }))
+}
+
+/// Submit the original SignedPresence record through the *original*
+/// gaming-directory hApp using the existing persistent Holochain agent.
+/// The separate Iroh JNI module already signed the EndpointId binding.
+fn publish_signed_presence(signed_json: String) -> Result<Value> {
+    ensure!(signed_json.len() <= 8192, "presence JSON exceeds 8 KiB");
+    let signed: Value = serde_json::from_str(&signed_json)
+        .context("decode Iroh-generated SignedPresence")?;
+    let ad = signed.get("advertisement").context("missing advertisement")?;
+    let peer = ad.get("peer_endpoint").context("missing peer_endpoint")?;
+    let claimed_agent = peer.get("agent").and_then(Value::as_str)
+        .context("missing advertised Holochain agent")?;
+    let endpoint = peer.get("endpoint").context("missing endpoint")?;
+    ensure!(endpoint.get("kind").and_then(Value::as_str) == Some("Iroh"),
+        "advertisement is not for an Iroh endpoint");
+    let address = endpoint.get("address").and_then(Value::as_str)
+        .context("missing Iroh address")?;
+    ensure!(!address.is_empty() && address.len() <= 2048
+        && address.split_whitespace().all(|tok|
+            tok.starts_with("ip:") || tok.starts_with("relay:")),
+        "invalid Iroh dial hints");
+    let fingerprint = endpoint.get("transport_identity")
+        .and_then(|v| v.get("fingerprint"))
+        .and_then(Value::as_array)
+        .context("missing EndpointId fingerprint")?;
+    ensure!(fingerprint.len() == 32
+        && fingerprint.iter().all(|b| b.as_u64().is_some_and(|n| n <= 255)),
+        "Iroh EndpointId must contain 32 public bytes");
+    let sig = signed.get("binding_signature").context("missing signed binding")?;
+    for component in ["r", "s"] {
+        let b = sig.get(component).and_then(Value::as_array)
+            .context("malformed Ed25519 binding signature")?;
+        ensure!(b.len() == 32
+            && b.iter().all(|v| v.as_u64().is_some_and(|n| n <= 255)),
+            "binding signature needs two 32-byte components");
+    }
+    let published = ad.get("published_at").and_then(Value::as_i64)
+        .context("missing published_at")?;
+    let expires = ad.get("expires_at").and_then(Value::as_i64)
+        .context("signed presence must have expiry")?;
+    ensure!(expires.checked_sub(published) == Some(120_000),
+        "signed presence TTL must match the desktop's 120 seconds");
+    let now: i64 = SystemTime::now()
+        .duration_since(UNIX_EPOCH).context("Android clock before epoch")?
+        .as_millis().try_into().context("Android clock overflow")?;
+    ensure!(published >= now - 60_000 && published <= now + 30_000
+        && expires > now + 30_000,
+        "signed presence is stale or future-dated");
+
+    let locked = slot().lock().map_err(|_| anyhow::anyhow!("native host lock poisoned"))?;
+    let host = locked.as_ref().context("start Holochain before publishing presence")?;
+    let own_agent = AgentPubKeyB64::from(host.agent.clone()).to_string();
+    ensure!(claimed_agent == own_agent,
+        "refusing signed presence authored for another Holochain agent");
+
+    let action: ActionHash = host.runtime.block_on(host.conductor.easy_call_zome(
+        &host.agent, None, host.directory.clone(), DIRECTORY_ZOME,
+        "publish_signed_presence", signed.clone()
+    )).context("original moq_directory.publish_signed_presence")?;
+
+    // A successful write alone is not sufficient: verify the exact action
+    // round-trips via the production directory's read API on this conductor.
+    let saved: Option<Value> = host.runtime.block_on(host.conductor.easy_call_zome(
+        &host.agent, None, host.directory.clone(), DIRECTORY_ZOME,
+        "get_endpoint_binding", action.clone()
+    )).context("original moq_directory.get_endpoint_binding")?;
+    ensure!(saved.as_ref() == Some(&signed),
+        "published signature/endpoint binding failed exact readback");
+
+    let id_hex = fingerprint.iter()
+        .map(|b| format!("{:02x}", b.as_u64().unwrap_or(0)))
+        .collect::<String>();
+    Ok(json!({
+        "agent": own_agent,
+        "binding_action": ActionHashB64::from(action).to_string(),
+        "endpoint_fingerprint_hex": id_hex,
+        "published_at_ms": published,
+        "expires_at_ms": expires,
+        "signed_presence_published": true,
+        "readback_verified": true,
+        "authenticated_race_session": false
+    }))
+}
+
+/// Read the caller's latest directory bindings, without expanding signatures
+/// or authorising any race. The original zome bounds this read to four.
+fn recent_signed_bindings() -> Result<Value> {
+    let locked = slot().lock().map_err(|_| anyhow::anyhow!("native host lock poisoned"))?;
+    let host = locked.as_ref().context("start Holochain first")?;
+    let values: Vec<(String, Value)> = host.runtime.block_on(
+        host.conductor.easy_call_zome(
+            &host.agent, None, host.directory.clone(), DIRECTORY_ZOME,
+            "get_recent_endpoint_bindings", host.agent.clone()
+        )
+    ).context("moq_directory.get_recent_endpoint_bindings")?;
+    ensure!(values.len() <= 4, "directory returned too many bindings");
+    let agent = AgentPubKeyB64::from(host.agent.clone()).to_string();
+    let recent = values.into_iter().filter_map(|(action, signed)| {
+        let ad = signed.get("advertisement")?;
+        let peer = ad.get("peer_endpoint")?;
+        if peer.get("agent")?.as_str()? != agent { return None; }
+        let endpoint = peer.get("endpoint")?;
+        Some(json!({
+            "binding_action": action,
+            "kind": endpoint.get("kind"),
+            "transport_identity": endpoint.get("transport_identity"),
+            "address": endpoint.get("address"),
+            "published_at_ms": ad.get("published_at"),
+            "expires_at_ms": ad.get("expires_at")
+        }))
+    }).collect::<Vec<_>>();
+    Ok(json!({"agent": agent, "recent_bindings": recent}))
 }
 
 fn str_arg(env: &mut JNIEnv<'_>, val: JString<'_>) -> Result<String> {
@@ -357,5 +474,36 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_leaveLob
     result_as_jstring(&mut env, match response {
         Ok(v) => v,
         Err(_) => Err(anyhow::anyhow!("native panic during leave_lobby")),
+    })
+}
+
+/// Publish signed Iroh presence as the persistent Holochain agent.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_publishSignedPresence(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    presence_json: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        publish_signed_presence(str_arg(&mut env, presence_json)?)
+    }));
+    result_as_jstring(&mut env, match response {
+        Ok(v) => v,
+        Err(_) => Err(anyhow::anyhow!("native panic during Iroh presence publish")),
+    })
+}
+
+/// Read this agent's latest signed presence records.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_recentSignedBindings(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        recent_signed_bindings()
+    }));
+    result_as_jstring(&mut env, match response {
+        Ok(v) => v,
+        Err(_) => Err(anyhow::anyhow!("native panic reading signed presence")),
     })
 }
