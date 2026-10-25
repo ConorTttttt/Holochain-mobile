@@ -29,6 +29,9 @@ internal object IrohBridge {
     /** Queue one synthetic 42-byte WP3 packet only after every peer authenticates. */
     external fun sendTestKart(): String
 
+    /** Start one bounded five-second, 20 Hz, 100-packet synthetic WP3 burst. */
+    external fun startTestStream(): String
+
     /** Stop this race mesh without closing or regenerating the persistent endpoint. */
     external fun disconnectRace(): String
 }
