@@ -65,6 +65,12 @@ mkdir -p "$APP/src/main/jniLibs/arm64-v8a" "$APP/src/main/assets"
 cp target/wasmi/aarch64-linux-android/release/libturbo_kart_android_native.so \
   "$APP/src/main/jniLibs/arm64-v8a/libturbo_kart_android_native.so"
 
+# Gate 2a: build the separate original-desktop Iroh/MoQ .so into the *same*
+# APK. It has an isolated Cargo dependency graph, its own JNI symbols and an
+# independently Keystore-protected endpoint seed, so the proven H2HC host
+# does not need to resolve the desktop game's Holochain dependency versions.
+bash "$ROOT/scripts/build-turbo-kart-realtime-jni.sh"
+
 BASE=${TURBO_KART_DESKTOP_BASE:-/mnt/holochain/offloaded/sf/Turbokart/turbo-kart/apps/turbo-kart-desktop}
 for file in \
   "$BASE/.happs/gaming_platform.happ" \
@@ -77,7 +83,7 @@ for file in \
   cp "$file" "$APP/src/main/assets/"
 done
 
-echo "JNI arm64 library and original Turbo Kart hApps staged into Android project."
+echo "Both 16 KiB-aligned JNI libraries and original Turbo Kart hApps staged into Android project."
 echo "Android project: $ROOT/android/turbo-kart-mobile"
 
 if [ "${1:-}" = "--prepare-only" ]; then
