@@ -1,8 +1,10 @@
 package dev.holochain.turbokart.mobile
 
 import android.app.Activity
+import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -33,6 +35,24 @@ class MainActivity : Activity() {
             setPadding(24, 24, 24, 24)
         }
         val scroll = ScrollView(this)
+        scroll.clipToPadding = false
+        // targetSdk 35 uses edge-to-edge on modern Android. Respect the
+        // status and navigation bars so the header and controls stay visible.
+        scroll.setOnApplyWindowInsetsListener { view, insets ->
+            val top: Int
+            val bottom: Int
+            if (Build.VERSION.SDK_INT >= 30) {
+                top = insets.getInsets(WindowInsets.Type.statusBars()).top
+                bottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+            } else {
+                @Suppress("DEPRECATION")
+                top = insets.systemWindowInsetTop
+                @Suppress("DEPRECATION")
+                bottom = insets.systemWindowInsetBottom
+            }
+            view.setPadding(0, top, 0, bottom)
+            insets
+        }
         scroll.addView(column)
         setContentView(scroll)
 
