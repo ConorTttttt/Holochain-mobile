@@ -30,6 +30,8 @@ class MainActivity : Activity() {
     private lateinit var startButton: Button
     private lateinit var listButton: Button
     private lateinit var irohButton: Button
+    private lateinit var publishPresenceButton: Button
+    private lateinit var verifyPresenceButton: Button
     private lateinit var lobbySelector: Spinner
     private lateinit var inspectButton: Button
     private lateinit var joinButton: Button
@@ -38,6 +40,7 @@ class MainActivity : Activity() {
 
     private var started = false
     private var irohStarted = false
+    private var presencePublishedThisRun = false
     private var busy = false
     private var agentId: String? = null
     private var joinedLobbyId: String? = null
@@ -113,9 +116,24 @@ class MainActivity : Activity() {
         column.addView(startButton)
         column.addView(irohButton)
         column.addView(TextView(this).apply {
-            text = "Iroh diagnostic: keep a stable endpoint ID across app restarts. " +
-                "No signed presence, authenticated race session or kart packets yet."
+            text = "Iroh identity persists across restarts. Next, publish a signed " +
+                "EndpointId-to-player binding through the existing Holochain directory. " +
+                "The manual binding expires after 120 seconds; publish again to refresh."
         })
+        publishPresenceButton = Button(this).apply {
+            text = "Publish signed Iroh presence"
+            setOnClickListener { publishIrohPresence() }
+        }
+        verifyPresenceButton = Button(this).apply {
+            text = "Verify directory Iroh bindings"
+            setOnClickListener {
+                submit("Reading original Holochain directory bindings…") {
+                    NativeBridge.recentSignedBindings()
+                }
+            }
+        }
+        column.addView(publishPresenceButton)
+        column.addView(verifyPresenceButton)
         column.addView(listButton)
         column.addView(TextView(this).apply { text = "Select a desktop lobby:" })
         column.addView(lobbySelector)
@@ -229,6 +247,8 @@ class MainActivity : Activity() {
     private fun updateButtons() {
         startButton.isEnabled = !busy && !started
         irohButton.isEnabled = !busy && started && !irohStarted
+        publishPresenceButton.isEnabled = !busy && started && irohStarted
+        verifyPresenceButton.isEnabled = !busy && started
         listButton.isEnabled = !busy && started
         lobbySelector.isEnabled = !busy && started && lobbyChoices.isNotEmpty()
         inspectButton.isEnabled = !busy && started && lobbyChoices.isNotEmpty()
@@ -290,6 +310,31 @@ class MainActivity : Activity() {
             } finally {
                 seed.fill(0)
             }
+        }
+    }
+
+    /**
+     * Signs using the persistent Iroh key inside the Iroh JNI library, then
+     * publishes using the existing Holochain agent in the Wasmi JNI host.
+     * The Ed25519 private key is never sent to Kotlin or to Holochain.
+     */
+    private fun publishIrohPresence() {
+        val agent = agentId?.takeIf { it.isNotBlank() }
+        if (agent == null) {
+            log.text = "Start Holochain and verify the restored agent first."
+            return
+        }
+        submit(
+            "Signing Iroh endpoint and publishing to original gaming directory…",
+            onSuccess = { presencePublishedThisRun = true }
+        ) {
+            val signedResult = JSONObject(IrohBridge.signPresence(agent))
+            check(signedResult.optBoolean("ok")) {
+                signedResult.optString("error", "Could not sign Iroh endpoint binding")
+            }
+            val signedPresence = signedResult.getJSONObject("result")
+                .getJSONObject("presence")
+            NativeBridge.publishSignedPresence(signedPresence.toString())
         }
     }
 
