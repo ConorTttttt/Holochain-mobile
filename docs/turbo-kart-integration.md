@@ -69,7 +69,10 @@ apps, and matching DNA hashes is the first passing criterion. On 25 October 2026
 The existing `scripts/build-android.sh` still builds only the original
 benchmarks. A **separate** `scripts/build-turbo-kart-android.sh` builds just
 the Turbo Kart smoke harness using the same NDK setup and the Wasmi feature.
-**The Android Turbo Kart harness has not yet been built or device-tested.**
+The Android Turbo Kart smoke binary was compiled and run on a Galaxy S23 on
+25 October 2026. Both hApps installed with expected hashes; it successfully
+listed and retrieved a desktop lobby, joined as Zippy, and the desktop UI
+independently displayed its arrival and subsequent departure.
 
 On the Linux host, with an Android ARM64 device authorised for ADB:
 
@@ -123,5 +126,8 @@ Do not connect the test keystore to valuable player data.
   **not** survive restarts. Run on a fresh profile every time.
 - It must **not** be used for production accounts or valuable player data.
 - It is a command-line prototype; it is not an Android APK or iOS app.
+- An opt-in Linux Lair persistence/resume experiment is documented in
+  [turbo-kart-persistent-identity.md](turbo-kart-persistent-identity.md).
+  This has **not been compile/run verified** or brought to the Android APK.
 - Cross-version read interoperability (mobile Holochain 0.7.1 vs desktop 0.7.0) was observed for `list_open_lobbies` and `get_lobby`; cross-version join and leave writes were observed in the desktop UI. The harness incorrectly decoded the action-hash return value in that run; fixed by decoding it as `ActionHash`.
 - It does not start races or implement Iroh/MoQ realtime sessions.
