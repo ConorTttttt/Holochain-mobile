@@ -37,7 +37,7 @@ No changed DNAs, old benchmarks, desktop applications or CLI smoke files.
 Prerequisites: the Android NDK r27c already used for `turbo-kart-smoke`;
 Android SDK Platform 35; JDK 17; Gradle 8.9 (or an Android Studio installation
 that can build the project). The project uses Android Gradle Plugin 8.7.3 and
-Kotlin Android plugin 2.0.21. No Gradle wrapper JAR is committed.
+Kotlin Android plugin 2.3.21. No Gradle wrapper JAR is committed.
 
 ```sh
 cd /mnt/holochain/TurboMobile/Holochain-mobile
