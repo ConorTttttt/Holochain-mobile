@@ -10,11 +10,16 @@
 //! app storage by Kotlin, never persisted or logged by this Rust library.
 
 use std::sync::{Mutex, OnceLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{bail, ensure, Context, Result};
 use holochain_moq_kart_wire::{item, KartState, KART_STATE_LEN};
-use holochain_moq_mesh_iroh::{IrohConfig, IrohMeshTransport, Reach, SecretKey};
-use jni::objects::{JByteArray, JObject};
+use holochain_moq_mesh_iroh::{iroh_endpoint, IrohConfig, IrohMeshTransport, Reach, SecretKey};
+use holochain_moq_protocol::{
+    check_presence, iroh_binding_payload, BindingSignature, EndpointAdvertisement,
+    PeerEndpoint, SignedPresence, PRESENCE_TTL_MS,
+};
+use jni::objects::{JByteArray, JObject, JString};
 use jni::sys::jstring;
 use jni::JNIEnv;
 use serde_json::{json, Value};
@@ -109,6 +114,64 @@ fn start(key: SecretKey) -> Result<Value> {
     Ok(status)
 }
 
+/// Generate the exact original gaming-directory SignedPresence record:
+///   author's Holochain AgentPubKeyB64 + Iroh EndpointId proof of possession.
+///
+/// Does NOT write to Holochain. The owning Holochain conductor validates the
+/// author and publishes the return payload with its own agent signer.
+fn signed_presence(agent: String) -> Result<Value> {
+    ensure!(
+        agent.starts_with("uhCAk")
+            && agent.len() <= 64
+            && agent.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_'),
+        "invalid Holochain agent key syntax"
+    );
+    let guard = live_slot().lock()
+        .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
+    let live = guard.as_ref().context("start or resume the Iroh endpoint first")?;
+    let endpoint = live.transport.endpoint();
+    let id = *endpoint.id().as_bytes();
+    let now_ms: i64 = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .context("Android clock is before Unix epoch")?
+        .as_millis()
+        .try_into()
+        .context("Android clock overflow")?;
+
+    // The desktop's own codec defines "ip:<host>:<port>" tokens,
+    // the Ed25519 binding payload, and the 120 s expiry.
+    let peer = PeerEndpoint {
+        agent: agent.clone(),
+        endpoint: iroh_endpoint(&endpoint.addr())
+            .context("encode Android Iroh endpoint using original desktop hints")?,
+    };
+    ensure!(
+        peer.endpoint.transport_identity.fingerprint == id,
+        "encoded Iroh transport fingerprint changed"
+    );
+    let advertisement = EndpointAdvertisement::new(
+        peer,
+        now_ms,
+        Some(PRESENCE_TTL_MS),
+    ).context("build expiring endpoint advertisement")?;
+    check_presence(&advertisement).context("original directory presence rules")?;
+
+    // The endpoint secret never crosses JNI. Only the signature and public
+    // SignedPresence envelope are handed back to the Holochain JNI host.
+    let sig = endpoint.secret_key().sign(&iroh_binding_payload(&id, &agent));
+    let signed = SignedPresence {
+        advertisement,
+        binding_signature: BindingSignature::from_bytes(&sig.to_bytes()),
+    };
+    Ok(json!({
+        "endpoint_id": endpoint.id().to_string(),
+        "agent": agent,
+        "presence": signed,
+        "signed_presence_published": false,
+        "authenticated_race_session": false,
+    }))
+}
+
 fn response_to_jstring(env: &mut JNIEnv<'_>, result: Result<Value>) -> jstring {
     let body = match result {
         Ok(value) => json!({ "ok": true, "result": value }),
@@ -149,4 +212,24 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_startEndpo
             Err(_) => Err(anyhow::anyhow!("native panic while starting Android Iroh endpoint")),
         },
     )
+}
+
+/// Create an Ed25519 EndpointId → Holochain Agent binding with the desktop
+/// protocol's domain separation. This does not publish; call the Holochain
+/// native JNI host's publishSignedPresence with the returned presence JSON.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_signPresence(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    agent_key: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> Result<Value> {
+        let agent: String = env.get_string(&agent_key)
+            .context("read local Holochain agent from Android")?.into();
+        signed_presence(agent)
+    }));
+    response_to_jstring(&mut env, match response {
+        Ok(value) => value,
+        Err(_) => Err(anyhow::anyhow!("native panic generating Iroh signed presence")),
+    })
 }
