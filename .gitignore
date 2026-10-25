@@ -4,3 +4,13 @@ tests/fixtures/*/target
 tests/fixtures/*/workdir/*.dna
 tests/fixtures/*/workdir/*.happ
 prototypes/h2hc-linker/target
+
+# Generated Android build outputs and locally copied game bundles.
+/android/turbo-kart-mobile/.gradle/
+/android/turbo-kart-mobile/.kotlin/
+/android/turbo-kart-mobile/.idea/
+/android/turbo-kart-mobile/local.properties
+/android/turbo-kart-mobile/app/build/
+/android/turbo-kart-mobile/build/
+/android/turbo-kart-mobile/app/src/main/assets/
+/android/turbo-kart-mobile/app/src/main/jniLibs/
