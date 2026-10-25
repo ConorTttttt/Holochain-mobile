@@ -290,6 +290,52 @@ Android background lifecycle and Wi-Fi/IP transitions are still missing.
 to an authenticated MoQ session, so the existing desktop game will have
 no Android racer to exchange frames with, even if signed presence succeeds.
 
+## Gate 2c.0 — read-only immutable race-record diagnostic (source committed)
+
+The Android Holochain JNI host now calls the **original**
+`turbo_kart.get_race(lobby_id)` zome from its existing validated Turbo
+Kart cell and displays a small roster summary through
+**Check locked race (read-only)**. It reports whether the desktop has
+committed a `RaceRecord`, its race ID and roster agents, and whether
+the phone's existing Holochain agent appears in that roster. No race is
+started, no keys are minted or changed, and no Iroh peer is dialled.
+This is deliberately **not** a successful admission or authorization
+check: signed frozen directory bindings and the complete
+`RaceAdmission::from_locked` validation remain to be implemented in
+the separate realtime JNI component before a session can be opened.
+
+This change is **source committed but not yet device-built or tested**.
+
+On the Galaxy S23, after pulling and building the branch as above:
+
+1. Start/resume Holochain and the persistent Iroh endpoint; check that the
+   same agent/endpoint identifiers remain. Discover and join the desktop
+   lobby as Zippy if not already joined.
+2. Before the desktop host starts a race, tap **Check locked race
+   (read-only)**. Expect `ok:true`,
+   `locked_race_exists:false`, and
+   `authenticated_race_session:false`.
+3. Both players must have valid signed Iroh directory bindings. The
+   host must refresh its own signed presence as well as requiring the
+   phone's. The host's `start_race` only proceeds while bindings
+   are live (at least 30 seconds remaining) and verifies their identity.
+4. Only if the desktop UI/workflow can start a race with this Android
+   participant should the host start it. Tap the diagnostic again,
+   without refreshing the open-lobby list. Expect `locked_race_exists:true`
+   and `local_agent_in_locked_roster:true`, with two roster agents.
+   **This does not imply any MoQ session has connected.**
+5. If the race does not start, capture the **desktop readiness error**
+   and the Android diagnostic JSON rather than attempting to forge a
+   race record, relax admission rules, or replace an app identity.
+
+The first authenticated peer test after this will transport the actual
+locked `RaceRecord` and original `SignedPresence` records into the
+isolated realtime JNI library for
+`RaceAdmission::from_locked` validation, confirm the live Iroh
+EndpointId equals the locked local member, then start
+`MeshSession<IrohMeshTransport>` on the shared endpoint. Require the
+same admission digest from the desktop before claiming authentication.
+
 ## Gate 2c — locked race admission and authenticated MoQ (future)
 
 Next, the desktop host's `start_race` can persist a locked roster
