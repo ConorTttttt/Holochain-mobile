@@ -28,6 +28,7 @@ struct Host {
     conductor: ConductorHandle,
     agent: AgentPubKey,
     kart: CellId,
+    summary: Value,
 }
 
 #[derive(Deserialize)]
@@ -146,7 +147,13 @@ fn start(
     let expected_linker = linker_id(&key)?;
     let mut locked = slot().lock()
         .map_err(|_| anyhow::anyhow!("native host lock poisoned"))?;
-    ensure!(locked.is_none(), "conductor already started in this process");
+    // An Android Activity can be recreated (e.g. rotation) while this native
+    // library stays loaded. Reuse the existing host instead of reinstalling.
+    if let Some(host) = locked.as_ref() {
+        let mut summary = host.summary.clone();
+        summary["session_reused"] = json!(true);
+        return Ok(summary);
+    }
     std::fs::create_dir_all(&data_dir).context("create app-private conductor dir")?;
     // Lair in Android's app-private directory is NOT yet validated on-device.
     let passphrase = Arc::new(Mutex::new(sodoken::LockedArray::from(passphrase)));
@@ -173,7 +180,13 @@ fn start(
             install_or_resume(&conductor, &dir_happ, &kart_happ, &hashes).await?;
         Ok::<_, anyhow::Error>((conductor, agent, kart, summary))
     })?;
-    *locked = Some(Host { runtime, conductor, agent, kart });
+    *locked = Some(Host {
+        runtime,
+        conductor,
+        agent,
+        kart,
+        summary: summary.clone(),
+    });
     Ok(summary)
 }
 
