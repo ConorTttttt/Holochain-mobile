@@ -59,10 +59,10 @@ message, type one JSON command per line:
 {"cmd":"quit"}
 ```
 
-The smoke harness joins **public** lobbies only. Joining and leaving write DHT records; leave the lobby before quitting. The test keystore does not persist its agent identity, and a restart requires a fresh data dir. `join_lobby`/`leave_lobby` return their action hashes; verify cross-agent membership using `get_lobby` and the desktop UI.
+The smoke harness joins **public** lobbies only. Joining and leaving write DHT records; leave the lobby before quitting. The test keystore does not persist its agent identity, and a restart requires a fresh data dir. With the corrected harness, `join_lobby`/`leave_lobby` return their action hashes; verify cross-agent membership using `get_lobby` and the desktop UI.
 
 An `install` result with `both_enabled: true`, the same agent for both
-apps, and matching DNA hashes is the first passing criterion. On 25 October 2026 a test running Holochain 0.7.1/Wasmi/H2HC listed a lobby created by the Holochain 0.7.0 desktop and retrieved its full `get_lobby` snapshot, including host, status, and members. **Joining from the lightweight conductor is not yet verified.**
+apps, and matching DNA hashes is the first passing criterion. On 25 October 2026 a test running Holochain 0.7.1/Wasmi/H2HC listed a lobby created by the Holochain 0.7.0 desktop and retrieved its full `get_lobby` snapshot, including host, status, and members. Subsequently, the lightweight conductor wrote a successful `join_lobby` record for character `zippy`, the desktop UI independently showed the mobile-compatible player, and a `leave_lobby` record removed the player from the desktop UI.
 
 ## Android
 
@@ -78,5 +78,5 @@ a localhost linker, or a reachable network address.
   **not** survive restarts. Run on a fresh profile every time.
 - It must **not** be used for production accounts or valuable player data.
 - It is a command-line prototype; it is not an Android APK or iOS app.
-- Cross-version read interoperability (mobile Holochain 0.7.1 vs desktop 0.7.0) was observed for `list_open_lobbies` and `get_lobby`; cross-version writes and joins are not yet verified.
+- Cross-version read interoperability (mobile Holochain 0.7.1 vs desktop 0.7.0) was observed for `list_open_lobbies` and `get_lobby`; cross-version join and leave writes were observed in the desktop UI. The harness incorrectly decoded the action-hash return value in that run; fixed by decoding it as `ActionHash`.
 - It does not start races or implement Iroh/MoQ realtime sessions.
