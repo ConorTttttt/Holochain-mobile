@@ -13,9 +13,14 @@ also confirmed the previous Android **16 KiB compatibility warning was gone**.
 This demonstrates alignment success on the tested device, not exhaustive
 coverage of all 16 KiB-page hardware.
 
-The next APK feature—**View Lobby, Join as Zippy, and Leave Lobby buttons**—
-is committed as source but **has not yet been compiled or device-tested**.
-This is still a control-plane prototype, not a playable racing game.
+**The View Lobby / Join as Zippy / Leave Lobby APK update is now built,
+installed and physically tested on the Galaxy S23.** The user independently
+observed Zippy appear in the desktop Turbo Kart lobby on Android join, then
+disappear on Android leave. This confirms cross-version Holochain **write
+interoperability from the persistent Android APK UI**, not just the earlier
+adb-shell test harness. The join/leave build retained the 16 KiB alignment
+checks. The APK remains a multiplayer **control-plane prototype**, not a
+playable racing game.
 
 ## Scope
 
@@ -162,7 +167,7 @@ Do **not** run `adb shell pm clear` or uninstall the APK between persistence
 tests. Those operations can destroy app-private conductor data and the
 unlocking material. `adb install -r` is intended to keep app data.
 
-## New APK lobby membership controls (not yet device-verified)
+## APK lobby membership controls (Galaxy S23 verified)
 
 After pulling this branch and rebuilding with `scripts/build-turbo-kart-apk.sh`,
 install the new APK using `adb install -r` (without clearing data), then:
@@ -187,16 +192,16 @@ results are decoded as Holochain `ActionHash` and returned as strings.
 All JNI calls run on a background thread. The APK supports public lobbies
 only; private invite codes are not yet implemented.
 
-Do not assume successful installation proves these new buttons work: test
-actual UI, native calls, zome writes and desktop display changes on the
-Galaxy S23.
+**Verified on Galaxy S23:** the built APK completed the UI join/leave
+flow. The desktop game displayed Zippy arriving and departing in response
+to the Android buttons, independently corroborating both native zome writes.
+This test does not imply that the phone can start or render races yet.
 
 ## Current limitations / safety
 
-- The APK's persistent-agent restart and post-resume lobby read have
-  **passed on the Galaxy S23**. The new APK's join/leave controls are
-  **not yet built or device-verified**, despite the earlier adb-shell
-  join/leave success. More lifecycle and battery/background tests remain.
+- The APK's persistent-agent restart, post-resume lobby read, and
+  **UI join/leave writes with desktop-visible results** have passed on
+  the Galaxy S23. Extended lifecycle, recovery and battery tests remain.
 - The UI supports public lobby join/leave using character `zippy` only.
   It does not implement private invites, character selection or race start.
 - `ws://` cleartext and the test linker key are for local development only.
@@ -209,3 +214,29 @@ Galaxy S23.
 - If the native conductor fails to start, gather a focused logcat trace:
   `adb logcat -d -t 300 | grep -Ei 'turbokart|holochain|lair|AndroidRuntime|UnsatisfiedLinkError'`.
   Do not delete saved player identity data as a workaround.
+
+## Next milestone — authenticated real-time race admission
+
+Desktop Turbo Kart already has authenticated iroh 1.2.0 / MoQ 0.3.10
+race sessions, an immutable E6.1 race admission, and the E6.3
+`KartState` snapshot track (42-byte WP3 format at 20 Hz). See the
+desktop repository's `E61-RACE-START.md`, `E62-REALTIME-SESSIONS.md`
+and `E63-KART-SYNC.md`. This is a separate native transport/data-plane;
+H2HC and Holochain lobby writes are **not** the frame transport.
+
+Recommended staged Android work:
+1. Audit and reuse the existing `kart-net` / `mesh-iroh` /
+   `RaceAdmission` code instead of inventing a second wire format.
+2. Integrate a persistent Android-side iroh endpoint identity, advertise
+   only valid signed presence, and validate locked race admission against
+   the phone's existing persistent Holochain agent.
+3. Add a mobile **race-ready** UI/diagnostic state, then prove one
+   authenticated iroh/MoQ session with the desktop, with no racing
+   physics yet. Do not claim admission merely because lobby join worked.
+4. Reuse WP3 42-byte player snapshots and the existing game's physics
+   and renderer/input adapters for a first visible two-device kart motion
+   test; keep Holochain out of the high-frequency path.
+5. Only after that expand to schedule, host authority, race progress,
+   recovery, power, network transitions and gameplay UX.
+
+This milestone is **not implemented or verified on Android yet**.
