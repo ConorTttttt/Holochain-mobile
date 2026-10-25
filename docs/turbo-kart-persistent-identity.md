@@ -78,25 +78,29 @@ same data directory concurrently.
 Do **not** try to make the `adb shell` smoke harness production-persistent
 by simply setting `--keystore lair`. The existing `h2hc-phone` code notes
 that the Android shell UID cannot bind Lair's Unix socket in that environment.
-The next Android implementation needs a native Android host process with an
-app-private data directory and verified Lair socket support, or a different
-properly integrated persistent keystore. Securely derive/store the Lair
-unlocking material through Android Keystore (not a fixed password in source,
-not a passphrase pushed through ADB); explicitly plan backup/recovery.
+The native APK host uses app-private storage, a local Lair keystore
+and a random Lair-unlock secret encrypted by Android Keystore. The first
+installed APK was built and run on a Galaxy S23, and the user confirmed
+that **all post-restart tests passed**: identical Android agent ID,
+`resumed:true`, both original hApps enabled and a working desktop lobby
+query after force-stop/relaunch. These results establish identity persistence
+in the **tested Android APK configuration**, not general production readiness.
 
-The APK host must implement the same `install`/ `resume` identity reuse
-semantics and ensure exactly the two production DNA hashes, independently of
-the game's realtime Iroh/MoQ racing data plane.
+The user also confirmed that the corrected NDK r27c 16 KiB-aligned binary
+and Gradle APK build passed the respective alignment checks and that the
+device no longer displayed its earlier 16 KiB compatibility warning.
 
-Keep the working disposable Android smoke harness available as a regression
-test. Neither this stage nor the persistent Linux prototype should be
-described as an Android player-identity feature until built and tested on
-the physical device.
+Keep the earlier disposable Android adb-shell smoke harness available as a
+regression test; it intentionally does not share the APK's identity.
 
-### Initial APK host implementation (unverified)
+### Stage 3: Android lobby controls and remaining security work
 
-A first Android native/JNI and Kotlin Activity prototype is now in
-`prototypes/turbo-kart-android-native` and `android/turbo-kart-mobile`.
-See [turbo-kart-android-apk.md](turbo-kart-android-apk.md) for build and
-on-device identity-restart criteria. The Android Lair socket and persistence
-path have **not** been validated on the Galaxy S23 yet.
+New Kotlin controls and Rust JNI methods for `get_lobby`, `join_lobby`
+and `leave_lobby` have been committed. They have **not yet been compiled
+or device-tested in an updated APK**. See
+[turbo-kart-android-apk.md](turbo-kart-android-apk.md) for the phone acceptance
+procedure. A successful APK test requires independent desktop UI evidence.
+
+Recovery/backup and migration of keystore-protected agent identity across
+devices, Android background execution, auth/transport hardening, and racing
+data-plane (Iroh/MoQ) integration remain future work.
