@@ -67,9 +67,10 @@ passphrase, then type `{"cmd":"resume"}` (not `install`).
 public key and both original production DNA hashes. The agent ID returned on
 both runs was
 `uhCAksfr6CgmhV3uu-WrNFRotvSHK06CY_KsObaXL0OQapv0nB30g`.
-A post-restart `list_open_lobbies` call has **not** yet been demonstrated;
-run that to extend the persistence smoke test. Capture errors instead of
-resetting the profile. Do not run two conductors pointing at the
+The user subsequently ran `{"cmd":"list_open_lobbies","limit":10}` after
+`resume` and received `ok:true`, including the existing desktop
+`MobileHolochainTest` lobby. **Post-resume network reads are verified.**
+Capture any future errors instead of resetting this persistent test profile. Do not run two conductors pointing at the
 same data directory concurrently.
 
 ## Stage 2: Android APK-private data and key management
@@ -91,3 +92,11 @@ Keep the working disposable Android smoke harness available as a regression
 test. Neither this stage nor the persistent Linux prototype should be
 described as an Android player-identity feature until built and tested on
 the physical device.
+
+### Initial APK host implementation (unverified)
+
+A first Android native/JNI and Kotlin Activity prototype is now in
+`prototypes/turbo-kart-android-native` and `android/turbo-kart-mobile`.
+See [turbo-kart-android-apk.md](turbo-kart-android-apk.md) for build and
+on-device identity-restart criteria. The Android Lair socket and persistence
+path have **not** been validated on the Galaxy S23 yet.
