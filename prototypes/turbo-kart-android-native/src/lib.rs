@@ -201,6 +201,54 @@ fn list_lobbies(limit: u32) -> Result<Value> {
     Ok(json!({ "lobbies": lobbies }))
 }
 
+fn get_lobby(lobby_id: String) -> Result<Value> {
+    ensure!(!lobby_id.is_empty() && lobby_id.len() <= 128, "invalid lobby ID length");
+    let locked = slot().lock()
+        .map_err(|_| anyhow::anyhow!("native host lock poisoned"))?;
+    let host = locked.as_ref().context("start the conductor first")?;
+    let lobby: Value = host.runtime.block_on(host.conductor.easy_call_zome(
+        &host.agent, None, host.kart.clone(), KART_ZOME, "get_lobby", lobby_id
+    )).context("get_lobby")?;
+    Ok(json!({ "lobby": lobby }))
+}
+
+fn join_lobby(lobby_id: String, character_id: String) -> Result<Value> {
+    ensure!(!lobby_id.is_empty() && lobby_id.len() <= 128, "invalid lobby ID length");
+    ensure!(
+        matches!(
+            character_id.as_str(),
+            "blaze" | "zippy" | "bella" | "toadly" |
+            "rex" | "grumbo" | "koopz" | "dotty"
+        ),
+        "unknown Turbo Kart character"
+    );
+    let locked = slot().lock()
+        .map_err(|_| anyhow::anyhow!("native host lock poisoned"))?;
+    let host = locked.as_ref().context("start the conductor first")?;
+    // Public lobbies only; the unmodified game's zome expects invite_code.
+    // The zome returns binary-encoded ActionHash, not serde_json::Value.
+    let action: ActionHash = host.runtime.block_on(host.conductor.easy_call_zome(
+        &host.agent,
+        None,
+        host.kart.clone(),
+        KART_ZOME,
+        "join_lobby",
+        json!({"lobby": lobby_id, "character_id": character_id, "invite_code": null}),
+    )).context("join_lobby")?;
+    Ok(json!({ "action": ActionHashB64::from(action).to_string() }))
+}
+
+fn leave_lobby(lobby_id: String) -> Result<Value> {
+    ensure!(!lobby_id.is_empty() && lobby_id.len() <= 128, "invalid lobby ID length");
+    let locked = slot().lock()
+        .map_err(|_| anyhow::anyhow!("native host lock poisoned"))?;
+    let host = locked.as_ref().context("start the conductor first")?;
+    let action: ActionHash = host.runtime.block_on(host.conductor.easy_call_zome(
+        &host.agent, None, host.kart.clone(), KART_ZOME, "leave_lobby", lobby_id
+    )).context("leave_lobby")?;
+    Ok(json!({ "action": ActionHashB64::from(action).to_string() }))
+}
+
 fn str_arg(env: &mut JNIEnv<'_>, val: JString<'_>) -> Result<String> {
     Ok(env.get_string(&val)?.into())
 }
@@ -258,5 +306,56 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_listOpen
     result_as_jstring(&mut env, match response {
         Ok(v) => v,
         Err(_) => Err(anyhow::anyhow!("native panic during lobby query")),
+    })
+}
+
+/// Read the selected desktop lobby and its current membership.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_getLobby(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    lobby_id: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        get_lobby(str_arg(&mut env, lobby_id)?)
+    }));
+    result_as_jstring(&mut env, match response {
+        Ok(v) => v,
+        Err(_) => Err(anyhow::anyhow!("native panic during get_lobby")),
+    })
+}
+
+/// Join a public lobby using the same Turbo Kart zome as the desktop.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_joinLobby(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    lobby_id: JString<'_>,
+    character_id: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let lobby_id = str_arg(&mut env, lobby_id)?;
+        let character_id = str_arg(&mut env, character_id)?;
+        join_lobby(lobby_id, character_id)
+    }));
+    result_as_jstring(&mut env, match response {
+        Ok(v) => v,
+        Err(_) => Err(anyhow::anyhow!("native panic during join_lobby")),
+    })
+}
+
+/// Leave a previously joined public lobby and return the committed action hash.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_NativeBridge_leaveLobby(
+    mut env: JNIEnv<'_>,
+    _receiver: JObject<'_>,
+    lobby_id: JString<'_>,
+) -> jstring {
+    let response = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        leave_lobby(str_arg(&mut env, lobby_id)?)
+    }));
+    result_as_jstring(&mut env, match response {
+        Ok(v) => v,
+        Err(_) => Err(anyhow::anyhow!("native panic during leave_lobby")),
     })
 }
