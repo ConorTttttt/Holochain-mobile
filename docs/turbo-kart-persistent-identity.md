@@ -1,20 +1,25 @@
-# Turbo Kart persistent identity: the next integration milestone
+# Turbo Kart persistent identity: Linux verified, Android host next
 
 The Android Wasmi/H2HC smoke test on 25 October 2026 succeeded: the
 Galaxy S23 started both original hApps, discovered and read the desktop
 `MobileHolochainTest` lobby, joined it as Zippy, and the desktop independently
 displayed the join and later the leave.
 
-The next milestone is **same agent after conductor restart**. The original
-smoke harness uses Holochain's `DangerTestKeystore` and makes a new test
-identity. A successful multiplayer session does not prove identity durability.
+On 25 October 2026, **persistent identity was verified on Linux** with the
+Lair-backed smoke harness: the conductor was stopped after install and then
+restarted from the same data directory and passphrase. The `resume` command
+returned the **identical** agent key and the unchanged Turbo Kart DNA hashes,
+with `both_enabled:true` and `resumed:true`. This result does **not** establish
+persistent Android identity yet. The original Android smoke harness still uses
+a disposable in-memory `DangerTestKeystore`.
 
 ## Stage 1: controlled Linux proof of key and conductor-state persistence
 
 The `turbo-kart-smoke` binary now supports optional
 `--keystore lair --passphrase-file FILE` and the JSON `resume` command.
-This is an **unverified development experiment**, not a production keystore
-integration. Existing calls without `--keystore` retain the original disposable
+This mode **compiled and passed the install/restart/resume identity check on
+Linux on 25 October 2026**. It is still a development experiment, not a
+production Android keystore integration. Existing calls without `--keystore` retain the original disposable
 memory mode. Never reuse a data dir created with the memory keystore.
 
 Build on the Linux PC:
@@ -58,10 +63,13 @@ Keep the H2HC linker online.
 First run: type `{"cmd":"install"}`, record the returned `agent`, and
 `{"cmd":"quit"}`. Restart the **same command** with the **same** profile and
 passphrase, then type `{"cmd":"resume"}` (not `install`).
-Pass criteria: `resumed:true`, `both_enabled:true`, the **exact same**
-agent public key and original production DNA hashes, and a working
-`list_open_lobbies` read. This is not yet proven; capture build/run errors
-rather than resetting the profile. Do not run two conductors pointing at the
+**Verified:** `resumed:true`, `both_enabled:true`, the exact same agent
+public key and both original production DNA hashes. The agent ID returned on
+both runs was
+`uhCAksfr6CgmhV3uu-WrNFRotvSHK06CY_KsObaXL0OQapv0nB30g`.
+A post-restart `list_open_lobbies` call has **not** yet been demonstrated;
+run that to extend the persistence smoke test. Capture errors instead of
+resetting the profile. Do not run two conductors pointing at the
 same data directory concurrently.
 
 ## Stage 2: Android APK-private data and key management
