@@ -64,13 +64,58 @@ The smoke harness joins **public** lobbies only. Joining and leaving write DHT r
 An `install` result with `both_enabled: true`, the same agent for both
 apps, and matching DNA hashes is the first passing criterion. On 25 October 2026 a test running Holochain 0.7.1/Wasmi/H2HC listed a lobby created by the Holochain 0.7.0 desktop and retrieved its full `get_lobby` snapshot, including host, status, and members. Subsequently, the lightweight conductor wrote a successful `join_lobby` record for character `zippy`, the desktop UI independently showed the mobile-compatible player, and a `leave_lobby` record removed the player from the desktop UI.
 
-## Android
+## Android (physical device smoke test)
 
-`scripts/build-android.sh` builds the original benchmark binary only. The
-new smoke binary has **not** yet been cross-compiled or tested on Android.
-When ready, add it to the Android build script and run it through ADB with
-a reachable H2HC linker. On-device USB testing requires `adb reverse` for
-a localhost linker, or a reachable network address.
+The existing `scripts/build-android.sh` still builds only the original
+benchmarks. A **separate** `scripts/build-turbo-kart-android.sh` builds just
+the Turbo Kart smoke harness using the same NDK setup and the Wasmi feature.
+**The Android Turbo Kart harness has not yet been built or device-tested.**
+
+On the Linux host, with an Android ARM64 device authorised for ADB:
+
+```sh
+export PATH="$HOME/Android/Sdk/platform-tools:$PATH"
+adb devices -l
+adb shell getprop ro.product.cpu.abi
+bash scripts/build-turbo-kart-android.sh
+```
+
+Expected binary:
+`target/wasmi/aarch64-linux-android/release/turbo-kart-smoke`.
+
+Keep the H2HC linker running on the host at `127.0.0.1:8090`. USB ADB
+reverse redirects Android localhost port 8090 to the host's listener.
+
+```sh
+adb reverse tcp:8090 tcp:8090
+adb reverse --list
+BASE=/absolute/path/to/turbo-kart/apps/turbo-kart-desktop
+PHONE=/data/local/tmp/turbo-kart-smoke
+adb shell mkdir -p "$PHONE"
+adb push target/wasmi/aarch64-linux-android/release/turbo-kart-smoke "$PHONE/turbo-kart-smoke"
+adb push "$BASE/.happs/gaming_platform.happ" "$PHONE/gaming_platform.happ"
+adb push "$BASE/.happs/turbo_kart.happ" "$PHONE/turbo_kart.happ"
+adb push "$BASE/expected-dna-hashes.json" "$PHONE/expected-dna-hashes.json"
+adb shell chmod 755 "$PHONE/turbo-kart-smoke"
+
+# Replace with the public signing key from your currently running H2HC linker.
+LINKER_KEY='<base64-linker-public-key-with-padding>'
+RUN_DIR="$PHONE/data-$(date +%s)"
+adb shell -T "$PHONE/turbo-kart-smoke \
+  --linker-url ws://127.0.0.1:8090/conductor/v1 \
+  --linker-key $LINKER_KEY \
+  --directory-happ $PHONE/gaming_platform.happ \
+  --kart-happ $PHONE/turbo_kart.happ \
+  --expected-hashes $PHONE/expected-dna-hashes.json \
+  --data-dir $RUN_DIR"
+```
+
+After `ready`, send newline-delimited JSON commands to stdin, beginning
+with `{"cmd":"install"}`. For a fresh desktop public lobby, use
+`list_open_lobbies`, `get_lobby`, `join_lobby`, `get_lobby`,
+`leave_lobby`, then verify the desktop UI independently observed the
+join and leave. A fresh `data-<timestamp>` dir is required for every new run.
+Do not connect the test keystore to valuable player data.
 
 ## Security and limitations
 
