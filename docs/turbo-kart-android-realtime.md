@@ -8,9 +8,17 @@ bound the original Iroh/MoQ transport. The user reported JSON events
 The probe returned direct IP addresses and an ephemeral endpoint ID;
 this is **not** a race session or signed presence publication.
 
-**Gate 2a has now been implemented in source, not yet compiled or tested**:
-a separate original-desktop Iroh/MoQ JNI library and a Keystore-encrypted
-persistent endpoint seed integrated into the working Android APK.
+**Gate 2a passed on the Galaxy S23**: the user reports that the
+updated APK built and installed, and after force-stop/relaunch it restored
+the exact same **persistent Holochain agent and Iroh EndpointId**. Earlier
+Holochain lobby joins/leaves and the 16 KiB alignment checks remain the
+verified baseline.
+
+**Gate 2b signed presence is now implemented in source, not yet rebuilt or
+tested on the Galaxy S23.** It generates the exact original desktop
+`SignedPresence` with a 120-second expiry, submits it through the
+persisted Holochain agent and original `moq_directory` zome, and reads back
+the action. A verified, admitted Iroh/MoQ peer session remains future work.
 
 ## What the desktop game already does
 
@@ -212,17 +220,84 @@ adb-shell probe endpoint: the test-only executable deliberately generated
 a temporary Iroh key and stored nothing. Gate 2a's Android Keystore secret
 is separate and permanent across ordinary app restarts.
 
-**Do not claim Gate 2a passed until the updated APK is built and tested
-on the Galaxy S23.**
+**Confirmed by on-device tests:** the same persistent Holochain agent
+and Iroh EndpointId resumed across APK force-stop and restart.
 
-## Gate 2b — signed presence and race admission (future)
+## Gate 2b — published signed presence (source ready, device test pending)
 
-The next step after Gate 2a passes is to use the phone's persistent
-Iroh endpoint private key and existing Holochain agent to publish a
-proper `SignedPresence` through the original gaming directory hApp.
-`RaceAdmission::from_locked` must independently verify the start
-record and endpoint bindings before starting a MoQ session.
+The implementation uses the desktop project's `holochain-moq-protocol`
+**unchanged** in the existing Iroh JNI library:
 
-**No signed presence, race admission, MoQ peer session or live kart
-snapshots are implemented on Android at this stage.** Graphics, input,
-host authority and network lifecycle remain further gates.
+- `IrohBridge.signPresence(agent)` builds the original
+  `SignedPresence` with an `EndpointKind::Iroh` address, the exact
+  `iroh_binding_payload(endpoint_id, agent)`, an Ed25519 signature
+  created by the persistent Iroh secret, and `PRESENCE_TTL_MS = 120000`.
+  The endpoint secret **never leaves the Iroh JNI library**.
+- `NativeBridge.publishSignedPresence(signedPresenceJson)` validates
+  the advertised agent equals the installed Holochain conductor's
+  persistent agent and checks the endpoint ID size, signature fields and
+  timestamp. It calls the ORIGINAL gaming directory cell's
+  `moq_directory.publish_signed_presence` and expects a Holochain
+  `ActionHash`. The original DNA checks signature/authorship.
+- It calls `moq_directory.get_endpoint_binding(ActionHash)` and requires
+  the readback to equal the exact submitted presence before returning
+  `readback_verified:true`.
+- A **Verify directory Iroh bindings** button independently invokes
+  `moq_directory.get_recent_endpoint_bindings` for the local agent
+  and displays its newest records. No new DNA or Holochain capability,
+  no new Android agent, and no different wire format were introduced.
+
+**This version is not compiled or tested on the phone yet.** Rebuild and
+install the updated APK using the same script and `adb install -r`;
+never uninstall or clear saved data.
+
+```sh
+cd /mnt/holochain/TurboMobile/Holochain-mobile
+git fetch origin feat/turbo-kart-integration
+git merge --ff-only FETCH_HEAD
+export PATH="$HOME/.local/opt/gradle-8.9/bin:$HOME/Android/Sdk/platform-tools:$PATH"
+export ANDROID_HOME="$HOME/Android/Sdk"
+bash scripts/build-turbo-kart-apk.sh
+adb reverse tcp:8090 tcp:8090
+adb install -r android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n dev.holochain.turbokart.mobile/.MainActivity
+```
+
+On the Galaxy S23:
+
+1. Tap **Start / Resume Holochain** and confirm your original agent
+   remains unchanged (`resumed:true`).
+2. Tap **Start / Resume Iroh Endpoint (Test)** and confirm the original
+   persistent Iroh EndpointId.
+3. Tap **Publish signed Iroh presence**. The `ok:true` result MUST
+   contain `signed_presence_published:true`,
+   `readback_verified:true`, a `binding_action` and `expires_at_ms`.
+   The `endpoint_fingerprint_hex` corresponds to the Iroh public key.
+4. Tap **Verify directory Iroh bindings**; expect your new
+   `binding_action` in the original Holochain directory's results.
+   The verification is important because successful signing alone
+   does not publish to the DHT.
+5. Optional: force-stop/restart without clearing data, resume both keys,
+   and use **Verify directory Iroh bindings** to verify the previously
+   published binding is still readable. If it has expired, tap
+   **Publish signed Iroh presence** again.
+
+**Manual refresh only:** the binding expires 120 seconds after publishing,
+so republish before the host attempts race setup. Automatic renewal,
+Android background lifecycle and Wi-Fi/IP transitions are still missing.
+
+**Do not start a desktop race with the phone yet.** It is not connected
+to an authenticated MoQ session, so the existing desktop game will have
+no Android racer to exchange frames with, even if signed presence succeeds.
+
+## Gate 2c — locked race admission and authenticated MoQ (future)
+
+Next, the desktop host's `start_race` can persist a locked roster
+only once the phone's signed, nonexpired endpoint binding is readable.
+Android must reuse `RaceAdmission::from_locked`, pinned endpoints,
+the original iroh/MoQ session and the 42-byte WP3 snapshots. A lobby
+join and valid signed presence are prerequisites, **not** proof of race
+admission or frame transport. None of Gate 2c is implemented.
+
+No Android race graphics, real-time peer session, host authority or
+gameplay physics have been tested.
