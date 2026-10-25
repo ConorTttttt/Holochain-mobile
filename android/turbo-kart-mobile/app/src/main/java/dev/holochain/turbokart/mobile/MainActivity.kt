@@ -18,8 +18,8 @@ import java.util.concurrent.Executors
 /**
  * Android multiplayer control-plane prototype: H2HC/Wasmi install/resume,
  * discover, inspect, join and leave public desktop lobbies.
- * Includes a standalone authenticated-key Iroh/MoQ endpoint test; no
- * signed directory presence, race admission, realtime peer session or racing UI yet.
+ * Includes persistent Iroh endpoint identity, signed directory presence and
+ * read-only locked race admission validation. No realtime peer session or racing UI yet.
  */
 class MainActivity : Activity() {
     private data class LobbyChoice(val id: String, val label: String)
@@ -35,6 +35,7 @@ class MainActivity : Activity() {
     private lateinit var lobbySelector: Spinner
     private lateinit var inspectButton: Button
     private lateinit var inspectRaceButton: Button
+    private lateinit var verifyRaceButton: Button
     private lateinit var joinButton: Button
     private lateinit var leaveButton: Button
     private lateinit var log: TextView
@@ -162,6 +163,13 @@ class MainActivity : Activity() {
                 }
             }
         }
+        verifyRaceButton = Button(this).apply {
+            text = "Verify signed race admission (no connection)"
+            setOnClickListener {
+                val lobby = joinedLobbyId ?: selectedLobby()?.id ?: return@setOnClickListener
+                verifyRaceAdmission(lobby)
+            }
+        }
         joinButton = Button(this).apply {
             text = "Join as Zippy"
             setOnClickListener {
@@ -188,6 +196,7 @@ class MainActivity : Activity() {
         }
         column.addView(inspectButton)
         column.addView(inspectRaceButton)
+        column.addView(verifyRaceButton)
         column.addView(joinButton)
         column.addView(leaveButton)
 
@@ -265,6 +274,8 @@ class MainActivity : Activity() {
         lobbySelector.isEnabled = !busy && started && lobbyChoices.isNotEmpty()
         inspectButton.isEnabled = !busy && started && lobbyChoices.isNotEmpty()
         inspectRaceButton.isEnabled = !busy && started && (joinedLobbyId != null || lobbyChoices.isNotEmpty())
+        verifyRaceButton.isEnabled = !busy && started && irohStarted &&
+            (joinedLobbyId != null || lobbyChoices.isNotEmpty())
         joinButton.isEnabled = !busy && started && lobbyChoices.isNotEmpty() && joinedLobbyId == null
         leaveButton.isEnabled = !busy && started && joinedLobbyId != null
     }
@@ -345,6 +356,22 @@ class MainActivity : Activity() {
             val signedPresence = signedResult.getJSONObject("result")
                 .getJSONObject("presence")
             NativeBridge.publishSignedPresence(signedPresence.toString())
+        }
+    }
+
+    /**
+     * The Wasmi JNI host reads the original locked RaceRecord and each exact
+     * signed binding from Holochain. The isolated desktop-linked Iroh JNI
+     * validates the roster with RaceAdmission::from_locked and checks its
+     * actual persistent EndpointId. This never initiates a race connection.
+     */
+    private fun verifyRaceAdmission(lobbyId: String) {
+        submit("Verifying frozen signed race roster and persistent Iroh endpoint…") {
+            val bundle = JSONObject(NativeBridge.lockedAdmissionBundle(lobbyId))
+            check(bundle.optBoolean("ok")) {
+                bundle.optString("error", "Could not read locked race and signed bindings")
+            }
+            IrohBridge.validateLockedAdmission(bundle.getJSONObject("result").toString())
         }
     }
 
