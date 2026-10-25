@@ -34,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var verifyPresenceButton: Button
     private lateinit var lobbySelector: Spinner
     private lateinit var inspectButton: Button
+    private lateinit var inspectRaceButton: Button
     private lateinit var joinButton: Button
     private lateinit var leaveButton: Button
     private lateinit var log: TextView
@@ -150,6 +151,17 @@ class MainActivity : Activity() {
                 }
             }
         }
+        inspectRaceButton = Button(this).apply {
+            text = "Check locked race (read-only)"
+            setOnClickListener {
+                // A started race no longer appears among open lobby results.
+                // Prefer our remembered joined lobby while this process runs.
+                val lobby = joinedLobbyId ?: selectedLobby()?.id ?: return@setOnClickListener
+                submit("Reading desktop race admission snapshot (not authenticated yet)…") {
+                    NativeBridge.getLockedRace(lobby)
+                }
+            }
+        }
         joinButton = Button(this).apply {
             text = "Join as Zippy"
             setOnClickListener {
@@ -175,6 +187,7 @@ class MainActivity : Activity() {
             }
         }
         column.addView(inspectButton)
+        column.addView(inspectRaceButton)
         column.addView(joinButton)
         column.addView(leaveButton)
 
@@ -251,6 +264,7 @@ class MainActivity : Activity() {
         listButton.isEnabled = !busy && started
         lobbySelector.isEnabled = !busy && started && lobbyChoices.isNotEmpty()
         inspectButton.isEnabled = !busy && started && lobbyChoices.isNotEmpty()
+        inspectRaceButton.isEnabled = !busy && started && (joinedLobbyId != null || lobbyChoices.isNotEmpty())
         joinButton.isEnabled = !busy && started && lobbyChoices.isNotEmpty() && joinedLobbyId == null
         leaveButton.isEnabled = !busy && started && joinedLobbyId != null
     }
