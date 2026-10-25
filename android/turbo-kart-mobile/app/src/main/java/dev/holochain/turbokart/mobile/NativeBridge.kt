@@ -23,6 +23,9 @@ object NativeBridge {
 
     external fun getLobby(lobbyId: String): String
 
+    /** Read original desktop locked race setup. Diagnostic only, not admission. */
+    external fun getLockedRace(lobbyId: String): String
+
     external fun joinLobby(lobbyId: String, characterId: String): String
 
     external fun leaveLobby(lobbyId: String): String
