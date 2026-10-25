@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     // Serve the existing Three.js game from a secure HTTPS app-assets origin.
-    implementation("androidx.webkit:webkit:1.18.0")
+    implementation("androidx.webkit:webkit:1.15.0")
 }
 
 android {
