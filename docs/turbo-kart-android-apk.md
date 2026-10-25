@@ -22,6 +22,16 @@ adb-shell test harness. The join/leave build retained the 16 KiB alignment
 checks. The APK remains a multiplayer **control-plane prototype**, not a
 playable racing game.
 
+**Realtime integration progress:** The original desktop's Iroh/MoQ transport
+and 42-byte WP3 codec compiled and ran on the Galaxy S23. A subsequent
+APK integrated a separately Android Keystore-protected, persistent Iroh
+EndpointId, which the user verified survives app restarts alongside
+the original Holochain agent. The next signed-presence publish/readback
+APK feature is **committed in source but not yet built or tested**; see
+[turbo-kart-android-realtime.md](turbo-kart-android-realtime.md).
+No authenticated MoQ race session or real kart-motion frames are running
+on Android yet.
+
 ## Scope
 
 The earlier adb-shell `turbo-kart-smoke` successfully installed the original
