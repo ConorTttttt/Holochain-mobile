@@ -1,0 +1,23 @@
+[package]
+name = "turbo-kart-android-native"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+description = "JNI host for Turbo Kart H2HC/Wasmi Android prototype"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1"
+base64 = "0.22"
+h2hc-conductor = { path = "../h2hc-conductor", default-features = false, features = ["wasmi"] }
+h2hc-p2p.workspace = true
+h2hc-protocol.workspace = true
+holochain.workspace = true
+holochain_conductor_api = "=0.7.1"
+jni = "0.21"
+serde.workspace = true
+serde_json.workspace = true
+sodoken = "0.1"
+tokio.workspace = true
