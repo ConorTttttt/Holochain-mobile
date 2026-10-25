@@ -1,8 +1,16 @@
 # Turbo Kart Android realtime phase — transport compatibility gate
 
-**Status:** isolated Android Iroh/MoQ + WP3 probe code committed, **not yet
-compiled or device-tested**. This is the first step beyond the verified
-Galaxy S23 APK Holochain multiplayer lobby join/leave milestone.
+**Status (25 October 2026):** **Gate 1 passed on the real Galaxy S23**.
+The isolated Android arm64 executable compiled, passed 16 KiB ELF alignment,
+matched the desktop's original WP3 42-byte golden test, and successfully
+bound the original Iroh/MoQ transport. The user reported JSON events
+`kart_wire_pass`, `iroh_endpoint_bound`, and `complete/ok:true`.
+The probe returned direct IP addresses and an ephemeral endpoint ID;
+this is **not** a race session or signed presence publication.
+
+**Gate 2a has now been implemented in source, not yet compiled or tested**:
+a separate original-desktop Iroh/MoQ JNI library and a Keystore-encrypted
+persistent endpoint seed integrated into the working Android APK.
 
 ## What the desktop game already does
 
@@ -109,7 +117,7 @@ Acceptance criteria:
 A failure at any gate should be captured without changing the APK, DNA
 hashes, Holochain keystore, or desktop game.
 
-## Gate 2 — authenticated Android endpoint, then race admission
+## Gate 2 design — authenticated Android endpoint and race admission
 
 After Gate 1 succeeds, add the Iroh/MoQ transport behind the **existing
 Android JNI host**, not as a competing conductor or separate app process.
@@ -138,6 +146,83 @@ Android JNI host**, not as a competing conductor or separate app process.
   frozen roster. Test session connect/stop/reconnect **without any race
   physics or game rendering**.
 
-No part of Gate 2 has been implemented. Full race movement, graphics,
-host authority and recovery are subsequent gates. Keep the proven
-Android Holochain APK unchanged while working on Gate 1.
+## Gate 2a — persistent Iroh EndpointId in the Android APK (source ready)
+
+Files:
+
+- `prototypes/turbo-kart-realtime-jni/src/lib.rs`: an independent Rust
+  JNI cdylib which links the **same original** desktop `mesh-iroh` and
+  `kart-wire` crates used in the Gate 1 standalone test. It maintains a
+  Tokio runtime and a direct-only Iroh/MoQ endpoint in-process; repeated
+  calls with the same key return the existing EndpointId. It refuses
+  switching keys while an endpoint is running. This is *not* a race session.
+- `android/turbo-kart-mobile/app/src/main/java/dev/holochain/turbokart/mobile/IrohIdentityStore.kt`:
+  creates an independent 32-byte Ed25519 endpoint seed and encrypts it in
+  app-private preferences under a non-exportable Android Keystore AES-GCM
+  master key. It fails closed if ciphertext or the master key disappears;
+  it does **not** share the Holochain Lair key.
+- `IrohBridge.kt`: JNI loader; `MainActivity.kt`: separate
+  **Start / Resume Iroh Endpoint (Test)** button enabled after the
+  existing Holochain conductor starts.
+- `scripts/build-turbo-kart-realtime-jni.sh`: builds the new ARM64
+  `libturbo_kart_realtime_jni.so` via a generated isolated Cargo manifest
+  using the unmodified desktop sources and the existing NDK r27c.
+  Reuses Gate 1's build cache and verifies 16 KiB ELF LOAD alignment.
+- `scripts/build-turbo-kart-apk.sh`: now stages and packages both separate
+  JNI libraries. The existing H2HC library and original hApps are unchanged.
+
+The isolated JNI dependency graph is intentional: the desktop game
+uses different Holochain crates than the Android 0.7.1 host. Sharing
+a single Cargo build graph could force unwanted dependency resolution.
+
+Build and install on the known Linux workstation:
+
+```sh
+cd /mnt/holochain/TurboMobile/Holochain-mobile
+git fetch origin feat/turbo-kart-integration
+git merge --ff-only FETCH_HEAD
+
+export PATH="$HOME/.local/opt/gradle-8.9/bin:$HOME/Android/Sdk/platform-tools:$PATH"
+export ANDROID_HOME="$HOME/Android/Sdk"
+bash scripts/build-turbo-kart-apk.sh
+
+adb reverse tcp:8090 tcp:8090
+adb install -r android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n dev.holochain.turbokart.mobile/.MainActivity
+```
+
+Acceptance procedure:
+
+1. Tap **Start / Resume Holochain**; ensure `resumed:true` and the
+   Holochain agent **matches the previous APK tests**.
+2. Tap **Start / Resume Iroh Endpoint (Test)**. Record the complete
+   `result.endpoint_id`; expect a nonempty `direct_addrs`, 42-byte
+   `kart_wire_bytes`, and `signed_presence_published:false`,
+   `authenticated_race_session:false`.
+3. Run `adb shell am force-stop dev.holochain.turbokart.mobile`.
+   Reopen the app, tap **Start / Resume Holochain** and then
+   **Start / Resume Iroh Endpoint (Test)** again.
+4. Require the **exact same Holochain agent and Iroh EndpointId** after
+   process restart. Direct IP addresses/ports are allowed to change.
+5. Ensure **Discover desktop lobbies**, **Join as Zippy** and **Leave**
+   still work. **Do not clear app data or uninstall.**
+
+The Iroh EndpointId inside this APK will **not** match Gate 1's ephemeral
+adb-shell probe endpoint: the test-only executable deliberately generated
+a temporary Iroh key and stored nothing. Gate 2a's Android Keystore secret
+is separate and permanent across ordinary app restarts.
+
+**Do not claim Gate 2a passed until the updated APK is built and tested
+on the Galaxy S23.**
+
+## Gate 2b — signed presence and race admission (future)
+
+The next step after Gate 2a passes is to use the phone's persistent
+Iroh endpoint private key and existing Holochain agent to publish a
+proper `SignedPresence` through the original gaming directory hApp.
+`RaceAdmission::from_locked` must independently verify the start
+record and endpoint bindings before starting a MoQ session.
+
+**No signed presence, race admission, MoQ peer session or live kart
+snapshots are implemented on Android at this stage.** Graphics, input,
+host authority and network lifecycle remain further gates.
