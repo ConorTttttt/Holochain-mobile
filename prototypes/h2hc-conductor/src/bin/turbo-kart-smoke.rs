@@ -292,6 +292,18 @@ impl Smoke {
                 && kart_hash == expected.turbo_kart,
             "installed DNA hashes do not match expected desktop hashes"
         );
+        // Enable is idempotent: previously enabled apps stay enabled after a
+        // restart, and a stopped app can be re-enabled explicitly.
+        self.conductor
+            .clone()
+            .enable_app(DIRECTORY_APP_ID.into())
+            .await
+            .context("enable resumed gaming_platform")?;
+        self.conductor
+            .clone()
+            .enable_app(KART_APP_ID.into())
+            .await
+            .context("enable resumed turbo_kart")?;
         let agent = directory.agent_pub_key.clone();
         self.cells = Some(Cells {
             agent: agent.clone(),
