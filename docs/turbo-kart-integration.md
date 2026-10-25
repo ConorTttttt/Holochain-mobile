@@ -3,7 +3,7 @@
 This is the **first integration milestone**, not an installable Android game. It
 reuses the existing H2HC/Wasmi conductor, installs the two **unchanged** Turbo Kart
 hApps with **one agent key**, compares their DNA hashes with the desktop
-`expected-dna-hashes.json`, and offers two read-only lobby commands.
+`expected-dna-hashes.json`, and offers read-only lobby discovery plus public-lobby join and leave commands.
 
 Source: `prototypes/h2hc-conductor/src/bin/turbo-kart-smoke.rs`.
 Nothing in the existing `h2hc-phone` benchmark, Turbo Kart desktop app or DNAs
@@ -52,16 +52,17 @@ message, type one JSON command per line:
 ```json
 {"cmd":"install"}
 {"cmd":"list_open_lobbies","limit":10}
+{"cmd":"get_lobby","id":"<lobby-action-hash>"}
+{"cmd":"join_lobby","id":"<lobby-action-hash>","character_id":"zippy"}
+{"cmd":"get_lobby","id":"<lobby-action-hash>"}
+{"cmd":"leave_lobby","id":"<lobby-action-hash>"}
 {"cmd":"quit"}
 ```
 
-For a known lobby ID, use
-`{"cmd":"get_lobby","id":"<lobby-action-hash>"}`.
+The smoke harness joins **public** lobbies only. Joining and leaving write DHT records; leave the lobby before quitting. The test keystore does not persist its agent identity, and a restart requires a fresh data dir. `join_lobby`/`leave_lobby` return their action hashes; verify cross-agent membership using `get_lobby` and the desktop UI.
 
 An `install` result with `both_enabled: true`, the same agent for both
-apps, and matching DNA hashes is the first passing criterion. Seeing a
-desktop-created lobby in `list_open_lobbies` is a **separate networking test**
-and has not yet been demonstrated.
+apps, and matching DNA hashes is the first passing criterion. On 25 October 2026 a test running Holochain 0.7.1/Wasmi/H2HC listed a lobby created by the Holochain 0.7.0 desktop and retrieved its full `get_lobby` snapshot, including host, status, and members. **Joining from the lightweight conductor is not yet verified.**
 
 ## Android
 
@@ -77,6 +78,5 @@ a localhost linker, or a reachable network address.
   **not** survive restarts. Run on a fresh profile every time.
 - It must **not** be used for production accounts or valuable player data.
 - It is a command-line prototype; it is not an Android APK or iOS app.
-- No cross-version (mobile Holochain 0.7.1 vs desktop 0.7.0) networking
-  interoperability or desktop lobby test is claimed yet.
+- Cross-version read interoperability (mobile Holochain 0.7.1 vs desktop 0.7.0) was observed for `list_open_lobbies` and `get_lobby`; cross-version writes and joins are not yet verified.
 - It does not start races or implement Iroh/MoQ realtime sessions.
