@@ -78,6 +78,14 @@ class MainActivity : Activity() {
             text = "Turbo Kart • Android H2HC / Wasmi"
             textSize = 22f
         })
+        // Separate WebView gameplay preview; existing Holochain and Iroh controls
+        // remain unchanged until native realtime racing is integrated.
+        column.addView(Button(this).apply {
+            text = "🏎 Play Touch Preview (single player)"
+            setOnClickListener {
+                startActivity(Intent(this@MainActivity, TouchGameActivity::class.java))
+            }
+        })
         column.addView(TextView(this).apply {
             text = "Public lobby test. Keep the desktop linker running and use adb reverse tcp:8090 tcp:8090."
         })
