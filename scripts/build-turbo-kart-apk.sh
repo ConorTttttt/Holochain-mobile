@@ -115,5 +115,14 @@ else
   exit 2
 fi
 
+APK="$ANDROID_ROOT/app/build/outputs/apk/debug/app-debug.apk"
+# AGP 8.7 should align uncompressed native libs in the APK as well as ELF.
+# Google's zipalign -P 16 check verifies the APK ZIP placement separately.
+if [ -x "$SDK/build-tools/35.0.0/zipalign" ]; then
+  "$SDK/build-tools/35.0.0/zipalign" -c -P 16 -v 4 "$APK"
+else
+  echo "Warning: SDK Build-Tools 35.0.0 zipalign unavailable; verify APK ZIP alignment separately."
+fi
+
 echo "Debug APK:"
-echo "$ANDROID_ROOT/app/build/outputs/apk/debug/app-debug.apk"
+echo "$APK"
