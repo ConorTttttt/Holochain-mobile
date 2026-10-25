@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The local USB/ADB linker uses ws://127.0.0.1. Allow cleartext in
+         debug builds only; release must use TLS or a safer channel. -->
+    <application android:usesCleartextTraffic="true"/>
+</manifest>
