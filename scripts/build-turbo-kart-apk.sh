@@ -55,6 +55,23 @@ if [ "${1:-}" = "--prepare-only" ]; then
 fi
 
 ANDROID_ROOT="$ROOT/android/turbo-kart-mobile"
+
+# Gradle does not automatically discover a manually installed Android SDK.
+# Keep local.properties machine-specific (it is gitignored), and preserve any
+# existing Android Studio configuration instead of overwriting it.
+SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
+if [ ! -d "$SDK/platforms/android-35" ]; then
+  echo "Android SDK Platform 35 not found under $SDK" >&2
+  echo "Install platforms;android-35 or set ANDROID_HOME to the SDK root." >&2
+  exit 1
+fi
+export ANDROID_HOME="$SDK"
+export ANDROID_SDK_ROOT="$SDK"
+if [ ! -e "$ANDROID_ROOT/local.properties" ]; then
+  printf 'sdk.dir=%s\n' "$SDK" > "$ANDROID_ROOT/local.properties"
+  echo "Created local Android SDK configuration: $ANDROID_ROOT/local.properties"
+fi
+
 if [ -x "$ANDROID_ROOT/gradlew" ]; then
   (cd "$ANDROID_ROOT" && ./gradlew assembleDebug)
 elif command -v gradle >/dev/null 2>&1; then
