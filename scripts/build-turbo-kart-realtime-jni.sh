@@ -40,6 +40,7 @@ PROJECT="$ROOT/target/turbo-kart-realtime-jni-source"
 TARGET="$ROOT/target/turbo-kart-realtime-probe-build"
 mkdir -p "$PROJECT/src" "$TARGET"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/lib.rs" "$PROJECT/src/lib.rs"
+cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/race_session.rs" "$PROJECT/src/race_session.rs"
 cat > "$PROJECT/Cargo.toml" <<EOF
 [workspace]
 resolver = "2"
@@ -58,10 +59,12 @@ crate-type = ["cdylib"]
 anyhow = "1"
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
-tokio = { version = "1", features = ["rt-multi-thread", "time", "net"] }
+sha2 = "0.10"
+tokio = { version = "1", features = ["rt-multi-thread", "time", "net", "sync"] }
 jni = "0.21"
 zeroize = "1"
 holochain-moq-kart-wire = { path = "$GAME/crates/kart-wire" }
+holochain-moq-mesh = { path = "$GAME/crates/mesh" }
 holochain-moq-mesh-iroh = { path = "$GAME/crates/mesh-iroh" }
 # The same SignedPresence / binding payload / TTL definitions as desktop DNA.
 holochain-moq-protocol = { path = "$GAME/crates/protocol" }
