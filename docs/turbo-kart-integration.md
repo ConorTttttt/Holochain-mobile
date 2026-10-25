@@ -126,8 +126,9 @@ Do not connect the test keystore to valuable player data.
   **not** survive restarts. Run on a fresh profile every time.
 - It must **not** be used for production accounts or valuable player data.
 - It is a command-line prototype; it is not an Android APK or iOS app.
-- An opt-in Linux Lair persistence/resume experiment is documented in
+- An opt-in Linux Lair persistence/resume mode is documented in
   [turbo-kart-persistent-identity.md](turbo-kart-persistent-identity.md).
-  This has **not been compile/run verified** or brought to the Android APK.
+  This **passed** the Linux install/restart/resume identity check on
+  25 October 2026, but has **not** been implemented in an Android APK.
 - Cross-version read interoperability (mobile Holochain 0.7.1 vs desktop 0.7.0) was observed for `list_open_lobbies` and `get_lobby`; cross-version join and leave writes were observed in the desktop UI. The harness incorrectly decoded the action-hash return value in that run; fixed by decoding it as `ActionHash`.
 - It does not start races or implement Iroh/MoQ realtime sessions.
