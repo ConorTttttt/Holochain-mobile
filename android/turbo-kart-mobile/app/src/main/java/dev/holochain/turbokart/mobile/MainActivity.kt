@@ -18,7 +18,8 @@ import java.util.concurrent.Executors
 /**
  * Android multiplayer control-plane prototype: H2HC/Wasmi install/resume,
  * discover, inspect, join and leave public desktop lobbies.
- * No actual racing UI or real-time Iroh/MoQ transport yet.
+ * Includes a standalone authenticated-key Iroh/MoQ endpoint test; no
+ * signed directory presence, race admission, realtime peer session or racing UI yet.
  */
 class MainActivity : Activity() {
     private data class LobbyChoice(val id: String, val label: String)
@@ -28,6 +29,7 @@ class MainActivity : Activity() {
     private lateinit var linkerKey: EditText
     private lateinit var startButton: Button
     private lateinit var listButton: Button
+    private lateinit var irohButton: Button
     private lateinit var lobbySelector: Spinner
     private lateinit var inspectButton: Button
     private lateinit var joinButton: Button
@@ -35,6 +37,7 @@ class MainActivity : Activity() {
     private lateinit var log: TextView
 
     private var started = false
+    private var irohStarted = false
     private var busy = false
     private var agentId: String? = null
     private var joinedLobbyId: String? = null
@@ -102,8 +105,17 @@ class MainActivity : Activity() {
                 }
             }
         }
+        irohButton = Button(this).apply {
+            text = "Start / Resume Iroh Endpoint (Test)"
+            setOnClickListener { startIrohEndpoint() }
+        }
         lobbySelector = Spinner(this)
         column.addView(startButton)
+        column.addView(irohButton)
+        column.addView(TextView(this).apply {
+            text = "Iroh diagnostic: keep a stable endpoint ID across app restarts. " +
+                "No signed presence, authenticated race session or kart packets yet."
+        })
         column.addView(listButton)
         column.addView(TextView(this).apply { text = "Select a desktop lobby:" })
         column.addView(lobbySelector)
@@ -216,6 +228,7 @@ class MainActivity : Activity() {
 
     private fun updateButtons() {
         startButton.isEnabled = !busy && !started
+        irohButton.isEnabled = !busy && started && !irohStarted
         listButton.isEnabled = !busy && started
         lobbySelector.isEnabled = !busy && started && lobbyChoices.isNotEmpty()
         inspectButton.isEnabled = !busy && started && lobbyChoices.isNotEmpty()
@@ -258,6 +271,24 @@ class MainActivity : Activity() {
                 )
             } finally {
                 secret.fill(0)
+            }
+        }
+    }
+
+    /**
+     * The Iroh identity is independent of Lair and securely persisted in
+     * Android Keystore-protected app data. No signed directory advert yet.
+     */
+    private fun startIrohEndpoint() {
+        submit(
+            "Starting original desktop Iroh/MoQ transport on Android…",
+            onSuccess = { irohStarted = true }
+        ) {
+            val seed = IrohIdentityStore(applicationContext).getOrCreate()
+            try {
+                IrohBridge.startEndpoint(seed)
+            } finally {
+                seed.fill(0)
             }
         }
     }
