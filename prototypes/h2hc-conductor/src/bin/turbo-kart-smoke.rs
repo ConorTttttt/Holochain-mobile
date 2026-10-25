@@ -5,9 +5,11 @@
 //!
 //! Protocol: one JSON command per stdin line, one JSON result per stdout line.
 //! Commands: {"cmd":"install"}, {"cmd":"list_open_lobbies","limit":10},
-//!           {"cmd":"get_lobby","id":"uhCkk..."}, {"cmd":"quit"}.
+//!           {"cmd":"get_lobby","id":"uhCkk..."},
+//!           {"cmd":"join_lobby","id":"uhCkk...","character_id":"zippy"},
+//!           {"cmd":"leave_lobby","id":"uhCkk..."}, {"cmd":"quit"}.
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use base64::Engine;
 use h2hc_conductor::{build_phone_conductor, Connector, H2hcOptions};
 use h2hc_p2p::ws::WsCounters;
@@ -78,7 +80,6 @@ fn args() -> Result<Args> {
 
 struct Cells {
     agent: AgentPubKey,
-    directory: CellId,
     kart: CellId,
 }
 
@@ -94,6 +95,8 @@ enum Command {
     Install,
     ListOpenLobbies { limit: u32 },
     GetLobby { id: String },
+    JoinLobby { id: String, character_id: String },
+    LeaveLobby { id: String },
     Quit,
 }
 
@@ -184,7 +187,6 @@ impl Smoke {
 
         self.cells = Some(Cells {
             agent: agent.clone(),
-            directory: directory_cell,
             kart: kart_cell,
         });
         Ok(json!({
@@ -231,6 +233,54 @@ impl Smoke {
                     .await
                     .context("Turbo Kart get_lobby")?;
                 Ok(json!({"lobby": lobby}))
+            }
+            Command::JoinLobby { id, character_id } => {
+                ensure!(id.len() <= 128, "lobby ID too long");
+                ensure!(
+                    matches!(
+                        character_id.as_str(),
+                        "blaze" | "zippy" | "bella" | "toadly" |
+                        "rex" | "grumbo" | "koopz" | "dotty"
+                    ),
+                    "unknown Turbo Kart character"
+                );
+                let cells = self.cells.as_ref().context("install hApps first")?;
+                // Only public lobbies are supported by this smoke command.
+                // The zome's JoinLobbyInput needs an explicit invite_code field.
+                let action: Value = self
+                    .conductor
+                    .easy_call_zome(
+                        &cells.agent,
+                        None,
+                        cells.kart.clone(),
+                        KART_ZOME,
+                        "join_lobby",
+                        json!({
+                            "lobby": id,
+                            "character_id": character_id,
+                            "invite_code": null
+                        }),
+                    )
+                    .await
+                    .context("Turbo Kart join_lobby")?;
+                Ok(json!({"action": action}))
+            }
+            Command::LeaveLobby { id } => {
+                ensure!(id.len() <= 128, "lobby ID too long");
+                let cells = self.cells.as_ref().context("install hApps first")?;
+                let action: Value = self
+                    .conductor
+                    .easy_call_zome(
+                        &cells.agent,
+                        None,
+                        cells.kart.clone(),
+                        KART_ZOME,
+                        "leave_lobby",
+                        id,
+                    )
+                    .await
+                    .context("Turbo Kart leave_lobby")?;
+                Ok(json!({"action": action}))
             }
             Command::Quit => std::process::exit(0),
         }
