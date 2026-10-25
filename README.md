@@ -34,6 +34,14 @@ limitations: [docs/turbo-kart-android-apk.md](docs/turbo-kart-android-apk.md).
 Android iroh/MoQ race sessions, graphics/physics, race UI and proper
 wireless/production networking have not been implemented.
 
+**Next integration gate:** cross-build and run the **desktop's original**
+Iroh/MoQ transport plus WP3 42-byte kart wire codec on Android arm64 using
+`scripts/build-turbo-kart-realtime-probe.sh`. This is an isolated
+test-only executable, not an APK modification or a race session.
+See [docs/turbo-kart-android-realtime.md](docs/turbo-kart-android-realtime.md)
+for the on-device test and subsequent signed endpoint/race admission plan.
+The Android real-time transport probe has not yet been built or verified.
+
 
 ## What is built
 
