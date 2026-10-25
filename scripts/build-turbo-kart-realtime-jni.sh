@@ -57,6 +57,7 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1"
 serde_json = "1"
+serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt-multi-thread", "time", "net"] }
 jni = "0.21"
 zeroize = "1"
@@ -64,6 +65,9 @@ holochain-moq-kart-wire = { path = "$GAME/crates/kart-wire" }
 holochain-moq-mesh-iroh = { path = "$GAME/crates/mesh-iroh" }
 # The same SignedPresence / binding payload / TTL definitions as desktop DNA.
 holochain-moq-protocol = { path = "$GAME/crates/protocol" }
+# Frozen RaceRecord types and the desktop's exact locked-roster validator.
+holochain-moq-turbo-kart = { path = "$GAME/crates/turbo-kart" }
+holochain-moq-turbo-kart-client = { path = "$GAME/crates/turbo-kart-client" }
 EOF
 
 echo "Building separate Android Iroh/MoQ JNI library (16 KiB aligned)..."
