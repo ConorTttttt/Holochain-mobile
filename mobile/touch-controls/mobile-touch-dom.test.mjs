@@ -12,6 +12,8 @@ class MockElement {
     this.className = '';
     this.children = [];
     this.events = new Map();
+    this.captureEvents = new Map();
+    this.parent = null;
     this.attributes = {};
     this.dataset = {};
     const classes = new Set();
@@ -22,25 +24,43 @@ class MockElement {
       toggle: (name, enabled) => (enabled ? classes.add(name) : classes.delete(name)),
     };
   }
-  append(node) { this.children.push(node); }
+  append(node) { node.parent = this; this.children.push(node); }
   remove() { this.removed = true; }
   setAttribute(key, val) { this.attributes[key] = val; }
   setPointerCapture() {}
-  addEventListener(name, fn) {
-    if (!this.events.has(name)) this.events.set(name, []);
-    this.events.get(name).push(fn);
+  addEventListener(name, fn, opts) {
+    const events = opts?.capture ? this.captureEvents : this.events;
+    if (!events.has(name)) events.set(name, []);
+    events.get(name).push(fn);
   }
-  removeEventListener(name, fn) {
-    this.events.set(name, (this.events.get(name) ?? []).filter(x => x !== fn));
+  removeEventListener(name, fn, opts) {
+    const events = opts?.capture ? this.captureEvents : this.events;
+    events.set(name, (events.get(name) ?? []).filter(x => x !== fn));
   }
   fire(name, props = {}) {
+    let stopped = false;
     const e = {
       type: name, pointerId: 1, clientX: 100, clientY: 80,
       timeStamp: 100, detail: 1, code: '',
-      preventDefault() {}, stopPropagation() {},
+      preventDefault() {}, stopPropagation() { stopped = true; },
       ...props,
     };
+    const ancestors = [];
+    for (let p = this.parent; p; p = p.parent) ancestors.push(p);
+    // DOM-style propagation, with capture first so the overlay receives
+    // presses even when Fire/Look Back stop event bubbling.
+    for (const node of [...ancestors].reverse()) {
+      for (const fn of node.captureEvents.get(name) ?? []) fn(e);
+      if (stopped) return;
+    }
+    for (const fn of this.captureEvents.get(name) ?? []) fn(e);
+    if (stopped) return;
     for (const fn of this.events.get(name) ?? []) fn(e);
+    if (stopped) return;
+    for (const node of ancestors) {
+      for (const fn of node.events.get(name) ?? []) fn(e);
+      if (stopped) return;
+    }
   }
 }
 
@@ -160,5 +180,66 @@ test('look back and accelerate release on pause, fire button is inert outside ra
     const count = keys().length;
     h.fire.fire('pointerdown');
     assert.equal(keys().length, count);
+  } finally { h.detach(); }
+});
+
+test('touch any steering half during countdown primes boost and lifting releases it', () => {
+  const h = harness();
+  const keys = () => h.doc.inputEvents.map(([type, key]) => `${type}:${key}`);
+  try {
+    assert.deepEqual(keys(), [], 'no automatic throttle before GO');
+    h.left.fire('pointerdown', { pointerId: 8, clientX: 80 });
+    assert.deepEqual(keys(), ['keydown:ArrowUp', 'keydown:ArrowLeft']);
+    h.left.fire('pointerup', { pointerId: 8, clientX: 80 });
+    assert.equal(keys().includes('keyup:ArrowUp'), true);
+    assert.equal(h.win.__turboKartTouchState.accelerate, false);
+    assert.equal(keys().filter(k => k === 'keydown:e').length, 0);
+  } finally { h.detach(); }
+});
+
+test('pressing the Fire/Look Back button during countdown also primes boost', () => {
+  const h = harness();
+  const keys = () => h.doc.inputEvents.map(([type, key]) => `${type}:${key}`);
+  try {
+    h.fire.fire('pointerdown', { pointerId: 10 });
+    assert.equal(keys().includes('keydown:ArrowUp'), true,
+      'overlay capture receives Fire press even with stopPropagation');
+    assert.equal(keys().includes('keydown:e'), true);
+    h.fire.fire('pointerup', { pointerId: 10 });
+    assert.equal(keys().includes('keyup:ArrowUp'), true);
+    h.look.fire('pointerdown', { pointerId: 11 });
+    assert.equal(keys().filter(k => k === 'keydown:ArrowUp').length, 2);
+    assert.equal(keys().includes('keydown:c'), true);
+    h.look.fire('pointerup', { pointerId: 11 });
+    assert.equal(keys().filter(k => k === 'keyup:ArrowUp').length, 2);
+    assert.equal(keys().includes('keyup:c'), true);
+  } finally { h.detach(); }
+});
+
+test('holding a start boost through GO does not release throttle at handoff', () => {
+  const h = harness();
+  const keys = () => h.doc.inputEvents.map(([type, key]) => `${type}:${key}`);
+  try {
+    h.right.fire('pointerdown', { pointerId: 21, clientX: 920 });
+    assert.equal(keys().includes('keydown:ArrowUp'), true);
+    h.advance('race', 3100);
+    h.advance('race', 3300);
+    h.right.fire('pointerup', { pointerId: 21, clientX: 920 });
+    assert.equal(keys().filter(k => k === 'keyup:ArrowUp').length, 0,
+      'auto-throttle takes over from manual hold without keyup');
+    assert.equal(h.win.__turboKartTouchState.accelerate, true);
+    h.advance('results', 4000);
+    assert.equal(keys().filter(k => k === 'keyup:ArrowUp').length, 1);
+  } finally { h.detach(); }
+});
+
+test('pointercancel and lost capture cannot leave boost stuck', () => {
+  const h = harness();
+  const keys = () => h.doc.inputEvents.map(([type, key]) => `${type}:${key}`);
+  try {
+    h.left.fire('pointerdown', { pointerId: 12 });
+    h.left.fire('pointercancel', { pointerId: 12 });
+    h.left.fire('lostpointercapture', { pointerId: 12 });
+    assert.equal(keys().filter(k => k === 'keyup:ArrowUp').length, 1);
   } finally { h.detach(); }
 });
