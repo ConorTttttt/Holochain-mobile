@@ -127,7 +127,9 @@ test('pause/background releases throttle, look-back and steering without firing'
   assert.equal(input.pointers.size, 0);
   assert.equal(input.lookPointers.size, 0);
   assert.equal(fired, 0);
-  assert.deepEqual(keys.slice(-3), [['ArrowUp', false], ['ArrowLeft', false], ['KeyC', false]]);
+  for (const key of ['ArrowUp', 'ArrowLeft', 'KeyC']) {
+    assert.equal(keys.filter(([code, down]) => code === key && down === false).length, 1);
+  }
   input.setActive(true);
   assert.deepEqual(input.snapshot(), { ...empty, accelerate: true });
 });
@@ -139,5 +141,6 @@ test('invalid steering side is rejected and inactive touches do nothing', () => 
   assert.deepEqual(input.snapshot(), empty);
   input.setActive(true);
   assert.throws(() => input.press(5, 'go'));
+  input.press(1, 'left');
   assert.throws(() => input.move(1, 'down'));
 });
