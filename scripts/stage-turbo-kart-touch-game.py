@@ -52,7 +52,7 @@ def stage(source: Path, destination: Path, touch_source: Path) -> None:
         )
 
     injected = (
-        '\n<!-- Turbo Kart mobile: auto-accelerate, hold left/right half to steer, tap to fire E. -->\n'
+        '\n<!-- Turbo Kart mobile: auto-accelerate; invisible left/right steering; separate Fire (E) and Look Back (C) buttons. -->\n'
         '<script type="module" src="./mobile-touch.mjs"></script>\n'
     )
     page = page.replace('</body>', injected + '</body>')
