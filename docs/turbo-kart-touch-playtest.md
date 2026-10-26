@@ -1,136 +1,116 @@
-# Turbo Kart mobile touchscreen driving — first playable UI experiment
+# Turbo Kart mobile touchscreen playtest
 
 **Branch:** `feat/turbo-kart-touch-controls`
 
-This change adds a **separate landscape Android launcher** called
-**Turbo Kart Touch Race**. It loads the **existing Three.js desktop game**
-in an isolated Android WebView and overlays two transparent steering halves:
+The app includes a separate Android landscape launcher named **Turbo Kart
+Touch Race** that loads the existing Three.js Turbo Kart web game, not a
+recreation of the kart physics. The Holochain/Iroh diagnostic application
+remains independent and unchanged.
 
-- **Automatic forward acceleration:** holds **ArrowUp** while a race is active.
-- **Left half:** hold anywhere on the left to steer left (**ArrowLeft**).
-- **Right half:** hold anywhere on the right to steer right (**ArrowRight**).
-- **Quick tap on either half:** fire the equipped weapon using **E / KeyE**.
-  Turbo Kart's desktop item integration test uses E; **Space is drift**, not fire.
+## Controls
 
-A short tap (up to 230 ms, without swiping more than 22 px) fires on
-release. A longer hold steers continuously without firing. You can tap with
-a second finger while the first finger keeps steering. Sliding across
-the middle switches steering; crossing does not fire. Holding both halves
-cancels steering and acceleration continues. The GO button has been removed.
+- **Auto acceleration:** holds **ArrowUp** while racing; no GO button.
+- **Left 50% of screen:** hold to steer left (**ArrowLeft**).
+- **Right 50% of screen:** hold to steer right (**ArrowRight**).
+- **FIRE button:** sends a single approximately 145 ms press of **E**
+  (`KeyE`) to use the equipped weapon; normal weapon/item rules still apply.
+- **LOOK BACK button:** **hold** to send **C** (`KeyC`) and look behind,
+  then release to restore the normal view.
 
-Menus and results remain unblocked: the overlay appears only in racing
-states (`intro`, `countdown`, `race`, `racing`). Leaving a race, hiding or
-backgrounding the app, or losing focus releases held acceleration/steering
-and pending weapon-key pulses. Acceleration resumes when gameplay regains focus.
+Both steering halves are **fully transparent**: no "Press here to turn"
+labels, coloured press highlights, or Auto GO text. They are always
+50%-width throughout gameplay, except for the visible buttons over them.
+The **FIRE** and **LOOK BACK** buttons are visually static while pressed and
+are positioned together at the **bottom centre** of the landscape screen.
+Their touches are handled separately, so touching a button does not steer.
 
-## Important distinction
+A quick tap anywhere in a steering half **only steers momentarily**; it does
+not fire a weapon anymore. The weapon fires only through the FIRE button.
+Multitouch enables steering while firing or looking behind. Two opposing
+steering touches cancel steering but never cancel auto acceleration.
+Repeated look-back pointers hold the rear view until the last is released.
 
-The game renderer is **not** in the GitHub Holochain-mobile repository.
-The original web game was kept as a sibling `turbo-kart-rally-main`
-directory and packaged into desktop `resources/ui`. This build stages those
-**existing** UI files from the installed/unpacked desktop game, rather than
-re-implementing the kart physics in Kotlin or replacing game assets with a
-mock game. Neither production Holochain DNA is changed.
+The controls appear only during gameplay states (`intro`, `countdown`,
+`race`, `racing`). Menus and results remain clickable. When the app is
+backgrounded, hidden, or loses focus, steering, acceleration, Look Back and
+any pending FIRE pulse are released; auto acceleration resumes on focus
+during a race.
 
-This is an isolated **single-player driving playtest**, not a proof of
-Android multiplayer gameplay. The independent
-`Turbo Kart H2HC Test` launcher with Holochain/Iroh diagnostics is preserved.
-There is **no privileged Kotlin-to-JavaScript bridge**, so this game WebView
-does not receive conductor credentials.
+Turbo Kart's published desktop input documentation maps look behind to
+**C**; its item integration test presses **E** to fire. **Space** is drift,
+not weapon firing.
 
-## Test and build
+## Build and install alongside Holochain/Iroh APK
 
-The pure JavaScript touch state tests can run without Android:
+From the separate touch project worktree:
 
 ```sh
+cd /mnt/holochain/TurboMobile/Holochain-mobile-touch
+git fetch origin feat/turbo-kart-touch-controls
+git merge --ff-only FETCH_HEAD
+
 node --test mobile/touch-controls/mobile-touch.test.mjs
-```
 
-Find the existing unpacked game UI. This is usually:
-
-```text
-/mnt/holochain/offloaded/sf/Turbokart/turbo-kart/apps/turbo-kart-desktop/resources/ui
-```
-
-or:
-
-```text
-/opt/Turbo Kart Rally/resources/app.asar.unpacked/resources/ui
-```
-
-Check that it contains **`index.html` and `src/`**. If those files are
-elsewhere, provide their directory using `TURBO_KART_GAME_UI_DIR`.
-The script fails with an explicit message if the selected directory lacks
-these files and never modifies the original game source.
-
-```sh
-cd /mnt/holochain/TurboMobile/Holochain-mobile
-export PATH="$HOME/.local/opt/gradle-8.9/bin:$HOME/Android/Sdk/platform-tools:$PATH"
 export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$HOME/.local/opt/gradle-8.9/bin:$HOME/Android/Sdk/platform-tools:$PATH"
 
-# Optional override. Otherwise the build script auto-detects resources/ui.
-# export TURBO_KART_GAME_UI_DIR="/full/path/to/unpacked/game/UI"
-
+# Stage original game UI and build the separate touchscreen debug APK.
 bash scripts/build-turbo-kart-apk.sh
-adb devices -l
+
 adb install -r android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n dev.holochain.turbokart.mobile.touch/dev.holochain.turbokart.mobile.TouchGameActivity
+adb shell am start -n \
+  dev.holochain.turbokart.mobile.touch/dev.holochain.turbokart.mobile.TouchGameActivity
 ```
 
-The new activity is also a separate launcher icon labeled **Turbo Kart Touch
-Race**. For safety, this touch-playtest branch changes the debug build
-application ID to `dev.holochain.turbokart.mobile.touch`. It installs
-**alongside**, rather than over, your existing Holochain/Iroh test APK
-(`dev.holochain.turbokart.mobile`); that app's keys, endpoint identity and
-test data remain untouched. Do not uninstall or clear either app's data.
+The build script automatically looks for the original unpacked game in
+`/mnt/holochain/offloaded/sf/Turbokart/turbo-kart/apps/turbo-kart-desktop/resources/ui`,
+`/opt/Turbo Kart Rally/resources/app.asar.unpacked/resources/ui`, or the
+original `turbo-kart-rally-main` sibling directory. The source directory
+must contain both `index.html` and `src/`. If autodetection fails, set
+`TURBO_KART_GAME_UI_DIR` to the correct game UI directory.
 
-The build should say:
+The staging script adds only the touch JS file and its module import to
+the generated APK copy of the real game. It does **not** change desktop game
+files or either production Holochain DNA.
 
-```text
-Android touch game staged: ... -> .../app/src/main/assets/game
-```
+The touchscreen APK has its **own debug application ID**
+(`dev.holochain.turbokart.mobile.touch`) and installs alongside the
+existing diagnostic APK (`dev.holochain.turbokart.mobile`). Its
+app-private data is separate. **Do not uninstall or clear the diagnostic
+APK's data while testing.**
 
-If it says `game UI not found`, locate the extracted desktop files and
-build again using `TURBO_KART_GAME_UI_DIR`.
+## Galaxy S23 acceptance checks
 
-## Acceptance tests on Galaxy S23 (landscape)
+1. Start a single-player race. Acceleration begins without any touch.
+2. Press and hold anywhere on the left half: steering left, with no visual
+   highlight or text on the steering region.
+3. Press and hold anywhere on the right half: steering right, again with
+   no colour change.
+4. Release steering: straight travel continues under auto acceleration.
+5. Tap the **FIRE** button with an equipped weapon: it fires exactly once,
+   subject to the game's normal rules. Tapping empty steering space does not
+   fire.
+6. Hold **LOOK BACK**: camera looks backward while the button is held;
+   releasing it returns to the forward view.
+7. While holding one steering half, use either action button with another
+   finger. Both actions should work without interfering with steering.
+8. Background/return to the app: no stuck look-back or steering input.
+9. Confirm the buttons do not obscure important HUD elements at landscape
+   display size.
 
-1. Launch the Touch Race icon; verify the actual Turbo Kart title screen and
-   character selection, not the Holochain JSON diagnostics.
-2. Begin a **single-player** race using the game's own UI.
-3. Wait for the race to begin **without touching the screen**; the kart
-   should accelerate forwards automatically.
-4. Hold the **left half**; the kart steers left while accelerating.
-5. Release and hold the **right half**; the kart steers right.
-6. Release steering; the kart straightens but keeps accelerating.
-7. **Tap quickly** anywhere on either half with an equipped item:
-   the item fires once. A longer steering press should not fire.
-8. Hold to steer with one finger and tap to fire with the other.
-9. Background the app while steering; no control should remain stuck.
-10. Verify the title/selection screens work and item/touch hints do not obscure
-    important HUD information. Recheck rendering and frame rate.
+**Status:** The previous touch controls were user-confirmed working on the
+Galaxy S23. The revised dedicated **FIRE**, **LOOK BACK**, invisible halves
+and no pressed-state shading are committed and unit tested. The new APK
+has **not yet been built or device-tested**, so confirm on the phone.
 
-The previous GO-button touch implementation was confirmed working on the
-Galaxy S23 by the user. This newer **auto-accelerate + half-screen steering +
-tap-to-fire** revision has unit tests in
-`mobile/touch-controls/mobile-touch.test.mjs`; run those and rebuild the APK
-before claiming this behavior works on-device. Synthetic KeyboardEvents are
-not trusted hardware events, but the previous revision already demonstrated
-that the game's keyboard handler accepts steering and throttle. Verify E-key
-item firing with an equipped weapon; if the game input mapping has changed,
-inspect its actual item-key handler before adjusting the overlay.
-`window.__turboKartTouchState` exposes the current touch snapshot for
-diagnostics.
+## Implementation notes and limitations
 
-## Build considerations and security
-
-- This uses WebView with a restricted HTTPS-like local asset origin,
-  JavaScript enabled, no `addJavascriptInterface`, and file/content access
-  disabled. Local `index.html` and models are served from APK assets.
-- The game's existing WebGL rendering and physics can be performance-heavy
-  on a phone; reducing resolution and quality is a subsequent milestone.
-- The game is packaged only when its actual UI assets are available; no
-  external image assets are invented.
-- Touch/physics behavior on the real phone has not yet been proven.
-- Real-time Iroh/MoQ multiplayer and race authentication are separate
-  from single-player touch input, and are not modified here.
+- The overlay is injected as `mobile-touch.mjs`, independent of the original
+  game source, and maps to the original keyboard control inputs.
+- FIRE is a single bounded keypress, not a repeating press; multiple rapid
+  touch presses during one active key pulse are coalesced.
+- Synthetic keyboard events are browser-generated (not trusted hardware
+  input), but the earlier touch playtest confirmed control compatibility.
+- The game WebView has no privileged JavaScript bridge or conductor secrets.
+- Native racing performance and real Iroh/MoQ race authentication are
+  separate features and are not modified in this change.
