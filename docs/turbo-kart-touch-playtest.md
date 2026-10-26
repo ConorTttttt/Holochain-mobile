@@ -4,21 +4,24 @@
 
 This change adds a **separate landscape Android launcher** called
 **Turbo Kart Touch Race**. It loads the **existing Three.js desktop game**
-in an isolated Android WebView and overlays three large multi-touch zones:
+in an isolated Android WebView and overlays two transparent steering halves:
 
-- **Left side (◀):** hold to steer left.
-- **Right side (▶):** hold to steer right.
-- **Bottom middle (GO ▲):** hold to accelerate (even while steering).
+- **Automatic forward acceleration:** holds **ArrowUp** while a race is active.
+- **Left half:** hold anywhere on the left to steer left (**ArrowLeft**).
+- **Right half:** hold anywhere on the right to steer right (**ArrowRight**).
+- **Quick tap on either half:** fire the equipped weapon using **E / KeyE**.
+  Turbo Kart's desktop item integration test uses E; **Space is drift**, not fire.
 
-Releasing a finger releases only that control. If both left and right are
-held, the steering input is neutral; GO remains active. Buttons appear only
-in racing states (`intro`, `countdown`, `race`, `racing`), leaving the
-title screen/character selection clickable. Switching away from the app or
-ending a race releases controls. The underlying keyboard bindings are mapped
-to **ArrowLeft / ArrowRight / ArrowUp**; if a particular game revision uses
-different gameplay bindings, update `CONTROL_KEYS` in
-`mobile/touch-controls/mobile-touch.mjs` after inspecting its keyboard
-handlers.
+A short tap (up to 230 ms, without swiping more than 22 px) fires on
+release. A longer hold steers continuously without firing. You can tap with
+a second finger while the first finger keeps steering. Sliding across
+the middle switches steering; crossing does not fire. Holding both halves
+cancels steering and acceleration continues. The GO button has been removed.
+
+Menus and results remain unblocked: the overlay appears only in racing
+states (`intro`, `countdown`, `race`, `racing`). Leaving a race, hiding or
+backgrounding the app, or losing focus releases held acceleration/steering
+and pending weapon-key pulses. Acceleration resumes when gameplay regains focus.
 
 ## Important distinction
 
@@ -95,23 +98,29 @@ build again using `TURBO_KART_GAME_UI_DIR`.
 1. Launch the Touch Race icon; verify the actual Turbo Kart title screen and
    character selection, not the Holochain JSON diagnostics.
 2. Begin a **single-player** race using the game's own UI.
-3. Hold **GO ▲** at the bottom; the kart should accelerate.
-4. Without lifting GO, press **◀** or **▶** with a second finger; the kart
-   should turn and keep accelerating.
-5. Release steering; the kart stops turning but continues accelerating.
-6. Release GO; acceleration stops. Background the app during a press, then
-   return; no control should remain stuck.
-7. Check performance, frame rate, whether assets render, and whether the
-   touchscreen overlaps HUD or other game buttons.
+3. Wait for the race to begin **without touching the screen**; the kart
+   should accelerate forwards automatically.
+4. Hold the **left half**; the kart steers left while accelerating.
+5. Release and hold the **right half**; the kart steers right.
+6. Release steering; the kart straightens but keeps accelerating.
+7. **Tap quickly** anywhere on either half with an equipped item:
+   the item fires once. A longer steering press should not fire.
+8. Hold to steer with one finger and tap to fire with the other.
+9. Background the app while steering; no control should remain stuck.
+10. Verify the title/selection screens work and item/touch hints do not obscure
+    important HUD information. Recheck rendering and frame rate.
 
-The five JavaScript pointer-state tests passed locally, and a headless
-Chromium multitouch simulation confirmed that GO remains held when the
-steering finger lifts. The Android APK
-WebView renderer/gameplay integration is **not yet device-verified**.
-Synthetic keyboard events are untrusted DOM events; we may need to connect
-the overlay directly to the game's real input state if keyboard dispatch
-doesn't move the kart. The test exposes
-`window.__turboKartTouchState` as a fallback direct input source.
+The previous GO-button touch implementation was confirmed working on the
+Galaxy S23 by the user. This newer **auto-accelerate + half-screen steering +
+tap-to-fire** revision has unit tests in
+`mobile/touch-controls/mobile-touch.test.mjs`; run those and rebuild the APK
+before claiming this behavior works on-device. Synthetic KeyboardEvents are
+not trusted hardware events, but the previous revision already demonstrated
+that the game's keyboard handler accepts steering and throttle. Verify E-key
+item firing with an equipped weapon; if the game input mapping has changed,
+inspect its actual item-key handler before adjusting the overlay.
+`window.__turboKartTouchState` exposes the current touch snapshot for
+diagnostics.
 
 ## Build considerations and security
 
