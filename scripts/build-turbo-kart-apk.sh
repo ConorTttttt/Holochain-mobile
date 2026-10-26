@@ -83,6 +83,29 @@ for file in \
   cp "$file" "$APP/src/main/assets/"
 done
 
+# Stage the existing Three.js game into a separate landscape touch-playtest
+# Activity, leaving the Holochain/Iroh diagnostic screens and DNAs unchanged.
+GAME_UI="${TURBO_KART_GAME_UI_DIR:-}"
+if [ -z "$GAME_UI" ]; then
+  for candidate in \
+    "$BASE/resources/ui" \
+    "/opt/Turbo Kart Rally/resources/app.asar.unpacked/resources/ui"; do
+    if [ -f "$candidate/index.html" ] && [ -d "$candidate/src" ]; then
+      GAME_UI="$candidate"
+      break
+    fi
+  done
+fi
+if [ -n "$GAME_UI" ]; then
+  python3 "$ROOT/scripts/stage-turbo-kart-touch-game.py" \
+    --source "$GAME_UI" \
+    --dest "$APP/src/main/assets/game" \
+    --touch-script "$ROOT/mobile/touch-controls/mobile-touch.mjs"
+else
+  echo "Note: game UI not found. Touch Race Activity will display staging instructions." >&2
+  echo "Set TURBO_KART_GAME_UI_DIR to the unpacked Turbo Kart resources/ui directory." >&2
+fi
+
 echo "Both 16 KiB-aligned JNI libraries and original Turbo Kart hApps staged into Android project."
 echo "Android project: $ROOT/android/turbo-kart-mobile"
 
