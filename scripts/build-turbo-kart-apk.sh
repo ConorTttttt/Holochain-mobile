@@ -89,7 +89,8 @@ GAME_UI="${TURBO_KART_GAME_UI_DIR:-}"
 if [ -z "$GAME_UI" ]; then
   for candidate in \
     "$BASE/resources/ui" \
-    "/opt/Turbo Kart Rally/resources/app.asar.unpacked/resources/ui"; do
+    "/opt/Turbo Kart Rally/resources/app.asar.unpacked/resources/ui" \
+    "$BASE/../../../turbo-kart-rally-main"; do
     if [ -f "$candidate/index.html" ] && [ -d "$candidate/src" ]; then
       GAME_UI="$candidate"
       break
