@@ -9,12 +9,19 @@ remains independent and unchanged.
 
 ## Controls
 
-- **Safe race start:** never holds **ArrowUp** in `intro` or `countdown`.
-  When the game exposes a separate `countdown` phase, it auto-accelerates
-  about **200 ms** after the transition to `race`/`racing`. If the game
-  enters `race` without exposing a countdown, it waits **3.6 seconds**
-  before accelerating. This deliberately trades a slower initial launch
-  for avoiding an early-throttle spinout; no GO button is needed.
+- **Starting boost, your timing:** during the starting countdown,
+  **touch and hold anywhere** on the screen to hold **ArrowUp**, then release
+  when you want to release the accelerator. This lets you try Turbo Kart's
+  existing manual start-boost mechanic rather than preventing it with a
+  mandatory auto-throttle lock. Touching too early can still cause a
+  spinout—timing remains in your hands.
+- **Automatic driving after GO:** when the game exposes a separate
+  `countdown` phase, auto-acceleration starts about **200 ms** after
+  entering `race`/`racing`. If the game enters `race` directly without
+  exposing a countdown, the previous **3.6-second fallback** still applies.
+  You can manually hold accelerate during either pre-GO window. When the
+  automatic driving gate opens, acceleration stays held even if you lift
+  your finger, with **no keyup/keydown interruption**.
 - **Left 50% of screen:** hold to steer left (**ArrowLeft**).
 - **Right 50% of screen:** hold to steer right (**ArrowRight**).
 - **FIRE button:** sends a single approximately 145 ms press of **E**
@@ -37,11 +44,15 @@ Repeated look-back pointers hold the rear view until the last is released.
 
 The controls appear only during gameplay states (`intro`, `countdown`,
 `race`, `racing`). Steering and FIRE/LOOK BACK remain available during
-countdown, but automatic throttle is **locked**. Menus and results remain
-clickable. On pause/background/focus loss, acceleration, steering, Look
-Back and pending FIRE pulses release. The throttle cannot be unlocked by
-elapsed wall-clock time while a countdown is hidden. Once GO has already
-been reached, focusing an ongoing race resumes auto acceleration.
+countdown. The screen's invisible pointer layer captures presses across
+both steering halves **and the two buttons** for manual boost; this does
+not change the buttons' normal actions. A countdown release stops manual
+acceleration unless the auto-throttle gate has opened. There is **no
+automatic throttle in the intro or countdown**, so starting boosts must
+be initiated by your touch. Menus and results remain clickable.
+On pause/background/focus loss, all held controls and pending FIRE pulses
+release. Elapsed wall-clock time while hidden cannot unlock a countdown.
+After GO, auto-acceleration resumes when gameplay regains focus.
 
 Turbo Kart's published desktop input documentation maps look behind to
 **C**; its item integration test presses **E** to fire. **Space** is drift,
@@ -88,32 +99,41 @@ APK's data while testing.**
 
 ## Galaxy S23 acceptance checks
 
-1. Start a single-player race. **During the countdown the kart must NOT
-   accelerate or spin out.** Confirm no movement until GO. After GO, it
-   accelerates automatically without touching. If no countdown state is
-   exposed by the game, it waits roughly 3.6 seconds before accelerating.
-2. Press and hold anywhere on the left half: steering left, with no visual
+1. Start a single-player race. With **no touch**, the kart does not
+   accelerate during the intro/countdown, avoiding the accidental spinout.
+2. During the countdown, **touch and hold anywhere** (left, right, FIRE,
+   or LOOK BACK area): manual acceleration begins. Release before GO and
+   it stops. Try different timing to trigger the game's normal starting
+   boost, which may penalise holding too early.
+3. Try **holding through GO**, then lifting. Automatic acceleration should
+   take over without a pause or keyup event.
+4. Start another race, **without touching** during the countdown.
+   Auto-acceleration should still begin after GO (or following the
+   3.6-second fallback if the game does not expose an explicit countdown).
+5. Press and hold anywhere on the left half: steering left, with no visual
    highlight or text on the steering region.
-3. Press and hold anywhere on the right half: steering right, again with
+6. Press and hold anywhere on the right half: steering right, again with
    no colour change.
-4. Release steering: straight travel continues under auto acceleration.
-5. Tap the **FIRE** button with an equipped weapon: it fires exactly once,
+7. Release steering: straight travel continues under auto acceleration.
+8. Tap the **FIRE** button with an equipped weapon: it fires exactly once,
    subject to the game's normal rules. Tapping empty steering space does not
-   fire.
-6. Hold **LOOK BACK**: camera looks backward while the button is held;
+   fire **as a weapon**; it activates boost only during countdown.
+9. Hold **LOOK BACK**: camera looks backward while the button is held;
    releasing it returns to the forward view.
-7. While holding one steering half, use either action button with another
-   finger. Both actions should work without interfering with steering.
-8. Background/return to the app: no stuck look-back or steering input.
-9. Confirm the buttons do not obscure important HUD elements at landscape
-   display size.
+10. While holding one steering half, use either action button with another
+    finger. Both actions should work without interfering with steering.
+11. Background/return to the app: no stuck boost, look-back or steering input.
+12. Confirm the buttons do not obscure important HUD elements at landscape
+    display size.
 
 **Status:** The previous touch controls were user-confirmed working on the
 Galaxy S23. The revised dedicated **FIRE**, **LOOK BACK**, invisible halves
-and no pressed-state shading are committed; 11 state tests, three mock-DOM interaction tests and seven dedicated
-race-start-gate tests passed (21 total). These tests do not replace
-on-device verification. The new APK
-has **not yet been built or device-tested**, so confirm on the phone.
+and no pressed-state shading are committed; The new manual-start-boost implementation was exercised with 37
+automated state/DOM checks (including multi-touch, button presses,
+backgrounding, false-start timing and boost-to-auto throttle handoff).
+Those checks do **not** confirm the exact start-boost timing in the original
+3D game's physics; test that behaviour on the Galaxy S23. This new APK has
+not yet been built or device-tested.
 
 ## Implementation notes and limitations
 
