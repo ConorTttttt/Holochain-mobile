@@ -8,7 +8,7 @@
         <!-- Independent single-player playtest. The existing Holochain/Iroh
              diagnostic Activity and its app-private identities are untouched. -->
         <activity
-            android:name=".TouchGameActivity"
+            android:name="dev.holochain.turbokart.mobile.TouchGameActivity"
             android:exported="true"
             android:hardwareAccelerated="true"
             android:screenOrientation="landscape"
@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name="dev.holochain.turbokart.mobile.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
