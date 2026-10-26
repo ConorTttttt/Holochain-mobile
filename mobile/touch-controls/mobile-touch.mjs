@@ -1,17 +1,15 @@
 // Turbo Kart landscape touchscreen controls.
 //
-// Auto-accelerate during a race. Holding the left/right half steers.
-// A brief stationary tap (on either half) fires the equipped item with E.
-// Browser-native pointer IDs allow multi-touch, and the game itself continues
-// to own physics, weapon selection, item cooldowns, and race state.
+// Automatically accelerate during races; transparent left/right halves steer.
+// The separate FIRE button sends E, and holding LOOK BACK sends C.
+// Preserve the game's native weapon/camera logic, race states and desktop keys.
 export const CONTROL_KEYS = Object.freeze({
   left: 'ArrowLeft',
   right: 'ArrowRight',
   accelerate: 'ArrowUp',
   fire: 'KeyE',
+  lookBack: 'KeyC',
 });
-export const TAP_MAX_MS = 230;
-export const TAP_MAX_DISTANCE_PX = 22;
 
 export class TouchDriveState {
   constructor(onKeyChange = () => {}, onFire = () => {}) {
@@ -19,75 +17,79 @@ export class TouchDriveState {
     this.onFire = onFire;
     this.active = false;
     this.pointers = new Map();
+    this.lookPointers = new Set();
     this.activeKeys = new Set();
   }
 
   setActive(active) {
-    const next = Boolean(active);
-    if (!next) this.pointers.clear();
-    this.active = next;
+    this.active = Boolean(active);
+    if (!this.active) {
+      this.pointers.clear();
+      this.lookPointers.clear();
+    }
     this.sync();
   }
 
-  press(pointerId, side, x, y, at = 0) {
+  press(pointerId, side) {
     if (!this.active) return;
     if (side !== 'left' && side !== 'right') throw new Error('Unknown steering side');
-    // Reusing an existing pointer should never count as a new tap.
     if (this.pointers.has(pointerId)) return;
-    this.pointers.set(pointerId, {
-      side, x, y, startedAt: at, moved: false,
-    });
+    this.pointers.set(pointerId, side);
     this.sync();
   }
 
-  move(pointerId, x, y, side) {
-    const pointer = this.pointers.get(pointerId);
-    if (!pointer) return;
+  move(pointerId, side) {
+    if (!this.pointers.has(pointerId)) return;
     if (side !== 'left' && side !== 'right') throw new Error('Unknown steering side');
-    const dx = x - pointer.x;
-    const dy = y - pointer.y;
-    if (dx * dx + dy * dy > TAP_MAX_DISTANCE_PX * TAP_MAX_DISTANCE_PX) {
-      pointer.moved = true;
-    }
-    if (pointer.side !== side) {
-      pointer.side = side;
-      pointer.moved = true; // crossing halves is a steer, not a weapon tap
+    if (this.pointers.get(pointerId) !== side) {
+      this.pointers.set(pointerId, side);
       this.sync();
     }
   }
 
-  release(pointerId, at = 0, allowTap = true) {
-    const pointer = this.pointers.get(pointerId);
-    if (!pointer) return;
-    this.pointers.delete(pointerId);
+  release(pointerId) {
+    if (!this.pointers.delete(pointerId)) return;
     this.sync();
-    const duration = at - pointer.startedAt;
-    if (allowTap && this.active && !pointer.moved &&
-        duration >= 0 && duration <= TAP_MAX_MS) {
-      this.onFire();
-    }
+  }
+
+  pressLook(pointerId) {
+    if (!this.active || this.lookPointers.has(pointerId)) return;
+    this.lookPointers.add(pointerId);
+    this.sync();
+  }
+
+  releaseLook(pointerId) {
+    if (!this.lookPointers.delete(pointerId)) return;
+    this.sync();
+  }
+
+  fireWeapon() {
+    if (this.active) this.onFire();
   }
 
   releaseAll() {
-    if (this.pointers.size) this.pointers.clear();
+    this.pointers.clear();
+    this.lookPointers.clear();
     this.sync();
   }
 
   snapshot() {
-    const sides = [...this.pointers.values()].map(p => p.side);
+    const sides = new Set(this.pointers.values());
     return {
-      left: this.active && sides.includes('left') && !sides.includes('right'),
-      right: this.active && sides.includes('right') && !sides.includes('left'),
+      left: this.active && sides.has('left') && !sides.has('right'),
+      right: this.active && sides.has('right') && !sides.has('left'),
       accelerate: this.active,
+      lookBack: this.active && this.lookPointers.size > 0,
     };
   }
 
   sync() {
-    const snapshot = this.snapshot();
+    const s = this.snapshot();
     const next = new Set();
-    if (snapshot.left) next.add(CONTROL_KEYS.left);
-    if (snapshot.right) next.add(CONTROL_KEYS.right);
-    if (snapshot.accelerate) next.add(CONTROL_KEYS.accelerate);
+    if (s.left) next.add(CONTROL_KEYS.left);
+    if (s.right) next.add(CONTROL_KEYS.right);
+    if (s.accelerate) next.add(CONTROL_KEYS.accelerate);
+    if (s.lookBack) next.add(CONTROL_KEYS.lookBack);
     for (const key of this.activeKeys) {
       if (!next.has(key)) this.onKeyChange(key, false);
     }
@@ -118,31 +120,31 @@ export function attachTurboKartTouchControls(win = window, doc = document) {
     }
     #tk-touch-left { left:0; }
     #tk-touch-right { right:0; }
-    #tk-touch-controls .tk-half.tk-held { background:rgba(25,114,196,.09); }
-    #tk-touch-controls .tk-hint {
-      position:absolute; bottom:max(16px,env(safe-area-inset-bottom));
-      font-size:clamp(13px,2.5vw,21px); font-weight:800;
-      color:white; background:rgba(0,0,0,.43);
-      border:1px solid rgba(255,255,255,.45);
-      border-radius:999px; padding:6px 14px;
-      text-shadow:0 1px 3px black;
-      pointer-events:none;
+    /* No labels or pressed-state colours on either steering half. */
+    #tk-touch-actions {
+      position:absolute; left:50%; bottom:max(14px,env(safe-area-inset-bottom));
+      transform:translateX(-50%); display:flex; align-items:flex-end;
+      gap:clamp(12px,3vw,26px); pointer-events:none; z-index:1;
     }
-    #tk-touch-left .tk-hint { left:max(12px,env(safe-area-inset-left)); }
-    #tk-touch-right .tk-hint { right:max(12px,env(safe-area-inset-right)); }
-    #tk-touch-controls .tk-status {
-      position:absolute; bottom:max(16px,env(safe-area-inset-bottom));
-      left:50%; transform:translateX(-50%);
-      font-size:clamp(10px,1.7vw,16px); padding:5px 10px;
-      border-radius:10px; pointer-events:none;
-      color:#fff; background:rgba(0,0,0,.39); white-space:nowrap;
+    #tk-touch-actions .tk-action {
+      pointer-events:auto; touch-action:none; -webkit-tap-highlight-color:transparent;
+      width:clamp(65px,13vw,100px); height:clamp(65px,13vw,100px);
+      border-radius:50%; border:2px solid rgba(255,255,255,.8);
+      box-shadow:0 2px 7px rgba(0,0,0,.45);
+      background:rgba(15,33,53,.85); color:white; font-weight:900;
+      font-size:clamp(12px,2vw,18px); line-height:1.1;
+      text-align:center; white-space:pre-line;
+      padding:7px; box-sizing:border-box;
+      -webkit-user-select:none; user-select:none;
     }
+    #tk-touch-fire { background:rgba(169,52,29,.91); }
+    #tk-touch-look { background:rgba(24,68,118,.91); }
+    /* The action buttons stay the same colour while touched. */
   `;
   doc.head.append(style);
   const overlay = doc.createElement('div');
   overlay.id = 'tk-touch-controls';
-  overlay.setAttribute('aria-label', 'Auto-drive: hold left or right half to steer, tap either side to fire');
-  const zones = new Map();
+  overlay.setAttribute('aria-label', 'Auto-drive. Hold left or right half to steer. Separate Fire and Look Back buttons.');
   const listeners = [];
   const listen = (target, type, cb, opts) => {
     target.addEventListener(type, cb, opts);
@@ -150,8 +152,8 @@ export function attachTurboKartTouchControls(win = window, doc = document) {
   };
 
   const sendKey = (key, down) => {
-    const code = key === 'KeyE' ? 'KeyE' : key;
-    const keyName = key === 'KeyE' ? 'e' : key;
+    const code = key;
+    const keyName = key === 'KeyE' ? 'e' : key === 'KeyC' ? 'c' : key;
     doc.dispatchEvent(new win.KeyboardEvent(down ? 'keydown' : 'keyup', {
       key: keyName, code, bubbles:true, cancelable:true,
     }));
@@ -177,55 +179,97 @@ export function attachTurboKartTouchControls(win = window, doc = document) {
   };
   const state = new TouchDriveState(sendKey, fire);
   const sideFromX = x => x < win.innerWidth / 2 ? 'left' : 'right';
-  const refreshHeld = () => {
-    const sides = new Set([...state.pointers.values()].map(p => p.side));
-    for (const [side, node] of zones) node.classList.toggle('tk-held', sides.has(side));
-  };
 
-  for (const { side, title } of [
-    {side:'left', title:'◀ HOLD LEFT · TAP TO FIRE'},
-    {side:'right', title:'HOLD RIGHT ▶ · TAP TO FIRE'},
-  ]) {
-    const node = doc.createElement('div');
-    node.id = 'tk-touch-' + side;
-    node.className = 'tk-half';
-    node.setAttribute('aria-label', title);
-    const hint = doc.createElement('div');
-    hint.className = 'tk-hint';
-    hint.textContent = title;
-    node.append(hint);
-    zones.set(side, node);
-    overlay.append(node);
+  // Full-screen invisible steering zones. Pressing or releasing them NEVER fires.
+  for (const side of ['left', 'right']) {
+    const zone = doc.createElement('div');
+    zone.id = 'tk-touch-' + side;
+    zone.className = 'tk-half';
+    zone.setAttribute('aria-label', 'Hold to steer ' + side);
+    overlay.append(zone);
 
-    listen(node, 'pointerdown', e => {
+    listen(zone, 'pointerdown', e => {
       e.preventDefault();
-      node.setPointerCapture?.(e.pointerId);
-      state.press(e.pointerId, sideFromX(e.clientX), e.clientX, e.clientY, e.timeStamp);
-      refreshHeld();
+      zone.setPointerCapture?.(e.pointerId);
+      state.press(e.pointerId, sideFromX(e.clientX));
     });
-    listen(node, 'pointermove', e => {
+    listen(zone, 'pointermove', e => {
       if (!state.pointers.has(e.pointerId)) return;
       e.preventDefault();
-      state.move(e.pointerId, e.clientX, e.clientY, sideFromX(e.clientX));
-      refreshHeld();
+      state.move(e.pointerId, sideFromX(e.clientX));
     });
-    listen(node, 'pointerup', e => {
+    listen(zone, 'pointerup', e => {
       e.preventDefault();
-      state.release(e.pointerId, e.timeStamp);
-      refreshHeld();
+      state.release(e.pointerId);
     });
-    const cancel = e => {
-      state.release(e.pointerId, e.timeStamp, false);
-      refreshHeld();
-    };
-    listen(node, 'pointercancel', cancel);
-    listen(node, 'lostpointercapture', cancel);
-    listen(node, 'contextmenu', e => e.preventDefault());
+    const cancelSteer = e => state.release(e.pointerId);
+    listen(zone, 'pointercancel', cancelSteer);
+    listen(zone, 'lostpointercapture', cancelSteer);
+    listen(zone, 'contextmenu', e => e.preventDefault());
   }
-  const status = doc.createElement('div');
-  status.className = 'tk-status';
-  status.textContent = 'AUTO GO';
-  overlay.append(status);
+
+  // These native buttons sit *above* the steering halves and do not
+  // dispatch any steering events, including while a second finger steers.
+  const actions = doc.createElement('div');
+  actions.id = 'tk-touch-actions';
+
+  const fireButton = doc.createElement('button');
+  fireButton.type = 'button';
+  fireButton.id = 'tk-touch-fire';
+  fireButton.className = 'tk-action';
+  fireButton.textContent = 'FIRE';
+  fireButton.setAttribute('aria-label', 'Fire equipped weapon');
+  listen(fireButton, 'pointerdown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    state.fireWeapon();
+  });
+  listen(fireButton, 'click', e => {
+    // Keyboard / accessibility activation: normal pointer click already
+    // fired on pointerdown, so do not fire twice.
+    if (e.detail === 0) state.fireWeapon();
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  listen(fireButton, 'contextmenu', e => e.preventDefault());
+  actions.append(fireButton);
+
+  const lookButton = doc.createElement('button');
+  lookButton.type = 'button';
+  lookButton.id = 'tk-touch-look';
+  lookButton.className = 'tk-action';
+  lookButton.textContent = 'LOOK\\nBACK';
+  lookButton.setAttribute('aria-label', 'Hold to look backwards');
+  listen(lookButton, 'pointerdown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    lookButton.setPointerCapture?.(e.pointerId);
+    state.pressLook(e.pointerId);
+  });
+  const releaseLook = e => {
+    e.preventDefault();
+    e.stopPropagation?.();
+    state.releaseLook(e.pointerId);
+  };
+  listen(lookButton, 'pointerup', releaseLook);
+  listen(lookButton, 'pointercancel', releaseLook);
+  listen(lookButton, 'lostpointercapture', releaseLook);
+  // Space/Enter should also work if the button is focused with a keyboard.
+  listen(lookButton, 'keydown', e => {
+    if (e.code !== 'Space' && e.code !== 'Enter') return;
+    e.preventDefault();
+    if (!e.repeat) state.pressLook('keyboard');
+  });
+  listen(lookButton, 'keyup', e => {
+    if (e.code !== 'Space' && e.code !== 'Enter') return;
+    e.preventDefault();
+    state.releaseLook('keyboard');
+  });
+  listen(lookButton, 'blur', () => state.releaseLook('keyboard'));
+  listen(lookButton, 'contextmenu', e => e.preventDefault());
+  actions.append(lookButton);
+
+  overlay.append(actions);
   doc.body.append(overlay);
 
   // The touch overlay is completely absent from all menus and results screens.
@@ -236,7 +280,6 @@ export function attachTurboKartTouchControls(win = window, doc = document) {
     if (state.active !== enabled) {
       state.setActive(enabled);
       if (!enabled) stopFire();
-      refreshHeld();
     }
     overlay.classList.toggle('tk-active', enabled);
   };
@@ -244,7 +287,6 @@ export function attachTurboKartTouchControls(win = window, doc = document) {
     focused = false;
     state.setActive(false);
     stopFire();
-    refreshHeld();
     overlay.classList.remove('tk-active');
   };
   listen(win, 'blur', cancel);
