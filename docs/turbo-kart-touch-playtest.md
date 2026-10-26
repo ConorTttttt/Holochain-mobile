@@ -49,7 +49,7 @@ cd /mnt/holochain/TurboMobile/Holochain-mobile-touch
 git fetch origin feat/turbo-kart-touch-controls
 git merge --ff-only FETCH_HEAD
 
-node --test mobile/touch-controls/mobile-touch.test.mjs
+node --test mobile/touch-controls/*.test.mjs
 
 export ANDROID_HOME="$HOME/Android/Sdk"
 export PATH="$HOME/.local/opt/gradle-8.9/bin:$HOME/Android/Sdk/platform-tools:$PATH"
@@ -100,7 +100,8 @@ APK's data while testing.**
 
 **Status:** The previous touch controls were user-confirmed working on the
 Galaxy S23. The revised dedicated **FIRE**, **LOOK BACK**, invisible halves
-and no pressed-state shading are committed and unit tested. The new APK
+and no pressed-state shading are committed; 11 state tests and three mock-DOM
+interaction tests passed. These tests do not replace on-device verification. The new APK
 has **not yet been built or device-tested**, so confirm on the phone.
 
 ## Implementation notes and limitations
