@@ -5,6 +5,19 @@
         android:label="Turbo Kart H2HC Test"
         android:allowBackup="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- Independent single-player playtest. The existing Holochain/Iroh
+             diagnostic Activity and its app-private identities are untouched. -->
+        <activity
+            android:name=".TouchGameActivity"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="landscape"
+            android:label="Turbo Kart Touch Race">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
         <activity
             android:name=".MainActivity"
             android:exported="true">
