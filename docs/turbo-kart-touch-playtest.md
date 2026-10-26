@@ -71,13 +71,15 @@ export ANDROID_HOME="$HOME/Android/Sdk"
 bash scripts/build-turbo-kart-apk.sh
 adb devices -l
 adb install -r android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n dev.holochain.turbokart.mobile/.TouchGameActivity
+adb shell am start -n dev.holochain.turbokart.mobile.touch/dev.holochain.turbokart.mobile.TouchGameActivity
 ```
 
 The new activity is also a separate launcher icon labeled **Turbo Kart Touch
-Race**. Your Holochain diagnostic icon remains available; the app package
-and app-private agent/endpoint identities are unchanged with
-`adb install -r`. **Do not uninstall or clear app data** during testing.
+Race**. For safety, this touch-playtest branch changes the debug build
+application ID to `dev.holochain.turbokart.mobile.touch`. It installs
+**alongside**, rather than over, your existing Holochain/Iroh test APK
+(`dev.holochain.turbokart.mobile`); that app's keys, endpoint identity and
+test data remain untouched. Do not uninstall or clear either app's data.
 
 The build should say:
 
@@ -102,7 +104,9 @@ build again using `TURBO_KART_GAME_UI_DIR`.
 7. Check performance, frame rate, whether assets render, and whether the
    touchscreen overlaps HUD or other game buttons.
 
-The JavaScript pointer-state tests passed locally, but the Android APK
+The five JavaScript pointer-state tests passed locally, and a headless
+Chromium multitouch simulation confirmed that GO remains held when the
+steering finger lifts. The Android APK
 WebView renderer/gameplay integration is **not yet device-verified**.
 Synthetic keyboard events are untrusted DOM events; we may need to connect
 the overlay directly to the game's real input state if keyboard dispatch
