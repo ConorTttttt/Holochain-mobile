@@ -24,7 +24,20 @@ def stage(source: Path, destination: Path, touch_source: Path) -> None:
     # Clean only the generated game APK asset tree.
     if dest.exists():
         shutil.rmtree(dest)
-    shutil.copytree(src, dest, symlinks=False)
+    # Only copy runtime assets: never embed .git, private data, node_modules
+    # or development logs from the game's original source directory.
+    dest.mkdir(parents=True)
+    allowed = ("index.html", "src", "assets", "vendor", "icon.png", "LICENSE", "NOTICE", "licenses")
+    for name in allowed:
+        original = src / name
+        target = dest / name
+        if not original.exists():
+            continue
+        if original.is_dir():
+            shutil.copytree(original, target, symlinks=False)
+        else:
+            shutil.copy2(original, target)
+
     page = (dest / 'index.html').read_text(encoding='utf-8')
     if page.count('</body>') != 1:
         raise ValueError('Game index.html must contain exactly one closing </body>')
