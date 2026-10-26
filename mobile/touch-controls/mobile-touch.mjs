@@ -238,7 +238,7 @@ export function attachTurboKartTouchControls(win = window, doc = document) {
   lookButton.type = 'button';
   lookButton.id = 'tk-touch-look';
   lookButton.className = 'tk-action';
-  lookButton.textContent = 'LOOK\\nBACK';
+  lookButton.textContent = 'LOOK BACK';
   lookButton.setAttribute('aria-label', 'Hold to look backwards');
   listen(lookButton, 'pointerdown', e => {
     e.preventDefault();
