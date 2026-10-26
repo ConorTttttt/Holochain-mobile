@@ -9,7 +9,12 @@ remains independent and unchanged.
 
 ## Controls
 
-- **Auto acceleration:** holds **ArrowUp** while racing; no GO button.
+- **Safe race start:** never holds **ArrowUp** in `intro` or `countdown`.
+  When the game exposes a separate `countdown` phase, it auto-accelerates
+  about **200 ms** after the transition to `race`/`racing`. If the game
+  enters `race` without exposing a countdown, it waits **3.6 seconds**
+  before accelerating. This deliberately trades a slower initial launch
+  for avoiding an early-throttle spinout; no GO button is needed.
 - **Left 50% of screen:** hold to steer left (**ArrowLeft**).
 - **Right 50% of screen:** hold to steer right (**ArrowRight**).
 - **FIRE button:** sends a single approximately 145 ms press of **E**
@@ -31,10 +36,12 @@ steering touches cancel steering but never cancel auto acceleration.
 Repeated look-back pointers hold the rear view until the last is released.
 
 The controls appear only during gameplay states (`intro`, `countdown`,
-`race`, `racing`). Menus and results remain clickable. When the app is
-backgrounded, hidden, or loses focus, steering, acceleration, Look Back and
-any pending FIRE pulse are released; auto acceleration resumes on focus
-during a race.
+`race`, `racing`). Steering and FIRE/LOOK BACK remain available during
+countdown, but automatic throttle is **locked**. Menus and results remain
+clickable. On pause/background/focus loss, acceleration, steering, Look
+Back and pending FIRE pulses release. The throttle cannot be unlocked by
+elapsed wall-clock time while a countdown is hidden. Once GO has already
+been reached, focusing an ongoing race resumes auto acceleration.
 
 Turbo Kart's published desktop input documentation maps look behind to
 **C**; its item integration test presses **E** to fire. **Space** is drift,
@@ -81,7 +88,10 @@ APK's data while testing.**
 
 ## Galaxy S23 acceptance checks
 
-1. Start a single-player race. Acceleration begins without any touch.
+1. Start a single-player race. **During the countdown the kart must NOT
+   accelerate or spin out.** Confirm no movement until GO. After GO, it
+   accelerates automatically without touching. If no countdown state is
+   exposed by the game, it waits roughly 3.6 seconds before accelerating.
 2. Press and hold anywhere on the left half: steering left, with no visual
    highlight or text on the steering region.
 3. Press and hold anywhere on the right half: steering right, again with
@@ -100,8 +110,9 @@ APK's data while testing.**
 
 **Status:** The previous touch controls were user-confirmed working on the
 Galaxy S23. The revised dedicated **FIRE**, **LOOK BACK**, invisible halves
-and no pressed-state shading are committed; 11 state tests and three mock-DOM
-interaction tests passed. These tests do not replace on-device verification. The new APK
+and no pressed-state shading are committed; 11 state tests, three mock-DOM interaction tests and seven dedicated
+race-start-gate tests passed (21 total). These tests do not replace
+on-device verification. The new APK
 has **not yet been built or device-tested**, so confirm on the phone.
 
 ## Implementation notes and limitations
