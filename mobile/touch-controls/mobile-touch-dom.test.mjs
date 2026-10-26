@@ -56,13 +56,15 @@ function harness() {
     addEventListener: MockElement.prototype.addEventListener,
     removeEventListener: MockElement.prototype.removeEventListener,
   };
-  doc.body.dataset.state = 'race';
+  doc.body.dataset.state = 'countdown';
 
   const timeouts = new Map();
   const intervals = new Map();
   let id = 0;
   const win = {
     innerWidth: 1000,
+    clock: 0,
+    performance: { now() { return win.clock; } },
     events: new Map(),
     addEventListener: MockElement.prototype.addEventListener,
     removeEventListener: MockElement.prototype.removeEventListener,
@@ -82,7 +84,12 @@ function harness() {
   const actions = overlay.children.find(node => node.id === 'tk-touch-actions');
   const fire = actions.children.find(node => node.id === 'tk-touch-fire');
   const look = actions.children.find(node => node.id === 'tk-touch-look');
-  return { win, doc, overlay, left, right, actions, fire, look, timeouts, intervals, detach };
+  const advance = (phase, time) => {
+    doc.body.dataset.state = phase;
+    win.clock = time;
+    for (const fn of [...intervals.values()]) fn();
+  };
+  return { win, doc, overlay, left, right, actions, fire, look, timeouts, intervals, detach, advance };
 }
 
 test('steering halves are transparent with no visible labels or pressed-state colours', () => {
@@ -104,6 +111,10 @@ test('auto-accelerates, steers, fires, looks back, and never fires on steering t
   const h = harness();
   const keys = () => h.doc.inputEvents.map(([type, key]) => `${type}:${key}`);
   try {
+    assert.deepEqual(keys(), [], 'countdown must not send ArrowUp');
+    h.advance('race', 3100);
+    assert.deepEqual(keys(), [], 'GO transition grace');
+    h.advance('race', 3300);
     assert.deepEqual(keys(), ['keydown:ArrowUp']);
     h.left.fire('pointerdown', { pointerId: 1, clientX: 80 });
     assert.equal(keys().at(-1), 'keydown:ArrowLeft');
@@ -139,6 +150,8 @@ test('look back and accelerate release on pause, fire button is inert outside ra
   const h = harness();
   const keys = () => h.doc.inputEvents.map(([type, key]) => `${type}:${key}`);
   try {
+    h.advance('race', 3100);
+    h.advance('race', 3300);
     h.look.fire('pointerdown', { pointerId: 3 });
     assert.equal(keys().at(-1), 'keydown:c');
     for (const fn of h.win.events.get('blur') ?? []) fn();
