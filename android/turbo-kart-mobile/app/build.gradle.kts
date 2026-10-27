@@ -19,6 +19,10 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
+            // Install touch playtest alongside the existing Holochain/Iroh
+            // debug APK. Separate app-private keys and conductor data.
+            applicationIdSuffix = ".touch"
+            versionNameSuffix = "-touch"
         }
         release {
             isMinifyEnabled = false
