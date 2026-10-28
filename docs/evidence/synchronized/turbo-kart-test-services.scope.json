@@ -1,0 +1,10 @@
+{
+  "ActiveState": "active",
+  "Result": "success",
+  "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/turbo-kart-test-services.scope",
+  "MemoryCurrent": "5945262080",
+  "MemoryPeak": "6442455040",
+  "MemoryMax": "6442450944",
+  "MemorySwapMax": "0",
+  "memory_events": "low 0\nhigh 0\nmax 2216\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+}

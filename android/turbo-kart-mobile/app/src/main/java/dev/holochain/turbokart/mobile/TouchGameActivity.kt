@@ -32,6 +32,9 @@ class TouchGameActivity : Activity() {
     private val bridgeWorker = Executors.newSingleThreadExecutor()
     private var paused = false
     private var portGeneration = 0
+    private val synchronizedRace get() = intent.getBooleanExtra("synchronizedRace", false)
+    private val inFlight = java.util.concurrent.atomic.AtomicInteger(0)
+    private var closing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +57,7 @@ class TouchGameActivity : Activity() {
             View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         )
 
-        val view = WebView(this)
+        val view = GameWebViewStore.obtain(this)
         view.setBackgroundColor(Color.BLACK)
         view.isLongClickable = false
         view.settings.apply {
@@ -74,34 +77,54 @@ class TouchGameActivity : Activity() {
             }
         }
         view.webViewClient = object : WebViewClient() {
+            override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                Log.e("TurboKartWeb", "Active renderer gone; didCrash=${detail.didCrash()}, priority=${detail.rendererPriorityAtExit()}")
+                portGeneration++; port?.close(); port = null
+                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                view.destroy(); game = null
+                if (synchronizedRace) bridgeWorker.execute { IrohBridge.productionRequest("{\"op\":\"stop\"}") }
+                setContentView(TextView(this@TouchGameActivity).apply { text = "Game renderer stopped. Use Android Back to return to the app menu; your player identities are preserved." })
+                return true
+            }
             override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
                 portGeneration++
                 port?.close(); port = null
             }
             override fun onPageFinished(view: WebView, url: String) {
-                if (url != GAME_URL || !intent.getBooleanExtra("multiplayer", false)) return
+                if (url != GAME_URL || !(intent.getBooleanExtra("multiplayer", false) || synchronizedRace)) return
                 val channels = view.createWebMessageChannel()
                 port = channels[0]
                 val generation = portGeneration
                 channels[0].setWebMessageCallback(object : WebMessagePort.WebMessageCallback() {
                     override fun onMessage(channel: WebMessagePort, message: WebMessage) {
                         val raw = message.data ?: return
-                        if (raw.length > 4096 || generation != portGeneration) return
+                        if (raw.length > 8192 || generation != portGeneration) return
                         val request = try { JSONObject(raw) } catch (_: Exception) { return }
                         val requestId = request.optLong("id", -1)
                         if (requestId < 1) return
+                        if (synchronizedRace && request.optString("op") == "exit") { finish(); return }
                         if (paused) {
                             channel.postMessage(WebMessage(JSONObject().put("id", requestId).put("ok", false).put("errorCode", "paused").toString()))
+                            return
+                        }
+                        if (inFlight.incrementAndGet() > 24) {
+                            inFlight.decrementAndGet()
+                            channel.postMessage(WebMessage(JSONObject().put("id", requestId).put("ok", false).put("error", "Race bridge backpressure").toString()))
                             return
                         }
                         bridgeWorker.execute {
                             val result = try {
                                 when (request.getString("op")) {
-                                    "status" -> IrohBridge.raceStatus()
-                                    "frame" -> IrohBridge.exchangeGameState(request.getJSONObject("state").toString())
+                                    "race" -> {
+                                        check(synchronizedRace)
+                                        IrohBridge.productionRequest(request.getJSONObject("request").toString())
+                                    }
+                                    "status" -> { check(!synchronizedRace); IrohBridge.raceStatus() }
+                                    "frame" -> { check(!synchronizedRace); IrohBridge.exchangeGameState(request.getJSONObject("state").toString()) }
                                     else -> "{\"ok\":false,\"error\":\"Unknown gameplay operation\"}"
                                 }
                             } catch (_: Exception) { "{\"ok\":false,\"error\":\"Invalid gameplay request\"}" }
+                            inFlight.decrementAndGet()
                             runOnUiThread {
                                 if (generation == portGeneration && port === channel) channel.postMessage(WebMessage(JSONObject(result).put("id", requestId).toString()))
                             }
@@ -112,7 +135,8 @@ class TouchGameActivity : Activity() {
                 val token = java.util.UUID.randomUUID().toString()
                 view.evaluateJavascript("window.__turboKartGamePortToken = ${JSONObject.quote(token)};", {
                     if (generation == portGeneration && view.url == GAME_URL) {
-                        view.postWebMessage(WebMessage("turbo-kart-game-port:$token", arrayOf(channels[1])), Uri.parse("https://$ASSET_HOST"))
+                        val prefix = if (synchronizedRace) "turbo-kart-online-port" else "turbo-kart-game-port"
+                        view.postWebMessage(WebMessage("$prefix:$token", arrayOf(channels[1])), Uri.parse("https://$ASSET_HOST"))
                     } else { channels[1].close() }
                 })
             }
@@ -153,8 +177,24 @@ class TouchGameActivity : Activity() {
     }
     override fun onDestroy() {
         portGeneration++; port?.close(); port = null
-        bridgeWorker.shutdownNow()
-        game?.destroy(); game = null; super.onDestroy()
+        if (synchronizedRace) bridgeWorker.execute { IrohBridge.productionRequest("{\"op\":\"stop\"}") }
+        bridgeWorker.shutdown()
+        game?.let { GameWebViewStore.release(it, this) }; game = null; super.onDestroy()
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onBackPressed() {
+        if (!synchronizedRace) { super.onBackPressed(); return }
+        if (closing) return
+        closing = true
+        game?.evaluateJavascript("window.__turboKartOnlineSession?.leave().catch(console.error);", null)
+        // Also covers Back during initial connection or a lost renderer.
+        android.os.Handler(mainLooper).postDelayed({
+            if (!isFinishing && !isDestroyed) bridgeWorker.execute {
+                IrohBridge.productionRequest("{\"op\":\"stop\"}")
+                runOnUiThread { if (!isDestroyed) finish() }
+            }
+        }, 6000)
     }
 
     private fun missing(): WebResourceResponse =

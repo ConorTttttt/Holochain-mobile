@@ -1,0 +1,5 @@
+Id=turbo-kart-test-services.scope
+ActiveState=inactive
+
+Id=turbo-kart-test-authority.scope
+ActiveState=inactive

@@ -1,0 +1,13 @@
+
+running 8 tests
+test progress::tests::binding_refuses_other_race_epoch_and_schedule ... ok
+test progress::tests::codec_round_trips_and_rejects_malformed ... ok
+test progress::tests::events_are_derived_once_per_transition ... ok
+test progress::tests::golden_bytes_match_the_game_codec ... ok
+test progress::tests::identity_kind_follows_the_grid ... ok
+test progress::tests::laps_and_finishes_follow_the_admission_and_the_clock ... ok
+test progress::tests::only_forward_given_the_previous_snapshot ... ok
+test progress::tests::standings_are_deterministic_and_verified ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 41 filtered out; finished in 0.00s
+

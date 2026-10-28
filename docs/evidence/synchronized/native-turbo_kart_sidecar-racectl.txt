@@ -1,0 +1,10 @@
+
+running 5 tests
+test racectl::tests::a_start_must_match_this_admission_exactly ... ok
+test racectl::tests::clock_verdict_at_and_around_both_ceilings ... ok
+test racectl::tests::duplicate_keeps_and_conflict_is_rejected ... ok
+test racectl::tests::grid_is_humans_in_admission_order_then_six_ai ... ok
+test racectl::tests::host_checks_peer_readiness_against_its_own_tier ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 44 filtered out; finished in 0.00s
+

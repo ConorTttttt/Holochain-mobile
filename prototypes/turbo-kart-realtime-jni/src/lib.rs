@@ -1,11 +1,11 @@
-//! Embedded Android realtime *endpoint* stage. Reuses the original desktop
+//! Embedded Android realtime endpoint and synchronized race session. Reuses the original desktop
 //! IrohMeshTransport/MoQ implementation and KartState wire codec by referencing
 //! the desktop Rust crates directly from the generated build manifest.
 //!
 //! The existing APK's H2HC/Wasmi conductor and Lair identity remain a
-//! separate JNI library. Gate 2c.2 optionally opens a pinned, digest-checked
-//! MoQ mesh and sends one synthetic WP3 diagnostic frame, but deliberately
-//! does not run the host/clock controller or a playable race.
+//! separate JNI library. The production module embeds the original desktop
+//! Session/RaceCtl for clock, readiness and gameplay. Legacy pinned MoQ mesh
+//! diagnostics remain separate and cannot overlap a production session.
 //!
 //! The 32-byte Iroh endpoint seed is provided from Android Keystore-protected
 //! app storage by Kotlin, never persisted or logged by this Rust library.
@@ -33,6 +33,7 @@ use zeroize::Zeroize;
 mod kart_stream;
 mod game_bridge;
 mod race_session;
+mod production;
 use race_session::RunningRace;
 
 struct LiveEndpoint {
@@ -40,6 +41,7 @@ struct LiveEndpoint {
     _runtime: Runtime,
     transport: IrohMeshTransport,
     race: Option<RunningRace>,
+    production: Option<production::ProductionRace>,
     relay_url: String,
 }
 
@@ -130,6 +132,7 @@ fn start(key: SecretKey, relay_url: String) -> Result<Value> {
         _runtime: runtime,
         transport,
         race: None,
+        production: None,
         relay_url,
     });
     Ok(status)
@@ -262,6 +265,7 @@ fn connect_locked_race(raw: String) -> Result<Value> {
     let mut guard = live_slot().lock()
         .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
     let live = guard.as_mut().context("start/resume the persistent Iroh endpoint first")?;
+    ensure!(live.production.is_none(), "close the synchronized race before diagnostics");
     let admission = verified_admission(&raw, live)?;
     if let Some(ref old) = live.race {
         ensure!(old.race_id() == admission.race_id.as_str(),
@@ -277,6 +281,61 @@ fn connect_locked_race(raw: String) -> Result<Value> {
     let status = race.status();
     live.race = Some(race);
     Ok(status)
+}
+
+fn start_production(raw: String) -> Result<Value> {
+    static GENERATION: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    let mut guard = live_slot().lock().map_err(|_| anyhow::anyhow!("Iroh endpoint lock poisoned"))?;
+    let live = guard.as_mut().context("start the persistent Iroh endpoint first")?;
+    ensure!(live.race.is_none(), "disconnect the diagnostic mesh before entering a synchronized race");
+    let admission = verified_admission(&raw, live)?;
+    if let Some(ref existing) = live.production {
+        ensure!(existing.race_id == admission.race_id.as_str(), "close the previous synchronized race first");
+        return Ok(existing.status());
+    }
+    let generation = GENERATION.fetch_update(std::sync::atomic::Ordering::Relaxed,
+        std::sync::atomic::Ordering::Relaxed, |value| value.checked_add(1))
+        .map_err(|_| anyhow::anyhow!("race generation exhausted"))? + 1;
+    let envelope: AdmissionEnvelope = serde_json::from_str(&raw)?;
+    let _entered = live._runtime.enter();
+    let race = production::ProductionRace::start(live.transport.endpoint(), admission,
+        serde_json::to_value(envelope.record)?, generation, &live.relay_url)?;
+    let status = race.status(); live.production = Some(race); Ok(status)
+}
+
+fn production_request(raw: String) -> Result<Value> {
+    ensure!(raw.len() <= 8192, "production request exceeds limit");
+    let value: Value = serde_json::from_str(&raw)?;
+    let mut guard = live_slot().lock().map_err(|_| anyhow::anyhow!("Iroh endpoint lock poisoned"))?;
+    let live = guard.as_mut().context("start the persistent endpoint first")?;
+    match value["op"].as_str() {
+        Some("stop") => {
+            if let Some(race) = live.production.take() { live._runtime.block_on(race.stop()); }
+            Ok(json!({"state":"disconnected","realtime_active":false,"identities_preserved":true}))
+        }
+        Some("status") if live.production.is_none() => Ok(json!({"state":"disconnected","realtime_active":false})),
+        _ => live.production.as_mut().context("no synchronized race")?.request(&value),
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_startProductionRace(
+    mut env: JNIEnv<'_>, _receiver: JObject<'_>, raw: JString<'_>,
+) -> jstring {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let raw: String = env.get_string(&raw)?.into(); start_production(raw)
+    }));
+    response_to_jstring(&mut env, result.unwrap_or_else(|_| Err(anyhow::anyhow!("production start panic"))))
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_productionRequest(
+    mut env: JNIEnv<'_>, _receiver: JObject<'_>, raw: JString<'_>,
+) -> jstring {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let raw: String = env.get_string(&raw)?.into(); production_request(raw)
+    }));
+    response_to_jstring(&mut env, result.unwrap_or_else(|_| Err(anyhow::anyhow!("production request panic"))))
 }
 
 fn race_status() -> Result<Value> {

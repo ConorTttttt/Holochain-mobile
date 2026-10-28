@@ -1,0 +1,368 @@
+[
+  {
+    "name": "original title, track, karts and landscape WebGL",
+    "passed": true,
+    "value": {
+      "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "renderer": "WebKit WebGL",
+      "width": 915,
+      "height": 412,
+      "karts": 8,
+      "errors": []
+    }
+  },
+  {
+    "name": "original single-player selection menu",
+    "passed": true,
+    "value": true
+  },
+  {
+    "name": "no automatic acceleration before GO",
+    "passed": true,
+    "value": {
+      "phase": "countdown",
+      "countdownTime": 0.06666666666666667,
+      "touch": {
+        "left": false,
+        "right": false,
+        "accelerate": false,
+        "lookBack": false
+      },
+      "input": {
+        "throttle": 0,
+        "brake": 0,
+        "steer": 0,
+        "drift": false,
+        "item": false,
+        "lookBack": false
+      },
+      "position": [
+        4.859110011841525,
+        -0.13200465827717472,
+        -97.70626556732732
+      ],
+      "heading": -0.02041037735616795,
+      "cameraLookBack": false,
+      "speed": -0.002113795489154342,
+      "boost": null,
+      "boostTimer": 0,
+      "stallTimer": 0,
+      "errors": []
+    }
+  },
+  {
+    "name": "manual countdown start boost and automatic handoff",
+    "passed": true,
+    "value": {
+      "phase": "racing",
+      "countdownTime": 3.512066666666574,
+      "touch": {
+        "left": false,
+        "right": true,
+        "accelerate": true,
+        "lookBack": false
+      },
+      "input": {
+        "throttle": 1,
+        "brake": 0,
+        "steer": 1,
+        "drift": false,
+        "item": false,
+        "lookBack": false
+      },
+      "position": [
+        4.849761832665948,
+        -0.13091192180269745,
+        -97.47771123717513
+      ],
+      "heading": -0.07748873801056681,
+      "cameraLookBack": false,
+      "speed": 6.990795407939313,
+      "boost": "start",
+      "boostTimer": 1.1666666666666665,
+      "stallTimer": 0,
+      "errors": []
+    }
+  },
+  {
+    "name": "actual original physics advances player",
+    "passed": true,
+    "value": {
+      "initial": {
+        "phase": "racing",
+        "countdownTime": 3.512066666666574,
+        "touch": {
+          "left": false,
+          "right": false,
+          "accelerate": true,
+          "lookBack": false
+        },
+        "input": {
+          "throttle": 1,
+          "brake": 0,
+          "steer": 0,
+          "drift": false,
+          "item": false,
+          "lookBack": false
+        },
+        "position": [
+          3.4226332280170175,
+          -0.0897564249660984,
+          -89.09595543217777
+        ],
+        "heading": -0.1793756147880114,
+        "cameraLookBack": false,
+        "speed": 32.170745819397055,
+        "boost": "start",
+        "boostTimer": 0.7463333333335658,
+        "stallTimer": 0,
+        "errors": []
+      },
+      "moved": {
+        "phase": "racing",
+        "countdownTime": 3.512066666666574,
+        "touch": {
+          "left": false,
+          "right": false,
+          "accelerate": true,
+          "lookBack": false
+        },
+        "input": {
+          "throttle": 1,
+          "brake": 0,
+          "steer": 0,
+          "drift": false,
+          "item": false,
+          "lookBack": false
+        },
+        "position": [
+          -0.9618358741069692,
+          0.001870072135179685,
+          -68.48845903931962
+        ],
+        "heading": -0.1793756147880114,
+        "cameraLookBack": false,
+        "speed": 51.74215273200606,
+        "boost": "start",
+        "boostTimer": 0.23560000000009274,
+        "stallTimer": 0,
+        "errors": []
+      }
+    }
+  },
+  {
+    "name": "left and right touch steer original input",
+    "passed": true,
+    "value": {
+      "steeringLeft": {
+        "phase": "racing",
+        "countdownTime": 3.512066666666574,
+        "touch": {
+          "left": true,
+          "right": false,
+          "accelerate": true,
+          "lookBack": false
+        },
+        "input": {
+          "throttle": 1,
+          "brake": 0,
+          "steer": -1,
+          "drift": false,
+          "item": false,
+          "lookBack": false
+        },
+        "position": [
+          -11.947698470271256,
+          0.3440226115036252,
+          -4.621206737365256
+        ],
+        "heading": 0.14017661753120347,
+        "cameraLookBack": false,
+        "speed": 37.20304092387886,
+        "boost": "start",
+        "boostTimer": 0,
+        "stallTimer": 0,
+        "errors": []
+      },
+      "steeringRight": {
+        "phase": "racing",
+        "countdownTime": 3.512066666666574,
+        "touch": {
+          "left": false,
+          "right": true,
+          "accelerate": true,
+          "lookBack": false
+        },
+        "input": {
+          "throttle": 1,
+          "brake": 0,
+          "steer": 1,
+          "drift": false,
+          "item": false,
+          "lookBack": false
+        },
+        "position": [
+          -9.999322706711139,
+          0.44743744901846483,
+          9.575045676147397
+        ],
+        "heading": -0.10670701662877215,
+        "cameraLookBack": false,
+        "speed": 37.20162983866781,
+        "boost": "start",
+        "boostTimer": 0,
+        "stallTimer": 0,
+        "errors": []
+      }
+    }
+  },
+  {
+    "name": "simultaneous steering and LOOK BACK pointers",
+    "passed": true,
+    "value": {
+      "multiple": {
+        "phase": "racing",
+        "countdownTime": 3.512066666666574,
+        "touch": {
+          "left": true,
+          "right": false,
+          "accelerate": true,
+          "lookBack": true
+        },
+        "input": {
+          "throttle": 1,
+          "brake": 0,
+          "steer": -1,
+          "drift": false,
+          "item": false,
+          "lookBack": true
+        },
+        "position": [
+          -11.160080490430639,
+          0.53155449136996,
+          20.209419166760803
+        ],
+        "heading": 0.07702483098419115,
+        "cameraLookBack": true,
+        "speed": 37.19696534021059,
+        "boost": "start",
+        "boostTimer": 0,
+        "stallTimer": 0,
+        "errors": []
+      },
+      "pointers": [
+        {
+          "name": "pointerdown",
+          "id": 5,
+          "type": "touch",
+          "target": "tk-touch-left",
+          "trusted": true
+        },
+        {
+          "name": "pointerdown",
+          "id": 6,
+          "type": "touch",
+          "target": "tk-touch-look",
+          "trusted": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "LOOK BACK release restores forward input",
+    "passed": true,
+    "value": true
+  },
+  {
+    "name": "FIRE invokes original item system exactly once",
+    "passed": true,
+    "value": {
+      "count": 1,
+      "item": null,
+      "timer": 1.837066666666806
+    }
+  },
+  {
+    "name": "touch pause and resume",
+    "passed": true,
+    "value": true
+  },
+  {
+    "name": "Android background clears all held inputs",
+    "passed": true,
+    "value": {
+      "phase": "paused",
+      "countdownTime": 3.512066666666574,
+      "touch": {
+        "left": false,
+        "right": false,
+        "accelerate": false,
+        "lookBack": false
+      },
+      "input": {
+        "throttle": 1,
+        "brake": 0,
+        "steer": -1,
+        "drift": false,
+        "item": false,
+        "lookBack": true
+      },
+      "position": [
+        17.48888215516664,
+        0.4493123536236908,
+        9.854125198942315
+      ],
+      "heading": 3.223811954067905,
+      "cameraLookBack": true,
+      "speed": 21.894120351658668,
+      "boost": "rocket",
+      "boostTimer": 0.20603333333375154,
+      "stallTimer": 0,
+      "errors": []
+    }
+  },
+  {
+    "name": "Android task resumes with automatic throttle and released steering/camera",
+    "passed": true,
+    "value": {
+      "phase": "racing",
+      "countdownTime": 3.512066666666574,
+      "touch": {
+        "left": false,
+        "right": false,
+        "accelerate": true,
+        "lookBack": false
+      },
+      "input": {
+        "throttle": 1,
+        "brake": 0,
+        "steer": 0,
+        "drift": false,
+        "item": false,
+        "lookBack": false
+      },
+      "position": [
+        17.197332291865468,
+        0.4178808511483667,
+        5.698560370833255
+      ],
+      "heading": 3.2241327308511334,
+      "cameraLookBack": false,
+      "speed": 31.10494234354303,
+      "boost": "rocket",
+      "boostTimer": 0.05300000000023194,
+      "stallTimer": 0,
+      "errors": []
+    }
+  },
+  {
+    "name": "original pause menu returns to title",
+    "passed": true,
+    "value": true
+  },
+  {
+    "name": "game error registry empty",
+    "passed": true,
+    "value": []
+  }
+]

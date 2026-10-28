@@ -1697,6 +1697,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "holochain-moq-clock"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "holochain-moq-mesh",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "holochain-moq-hdk-bridge"
 version = "0.1.0"
 dependencies = [
@@ -1709,6 +1720,33 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "holochain-moq-host"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "holochain-moq-clock",
+ "holochain-moq-mesh",
+ "holochain-moq-protocol",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "holochain-moq-kart-net"
+version = "0.1.0"
+dependencies = [
+ "holochain-moq-hdk-bridge",
+ "holochain-moq-node",
+ "holochain-moq-protocol",
+ "holochain-moq-turbo-kart",
+ "holochain-moq-turbo-kart-client",
+ "serde",
+ "thiserror 1.0.69",
+ "tokio",
 ]
 
 [[package]]
@@ -5900,6 +5938,7 @@ name = "turbo-kart-realtime-jni"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
  "holochain-moq-kart-wire",
  "holochain-moq-mesh",
  "holochain-moq-mesh-iroh",
@@ -5911,7 +5950,37 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "tokio",
+ "turbo-kart-sidecar",
  "zeroize",
+]
+
+[[package]]
+name = "turbo-kart-sidecar"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bytes",
+ "ed25519-dalek 2.2.0",
+ "holo_hash",
+ "holochain-moq-clock",
+ "holochain-moq-hdk-bridge",
+ "holochain-moq-host",
+ "holochain-moq-kart-net",
+ "holochain-moq-kart-wire",
+ "holochain-moq-mesh",
+ "holochain-moq-mesh-iroh",
+ "holochain-moq-node",
+ "holochain-moq-protocol",
+ "holochain-moq-turbo-kart",
+ "holochain-moq-turbo-kart-client",
+ "holochain_client",
+ "iroh",
+ "rand 0.8.8",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tokio",
 ]
 
 [[package]]

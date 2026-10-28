@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "result": {
+    "lobbies": [
+      {
+        "id": "uhCkkavzOp8uDSuE0YqhTVPb7iDNqyaeCevCLr4_f5aHYDnH_wJTz",
+        "lobby": {
+          "name": "SyncRace-2",
+          "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+          "max_players": 2,
+          "track_id": "palm-cove",
+          "class": "50cc",
+          "laps": 1,
+          "relay_urls": [],
+          "access": "Public"
+        },
+        "created_at": 1793209964420
+      }
+    ]
+  }
+}

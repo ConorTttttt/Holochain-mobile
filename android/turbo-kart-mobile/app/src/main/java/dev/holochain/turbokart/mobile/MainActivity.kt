@@ -317,6 +317,26 @@ class MainActivity : Activity() {
         diagnostics.addView(sendTestKartButton)
         diagnostics.addView(streamKartButton)
         diagnostics.addView(Button(this).apply {
+            text = "Enter synchronized race"
+            setOnClickListener {
+                val lobby = joinedLobbyId ?: selectedLobby()?.id ?: return@setOnClickListener
+                submit("Entering the original synchronized multiplayer race…", onSuccess = {
+                    getPreferences(MODE_PRIVATE).edit().putString("synchronized_lobby", lobby).apply()
+                    startActivity(Intent(this@MainActivity, TouchGameActivity::class.java).putExtra("synchronizedRace", true))
+                }) {
+                    val bundle = JSONObject(NativeBridge.lockedAdmissionBundle(lobby))
+                    check(bundle.optBoolean("ok")) { bundle.optString("error", "No locked race") }
+                    IrohBridge.startProductionRace(bundle.getJSONObject("result").toString())
+                }
+            }
+        })
+        diagnostics.addView(Button(this).apply {
+            text = "Synchronized race status"
+            setOnClickListener { submit("Reading synchronized race status…") {
+                IrohBridge.productionRequest("{\"op\":\"status\"}")
+            } }
+        })
+        diagnostics.addView(Button(this).apply {
             text = "Drive admitted race (development bridge)"
             setOnClickListener {
                 submit("Checking authenticated MoQ before opening gameplay…", onSuccess = {
@@ -544,6 +564,24 @@ class MainActivity : Activity() {
                 busy = false
                 updateButtons()
                 log.text = parsed?.toString(2) ?: result
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val previous = getPreferences(MODE_PRIVATE).getString("synchronized_lobby", null) ?: return
+        worker.execute {
+            val status = try { JSONObject(IrohBridge.productionRequest("{\"op\":\"status\"}")) } catch (_: Exception) { null }
+            if (status?.optBoolean("ok") == true && status.optJSONObject("result")?.optBoolean("realtime_active") == false) {
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        if (joinedLobbyId == previous) joinedLobbyId = null
+                        getPreferences(MODE_PRIVATE).edit().remove("synchronized_lobby").apply()
+                        updateButtons()
+                        log.text = "Race session closed. Join a new lobby to race again. Your player identities are preserved."
+                    }
+                }
             }
         }
     }

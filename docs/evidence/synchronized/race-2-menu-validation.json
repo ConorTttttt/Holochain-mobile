@@ -1,0 +1,6 @@
+{
+  "normal_menu_return": true,
+  "app_pid_unchanged": true,
+  "renderer_crash_after_return": false,
+  "confirmed_session_close": true
+}

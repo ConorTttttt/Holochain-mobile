@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "result": {
+    "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+    "binding_action": "uhCkkpiGd8Dab9xepgANpgPOH3JmMPpsMKx4freZypERz9X7Hp-dt",
+    "endpoint_fingerprint_hex": "53fdcfcfb33a25fab3f00464e4ee20c4f493a80127bc8b62e2ee26d9fc9b0d45",
+    "published_at_ms": 1793210162471,
+    "expires_at_ms": 1793210282471,
+    "signed_presence_published": true,
+    "readback_verified": true,
+    "authenticated_race_session": false
+  }
+}

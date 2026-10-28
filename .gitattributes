@@ -2,3 +2,5 @@
 mobile/game-assets/fonts/*-OFL.txt -whitespace
 docs/evidence/combined/*.txt -whitespace
 docs/evidence/combined/*.log -whitespace
+docs/evidence/synchronized/*.txt -whitespace
+docs/evidence/synchronized/**/*.txt -whitespace

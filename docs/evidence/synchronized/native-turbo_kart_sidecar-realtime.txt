@@ -1,0 +1,19 @@
+
+running 14 tests
+test realtime::tests::absent_peer_is_reported_unreachable_within_the_deadline ... ok
+test realtime::tests::admission_digest_mismatch_is_a_non_retryable_setup_failure ... ok
+test realtime::tests::bounded_dialing_fits_inside_the_setup_deadline ... ok
+test realtime::tests::default_session_is_lan_mode_direct_with_the_15_ms_tier ... ok
+test realtime::tests::dialer_entering_10_s_early_still_connects ... ok
+test realtime::tests::host_lost_before_the_start_fails_the_race_instead_of_rescheduling ... ok
+test realtime::tests::internet_session_via_relay_hint_only ... ignored, network: set TK_RELAY_PROBE_URL
+test realtime::tests::kart_state_travels_only_as_valid_wp3_from_the_admitted_source ... ok
+test realtime::tests::one_schedule_agreed_and_ai_from_the_host_only ... ok
+test realtime::tests::outsider_is_refused_before_moq_and_other_race_cannot_authenticate_test_tracks ... ok
+test realtime::tests::progress_only_from_the_host_bound_to_the_race_and_forward_only ... ok
+test realtime::tests::shared_endpoint_preserves_identity_sessions_and_exactly_once_reliable_reconnect ... ok
+test realtime::tests::tick_gate_drops_duplicates_and_stale_but_accepts_a_new_race_clock ... ok
+test realtime::tests::wp3_golden_bytes_match_the_game_adapter ... ok
+
+test result: ok. 13 passed; 0 failed; 1 ignored; 0 measured; 35 filtered out; finished in 60.03s
+

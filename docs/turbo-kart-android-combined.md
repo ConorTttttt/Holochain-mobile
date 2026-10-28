@@ -1,5 +1,13 @@
 # Turbo Kart Rally: combined Android development
 
+## Current synchronized race implementation
+
+Continued from clean HEAD `d6d2e42ce39235860b0be0410bddb68c42d90460` on the existing combined branch. **A complete desktop-versus-emulator race has now been demonstrated through the original normal multiplayer controller. Two consecutive races passed on the final dual-ABI APK without restarting the Android app, Holochain conductor or Iroh endpoint.** Both players finished, all eight authoritative standings agreed, items and six host-controlled AI synchronized, and both original result menus returned normally. Physical Galaxy S23 testing remains pending.
+
+See [synchronized race implementation and acceptance](turbo-kart-synchronized-race.md) for the current architecture, measured timing/publication, test commands, final artifact hashes and independently captured evidence. The records below describe the earlier development-motion milestone; its incomplete-race status and next-work list are historical and are superseded by that acceptance report.
+
+## Earlier combined implementation record
+
 Working branch: `feat/turbo-kart-mobile-combined`, based on WP3 `530fc87`, merged with `origin/feat/turbo-kart-touch-controls` (`4af7bc3`). The original worktree and its modified Cargo.lock are preserved.
 
 ## Build
@@ -196,7 +204,7 @@ The 14 single-player checks were run on the dual-ABI APK before the last bridge-
 
 Automated results: 43 JavaScript touch/bridge tests, 3 staging tests, 62 original-game physics/items/WP3/interpolation tests and 4 Android-native Rust assertions passed. The saved emulator game run has 14 passed checks; the separate recorded-motion validator has 19 passed checks.
 
-Next work is to integrate the original race controller's clock/readiness and lifecycle, replace the development counterpart with the desktop's normal online entry, synchronize authoritative AI/progress/items, and decouple publication cadence from render frames. Investigate the WebView exit on returning to the native menu. A synchronized scored desktop/Android race and physical-device acceptance remain pending.
+At this earlier milestone, clock/readiness, the normal online lifecycle, authoritative AI/progress/items, publication pacing and WebView menu teardown still needed integration. Those tasks are now covered by the [synchronized race acceptance](turbo-kart-synchronized-race.md). Physical-device acceptance remains pending. Original results remain provisional and are not recorded to the DHT.
 
 For later physical installation, first identify the actual phone serial; this command was **not** run on a phone:
 

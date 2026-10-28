@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "app_pid": "3321",
+  "original_menu_buttons": true,
+  "session": {
+    "ok": true,
+    "result": {
+      "state": "disconnected",
+      "realtime_active": false
+    }
+  },
+  "renderer_errors_after_marker": [],
+  "same_process": true
+}

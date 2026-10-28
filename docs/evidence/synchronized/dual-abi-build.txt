@@ -1,0 +1,238 @@
+Running as unit: turbo-kart-native-build.scope; invocation ID: 19fe48189d1e4a49b3220cb6120cf14d
+    Finished `release` profile [optimized] target(s) in 1.22s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+Reusing original Turbo Kart realtime crates from /mnt/holochain/offloaded/sf/Turbokart/turbo-kart
+8c83ed77a1b4
+Building separate Android Iroh/MoQ JNI library (16 KiB aligned)...
+   Compiling turbo-kart-realtime-jni v0.1.0 (/mnt/holochain/TurboMobile/Holochain-mobile-combined/target/turbo-kart-realtime-jni-source)
+warning: use of deprecated method `std::sync::atomic::Atomic::<u32>::fetch_update`: renamed to `try_update` for consistency
+   --> src/lib.rs:296:33
+    |
+296 |     let generation = GENERATION.fetch_update(std::sync::atomic::Ordering::Relaxed,
+    |                                 ^^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+help: replace the use of the deprecated method
+    |
+296 -     let generation = GENERATION.fetch_update(std::sync::atomic::Ordering::Relaxed,
+296 +     let generation = GENERATION.try_update(std::sync::atomic::Ordering::Relaxed,
+    |
+
+warning: `turbo-kart-realtime-jni` (lib) generated 1 warning (run `cargo fix --lib -p turbo-kart-realtime-jni` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 20.66s
+16 KiB-aligned Iroh/MoQ JNI staged into Android APK project.
+/mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/src/main/jniLibs/arm64-v8a/libturbo_kart_realtime_jni.so
+    Finished `release` profile [optimized] target(s) in 0.57s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+Reusing original Turbo Kart realtime crates from /mnt/holochain/offloaded/sf/Turbokart/turbo-kart
+8c83ed77a1b4
+Building separate Android Iroh/MoQ JNI library (16 KiB aligned)...
+   Compiling turbo-kart-realtime-jni v0.1.0 (/mnt/holochain/TurboMobile/Holochain-mobile-combined/target/turbo-kart-realtime-jni-source)
+warning: use of deprecated method `std::sync::atomic::Atomic::<u32>::fetch_update`: renamed to `try_update` for consistency
+   --> src/lib.rs:296:33
+    |
+296 |     let generation = GENERATION.fetch_update(std::sync::atomic::Ordering::Relaxed,
+    |                                 ^^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+help: replace the use of the deprecated method
+    |
+296 -     let generation = GENERATION.fetch_update(std::sync::atomic::Ordering::Relaxed,
+296 +     let generation = GENERATION.try_update(std::sync::atomic::Ordering::Relaxed,
+    |
+
+warning: `turbo-kart-realtime-jni` (lib) generated 1 warning (run `cargo fix --lib -p turbo-kart-realtime-jni` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 19.38s
+16 KiB-aligned Iroh/MoQ JNI staged into Android APK project.
+/mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/src/main/jniLibs/x86_64/libturbo_kart_realtime_jni.so
+Android touch game staged: /mnt/holochain/offloaded/sf/Turbokart/turbo-kart/apps/turbo-kart-desktop/resources/ui -> /mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/src/main/assets/game
+Original game files and both Holochain DNAs were not modified.
+Both 16 KiB-aligned JNI libraries and original Turbo Kart hApps staged into Android project.
+Android project: /mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile
+Using installed Gradle. AGP 8.7.3 needs Gradle 8.9 and JDK 17.
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+
+> Task :app:compileDebugKotlin
+w: file:///mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/src/main/java/dev/holochain/turbokart/mobile/MainActivity.kt:79:34 'val systemWindowInsetTop: Int' is deprecated. Deprecated in Java.
+w: file:///mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/src/main/java/dev/holochain/turbokart/mobile/MainActivity.kt:80:37 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
+
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeProjectDexDebug
+> Task :app:mergeDebugJniLibFolders
+> Task :app:mergeDebugNativeLibs
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libturbo_kart_realtime_jni.so.
+
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 19s
+37 actionable tasks: 9 executed, 28 up-to-date
+Verifying alignment of /mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk (4)...
+      87 META-INF/com/android/build/gradle/app-metadata.properties (OK - compressed)
+     180 classes.dex (OK - compressed)
+  850357 classes2.dex (OK - compressed)
+  884736 lib/arm64-v8a/libturbo_kart_android_native.so (OK)
+130908160 lib/x86_64/libturbo_kart_android_native.so (OK)
+259820565 assets/expected-dna-hashes.json (OK - compressed)
+259820761 assets/game/LICENSE (OK - compressed)
+259821446 assets/game/NOTICE (OK - compressed)
+259822796 assets/game/assets/Music/Blizzard Circuit (Extended).wav (OK)
+320164332 assets/game/assets/Music/Dune Drift Highway (Extended).wav (OK)
+384776036 assets/game/assets/Music/Sunny Meadow Circuit (Extended).wav (OK)
+445722872 assets/game/assets/Music/blizzard-circuit.mp3 (OK)
+453496544 assets/game/assets/Music/dune-drift-highway.mp3 (OK)
+463311416 assets/game/assets/Music/sunny-meadow-circuit.mp3 (OK)
+472109173 assets/game/assets/karts/bella.glb (OK - compressed)
+475927498 assets/game/assets/karts/blaze.glb (OK - compressed)
+479622242 assets/game/assets/karts/solar_racer_AAA.glb (OK - compressed)
+484815937 assets/game/assets/karts/zippy.glb (OK - compressed)
+487396508 assets/game/assets/portraits/Mystery Racer Kart Reveal.png (OK)
+488950976 assets/game/icon.png (OK)
+488951884 assets/game/index.html (OK - compressed)
+488952526 assets/game/licenses/CAL-1.0.txt (OK - compressed)
+488958742 assets/game/licenses/NPM-PACKAGES.txt (OK - compressed)
+488981371 assets/game/licenses/RUST-CRATES.txt (OK - compressed)
+489180301 assets/game/licenses/THIRD-PARTY-NOTICES.txt (OK - compressed)
+489181308 assets/game/licenses/electron-LICENSE.txt (OK - compressed)
+489182019 assets/game/licenses/manifest.json (OK - compressed)
+489182911 assets/game/licenses/three.js-LICENSE.txt (OK - compressed)
+489183619 assets/game/local-fonts.css (OK - compressed)
+489183842 assets/game/mobile-fonts/LilitaOne-OFL.txt (OK - compressed)
+489185968 assets/game/mobile-fonts/LilitaOne-Regular.ttf (OK - compressed)
+489202185 assets/game/mobile-fonts/Nunito-OFL.txt (OK - compressed)
+489204298 assets/game/mobile-fonts/Nunito.ttf (OK - compressed)
+489340218 assets/game/mobile-fonts/sources.json (OK - compressed)
+489341797 assets/game/mobile-touch.mjs (OK - compressed)
+489347204 assets/game/src/about.js (OK - compressed)
+489349049 assets/game/src/ai.js (OK - compressed)
+489357144 assets/game/src/audio.js (OK - compressed)
+489365997 assets/game/src/camera.js (OK - compressed)
+489370111 assets/game/src/championship.js (OK - compressed)
+489371282 assets/game/src/characters.js (OK - compressed)
+489372650 assets/game/src/config.js (OK - compressed)
+489373951 assets/game/src/cup-session.js (OK - compressed)
+489377075 assets/game/src/custom-icons.js (OK - compressed)
+489379384 assets/game/src/custom-kart-list.js (OK - compressed)
+489379612 assets/game/src/custom-karts.js (OK - compressed)
+489382063 assets/game/src/custom-powerups.js (OK - compressed)
+489396445 assets/game/src/driving-surfaces.js (OK - compressed)
+489396898 assets/game/src/effects.js (OK - compressed)
+489412529 assets/game/src/environment-themes.js (OK - compressed)
+489416761 assets/game/src/environment.js (OK - compressed)
+489431350 assets/game/src/events.js (OK - compressed)
+489431751 assets/game/src/hud.js (OK - compressed)
+489441484 assets/game/src/input.js (OK - compressed)
+489444604 assets/game/src/items.js (OK - compressed)
+489458253 assets/game/src/kart.js (OK - compressed)
+489475334 assets/game/src/lobby-refresh.js (OK - compressed)
+489475858 assets/game/src/main.js (OK - compressed)
+489501986 assets/game/src/maps/avalanche-pass.js (OK - compressed)
+489502970 assets/game/src/maps/coastal-switchbacks.js (OK - compressed)
+489503735 assets/game/src/maps/coral-lagoon.js (OK - compressed)
+489504664 assets/game/src/maps/design.js (OK - compressed)
+489506430 assets/game/src/maps/dune-canyon.js (OK - compressed)
+489507446 assets/game/src/maps/elevation-profiles.js (OK - compressed)
+489508606 assets/game/src/maps/frost-fang.js (OK - compressed)
+489509436 assets/game/src/maps/glacier-express.js (OK - compressed)
+489510309 assets/game/src/maps/index.js (OK - compressed)
+489510975 assets/game/src/maps/mirage-highway.js (OK - compressed)
+489511772 assets/game/src/maps/mirror-cove.js (OK - compressed)
+489512077 assets/game/src/maps/palm-boulevard.js (OK - compressed)
+489512817 assets/game/src/maps/palm-cove.js (OK - compressed)
+489513402 assets/game/src/maps/scorpion-mine.js (OK - compressed)
+489514196 assets/game/src/maps/vine-temple.js (OK - compressed)
+489515075 assets/game/src/menu.js (OK - compressed)
+489522881 assets/game/src/models.js (OK - compressed)
+489548749 assets/game/src/multiplayer.js (OK - compressed)
+489558763 assets/game/src/net-items-codec.js (OK - compressed)
+489561520 assets/game/src/net-items.js (OK - compressed)
+489565066 assets/game/src/netdiag.js (OK - compressed)
+489568147 assets/game/src/netplay.js (OK - compressed)
+489584327 assets/game/src/progress.js (OK - compressed)
+489591020 assets/game/src/quality.js (OK - compressed)
+489593399 assets/game/src/race-picker.js (OK - compressed)
+489594925 assets/game/src/race.js (OK - compressed)
+489598909 assets/game/src/road-themes.js (OK - compressed)
+489600760 assets/game/src/styles.css (OK - compressed)
+489612381 assets/game/src/track-layout.js (OK - compressed)
+489626157 assets/game/src/track-obstacles.js (OK - compressed)
+489628274 assets/game/src/track-textures.js (OK - compressed)
+489632257 assets/game/src/track.js (OK - compressed)
+489643373 assets/game/vendor/three@0.170.0/build/three.module.js (OK - compressed)
+489984412 assets/game/vendor/three@0.170.0/examples/jsm/geometries/RoundedBoxGeometry.js (OK - compressed)
+489985942 assets/game/vendor/three@0.170.0/examples/jsm/loaders/GLTFLoader.js (OK - compressed)
+490015586 assets/game/vendor/three@0.170.0/examples/jsm/postprocessing/EffectComposer.js (OK - compressed)
+490017067 assets/game/vendor/three@0.170.0/examples/jsm/postprocessing/MaskPass.js (OK - compressed)
+490017904 assets/game/vendor/three@0.170.0/examples/jsm/postprocessing/OutputPass.js (OK - compressed)
+490018868 assets/game/vendor/three@0.170.0/examples/jsm/postprocessing/Pass.js (OK - compressed)
+490019737 assets/game/vendor/three@0.170.0/examples/jsm/postprocessing/RenderPass.js (OK - compressed)
+490020515 assets/game/vendor/three@0.170.0/examples/jsm/postprocessing/ShaderPass.js (OK - compressed)
+490021301 assets/game/vendor/three@0.170.0/examples/jsm/postprocessing/UnrealBloomPass.js (OK - compressed)
+490024806 assets/game/vendor/three@0.170.0/examples/jsm/shaders/CopyShader.js (OK - compressed)
+490025236 assets/game/vendor/three@0.170.0/examples/jsm/shaders/LuminosityHighPassShader.js (OK - compressed)
+490025853 assets/game/vendor/three@0.170.0/examples/jsm/shaders/OutputShader.js (OK - compressed)
+490026527 assets/game/vendor/three@0.170.0/examples/jsm/utils/BufferGeometryUtils.js (OK - compressed)
+490035178 assets/gaming_platform.happ (OK - compressed)
+491080865 assets/turbo_kart.happ (OK - compressed)
+492175203 AndroidManifest.xml (OK - compressed)
+492176220 resources.arsc (OK)
+492176334 kotlin/annotation/annotation.kotlin_builtins (OK - compressed)
+492176952 kotlin/collections/collections.kotlin_builtins (OK - compressed)
+492178921 kotlin/concurrent/atomics/atomics.kotlin_builtins (OK - compressed)
+492180106 kotlin/coroutines/coroutines.kotlin_builtins (OK - compressed)
+492180294 kotlin/internal/internal.kotlin_builtins (OK - compressed)
+492180712 kotlin/kotlin.kotlin_builtins (OK - compressed)
+492186281 kotlin/ranges/ranges.kotlin_builtins (OK - compressed)
+492187729 kotlin/reflect/reflect.kotlin_builtins (OK - compressed)
+492189238 assets/game/game-bridge-core.mjs (OK - compressed)
+  850793 assets/game/mobile-game.mjs (OK - compressed)
+100706786 classes3.dex (OK - compressed)
+492191744 lib/arm64-v8a/libturbo_kart_realtime_jni.so (OK)
+525238272 lib/x86_64/libturbo_kart_realtime_jni.so (OK)
+  852168 assets/game/online-game.mjs (OK - compressed)
+Verification succesful
+APK verified: original package, MainActivity, complete staged assets, JNI ABIs ['arm64-v8a', 'x86_64']
+Debug APK:
+/mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk

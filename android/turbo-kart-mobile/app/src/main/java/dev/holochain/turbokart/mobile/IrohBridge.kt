@@ -37,4 +37,9 @@ internal object IrohBridge {
 
     /** Restricted physics DTO; authentication and codec validation stay native. */
     external fun exchangeGameState(frameJson: String): String
+
+    /** Original desktop Session/RaceCtl with the same immutable admission. */
+    external fun startProductionRace(bundleJson: String): String
+    /** Fixed gameplay operations only: status, ready, packets, poll and stop. */
+    external fun productionRequest(requestJson: String): String
 }

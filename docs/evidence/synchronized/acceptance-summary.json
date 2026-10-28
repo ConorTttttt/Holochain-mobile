@@ -1,0 +1,617 @@
+{
+  "passed": true,
+  "baseline_commit": "d6d2e42ce39235860b0be0410bddb68c42d90460",
+  "complete_live_races": [
+    {
+      "label": "race-3",
+      "race_id": "5c82f1b6d1f628825f315cfd980f0ab8",
+      "schedule": {
+        "id": "b96f1a49f1b7c7c1",
+        "start_at_host_ms": 1017492,
+        "host_epoch": 1,
+        "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+      },
+      "humans": [
+        {
+          "index": 0,
+          "kind": 0,
+          "laps": 1,
+          "checkpoint": 0,
+          "place": 3,
+          "state": 1,
+          "progress": 131072,
+          "lapMs": 60895,
+          "finishMs": 60895
+        },
+        {
+          "index": 1,
+          "kind": 0,
+          "laps": 1,
+          "checkpoint": 0,
+          "place": 1,
+          "state": 1,
+          "progress": 131072,
+          "lapMs": 58965,
+          "finishMs": 58965
+        }
+      ],
+      "android_items": {
+        "sent": 12,
+        "received": 103,
+        "refused": 0,
+        "dropped": 0
+      },
+      "desktop_items": {
+        "sent": 103,
+        "received": 12,
+        "refused": 0,
+        "dropped": 0
+      },
+      "native_publication": {
+        "nominal_hz": 20,
+        "publisher": "native-thread",
+        "queue_capacity": 3,
+        "queued": 2056,
+        "published": 1349,
+        "superseded": 704,
+        "empty_ticks": 161,
+        "ticks": 1519,
+        "skipped_deadlines": 0,
+        "interval_samples": 1200,
+        "mean_interval_us": 50457,
+        "p95_interval_us": 52719,
+        "max_interval_us": 399934,
+        "error": null
+      },
+      "render_probe": null,
+      "menu_validation": {
+        "passed": true,
+        "app_pid": "3321",
+        "original_menu_buttons": true,
+        "session": {
+          "ok": true,
+          "result": {
+            "state": "disconnected",
+            "realtime_active": false
+          }
+        },
+        "renderer_errors_after_marker": [],
+        "same_process": true
+      }
+    },
+    {
+      "label": "race-4",
+      "race_id": "51dc9ab89d96a7e7973bb3834352d9cc",
+      "schedule": {
+        "id": "9a97e331f494dd8d",
+        "start_at_host_ms": 1016143,
+        "host_epoch": 1,
+        "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+      },
+      "humans": [
+        {
+          "index": 0,
+          "kind": 0,
+          "laps": 1,
+          "checkpoint": 0,
+          "place": 1,
+          "state": 1,
+          "progress": 131072,
+          "lapMs": 58403,
+          "finishMs": 58403
+        },
+        {
+          "index": 1,
+          "kind": 0,
+          "laps": 1,
+          "checkpoint": 0,
+          "place": 8,
+          "state": 1,
+          "progress": 131072,
+          "lapMs": 64718,
+          "finishMs": 64718
+        }
+      ],
+      "android_items": {
+        "sent": 15,
+        "received": 80,
+        "refused": 0,
+        "dropped": 0
+      },
+      "desktop_items": {
+        "sent": 80,
+        "received": 15,
+        "refused": 0,
+        "dropped": 0
+      },
+      "native_publication": {
+        "nominal_hz": 20,
+        "publisher": "native-thread",
+        "queue_capacity": 3,
+        "queued": 2087,
+        "published": 1368,
+        "superseded": 716,
+        "empty_ticks": 137,
+        "ticks": 1516,
+        "skipped_deadlines": 0,
+        "interval_samples": 1200,
+        "mean_interval_us": 50956,
+        "p95_interval_us": 53722,
+        "max_interval_us": 401056,
+        "error": null
+      },
+      "render_probe": {
+        "seconds": 10.063,
+        "renderFrames": 132,
+        "simulationTimerCalls": 426,
+        "nativePublished": 194,
+        "desktopReceived": 194,
+        "publicationHz": 19.278545165457615
+      },
+      "menu_validation": {
+        "passed": true,
+        "app_pid": "3321",
+        "original_menu_buttons": true,
+        "session": {
+          "ok": true,
+          "result": {
+            "state": "disconnected",
+            "realtime_active": false
+          }
+        },
+        "renderer_errors_after_marker": [],
+        "same_process": true
+      }
+    }
+  ],
+  "same_android_pid": "3321",
+  "desktop_motion_adapter_present": false,
+  "desktop_legacy_test_channel_present": false,
+  "identity": {
+    "holochain": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+    "iroh": "53fdcfcfb33a25fab3f00464e4ee20c4f493a80127bc8b62e2ee26d9fc9b0d45",
+    "matches_pre_update_baseline": true,
+    "second_race_conductor_reused": true,
+    "second_race_endpoint_already_running": true
+  },
+  "clock": {
+    "label": "race-4",
+    "method": "CDP midpoint maps page monotonic GO to observer monotonic time; no cross-device wall-clock subtraction",
+    "samples": {
+      "android": [
+        {
+          "page": {
+            "now": 65162.80000000005,
+            "origin": 1793212137683.7,
+            "go": 1793212148395.7,
+            "lateMs": 21.977000000069893,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 5423.936,
+              "error_bound_ms": 1.253,
+              "rtt_ms": 1.279,
+              "quality": "Good",
+              "samples": 12,
+              "attempts": 1,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 16.126555999999994,
+          "observerGoMs": -54353.97777300005
+        },
+        {
+          "page": {
+            "now": 65179.39999999991,
+            "origin": 1793212137683.7,
+            "go": 1793212148395.7,
+            "lateMs": 21.977000000069893,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 5423.936,
+              "error_bound_ms": 1.253,
+              "rtt_ms": 1.279,
+              "quality": "Good",
+              "samples": 12,
+              "attempts": 1,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 14.012119999999996,
+          "observerGoMs": -54354.07161799991
+        },
+        {
+          "page": {
+            "now": 65189,
+            "origin": 1793212137683.7,
+            "go": 1793212148395.7,
+            "lateMs": 21.977000000069893,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 5423.936,
+              "error_bound_ms": 1.253,
+              "rtt_ms": 1.279,
+              "quality": "Good",
+              "samples": 12,
+              "attempts": 1,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 7.965637000000001,
+          "observerGoMs": -54351.5004345
+        },
+        {
+          "page": {
+            "now": 65193.19999999995,
+            "origin": 1793212137683.7,
+            "go": 1793212148395.7,
+            "lateMs": 21.977000000069893,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 5423.936,
+              "error_bound_ms": 1.253,
+              "rtt_ms": 1.279,
+              "quality": "Good",
+              "samples": 12,
+              "attempts": 1,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 2.310288999999983,
+          "observerGoMs": -54349.430048499955
+        },
+        {
+          "page": {
+            "now": 65195.30000000005,
+            "origin": 1793212137683.7,
+            "go": 1793212148395.7,
+            "lateMs": 21.977000000069893,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 5423.936,
+              "error_bound_ms": 1.253,
+              "rtt_ms": 1.279,
+              "quality": "Good",
+              "samples": 12,
+              "attempts": 1,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 1.14899699999998,
+          "observerGoMs": -54348.928980500044
+        },
+        {
+          "page": {
+            "now": 65197.30000000005,
+            "origin": 1793212137683.7,
+            "go": 1793212148395.7,
+            "lateMs": 21.977000000069893,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 5423.936,
+              "error_bound_ms": 1.253,
+              "rtt_ms": 1.279,
+              "quality": "Good",
+              "samples": 12,
+              "attempts": 1,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 1.3965259999999944,
+          "observerGoMs": -54348.860517000045
+        },
+        {
+          "page": {
+            "now": 65206.19999999995,
+            "origin": 1793212137683.7,
+            "go": 1793212148395.7,
+            "lateMs": 21.977000000069893,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 5423.936,
+              "error_bound_ms": 1.253,
+              "rtt_ms": 1.279,
+              "quality": "Good",
+              "samples": 12,
+              "attempts": 1,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 8.229266999999993,
+          "observerGoMs": -54352.10696249995
+        },
+        {
+          "page": {
+            "now": 65214.5,
+            "origin": 1793212137683.7,
+            "go": 1793212148395.7,
+            "lateMs": 21.977000000069893,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 5423.936,
+              "error_bound_ms": 1.253,
+              "rtt_ms": 1.279,
+              "quality": "Good",
+              "samples": 12,
+              "attempts": 1,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 4.555717999999985,
+          "observerGoMs": -54349.008022
+        }
+      ],
+      "desktop": [
+        {
+          "page": {
+            "now": 1176351.1000000238,
+            "origin": 1793211027258.8,
+            "go": 1793212149147.1,
+            "lateMs": 14.310000011930242,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 0,
+              "error_bound_ms": 0,
+              "rtt_ms": 0,
+              "quality": "Good",
+              "samples": 0,
+              "attempts": 0,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 1.3934600000000046,
+          "observerGoMs": -54357.190396195714
+        },
+        {
+          "page": {
+            "now": 1176366.3000000715,
+            "origin": 1793211027258.8,
+            "go": 1793212149147.1,
+            "lateMs": 14.310000011930242,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 0,
+              "error_bound_ms": 0,
+              "rtt_ms": 0,
+              "quality": "Good",
+              "samples": 0,
+              "attempts": 0,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 1.1501289999999926,
+          "observerGoMs": -54357.0773777434
+        },
+        {
+          "page": {
+            "now": 1176375.4000000954,
+            "origin": 1793211027258.8,
+            "go": 1793212149147.1,
+            "lateMs": 14.310000011930242,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 0,
+              "error_bound_ms": 0,
+              "rtt_ms": 0,
+              "quality": "Good",
+              "samples": 0,
+              "attempts": 0,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 1.101664999999997,
+          "observerGoMs": -54357.05447576724
+        },
+        {
+          "page": {
+            "now": 1176378.7000000477,
+            "origin": 1793211027258.8,
+            "go": 1793212149147.1,
+            "lateMs": 14.310000011930242,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 0,
+              "error_bound_ms": 0,
+              "rtt_ms": 0,
+              "quality": "Good",
+              "samples": 0,
+              "attempts": 0,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 0.8484960000000115,
+          "observerGoMs": -54357.04164621956
+        },
+        {
+          "page": {
+            "now": 1176380.8000000715,
+            "origin": 1793211027258.8,
+            "go": 1793212149147.1,
+            "lateMs": 14.310000011930242,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 0,
+              "error_bound_ms": 0,
+              "rtt_ms": 0,
+              "quality": "Good",
+              "samples": 0,
+              "attempts": 0,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 0.7760419999999897,
+          "observerGoMs": -54357.1584112434
+        },
+        {
+          "page": {
+            "now": 1176383,
+            "origin": 1793211027258.8,
+            "go": 1793212149147.1,
+            "lateMs": 14.310000011930242,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 0,
+              "error_bound_ms": 0,
+              "rtt_ms": 0,
+              "quality": "Good",
+              "samples": 0,
+              "attempts": 0,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 0.7888570000000072,
+          "observerGoMs": -54357.146830671874
+        },
+        {
+          "page": {
+            "now": 1176396,
+            "origin": 1793211027258.8,
+            "go": 1793212149147.1,
+            "lateMs": 14.310000011930242,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 0,
+              "error_bound_ms": 0,
+              "rtt_ms": 0,
+              "quality": "Good",
+              "samples": 0,
+              "attempts": 0,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 4.982605000000007,
+          "observerGoMs": -54358.986521671875
+        },
+        {
+          "page": {
+            "now": 1176401.5,
+            "origin": 1793211027258.8,
+            "go": 1793212149147.1,
+            "lateMs": 14.310000011930242,
+            "schedule": {
+              "id": "9a97e331f494dd8d",
+              "start_at_host_ms": 1016143,
+              "host_epoch": 1,
+              "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh"
+            },
+            "clock": {
+              "offset_ms": 0,
+              "error_bound_ms": 0,
+              "rtt_ms": 0,
+              "quality": "Good",
+              "samples": 0,
+              "attempts": 0,
+              "tier": "internet",
+              "max_error_bound_ms": 60
+            }
+          },
+          "rttMs": 0.8137920000000065,
+          "observerGoMs": -54357.01790417187
+        }
+      ]
+    },
+    "goDifferenceMs": 8.229430743354897,
+    "observationUncertaintyMs": 0.9625194999999849,
+    "androidLateMs": 21.977000000069893,
+    "desktopLateMs": 14.310000011930242,
+    "passed": true
+  },
+  "automated": {
+    "javascript": 46,
+    "staging": 3,
+    "original_game": 62,
+    "native_jni": 4,
+    "native_original_sidecar": 39,
+    "native_optional_relay_ignored": 1,
+    "single_player_webview": 14
+  }
+}

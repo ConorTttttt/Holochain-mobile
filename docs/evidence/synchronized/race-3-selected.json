@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "result": {
+    "lobby": {
+      "id": "uhCkkLJwBJDId5oc1-loenxclTUEtsQW2xwwBY4EQQrWzBKl_Qz1_",
+      "lobby": {
+        "name": "SyncRace-3",
+        "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "max_players": 2,
+        "track_id": "palm-cove",
+        "class": "50cc",
+        "laps": 1,
+        "relay_urls": [],
+        "access": "Public"
+      },
+      "created_at": 1793211491946,
+      "status": {
+        "status": {
+          "lobby": "uhCkkLJwBJDId5oc1-loenxclTUEtsQW2xwwBY4EQQrWzBKl_Qz1_",
+          "state": "Open",
+          "race_id": null
+        },
+        "author": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "at_ms": 1793211491951
+      },
+      "members": [
+        {
+          "player": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+          "character_id": "blaze",
+          "joined_at": 1793211491949,
+          "join": "uhCkkC7qaHca4fvo0-IQR0E2wp_gu2UoAsi66HSoDha_dkKySRlLN"
+        }
+      ],
+      "waitlist": []
+    }
+  }
+}

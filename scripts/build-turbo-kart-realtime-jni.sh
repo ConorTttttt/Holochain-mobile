@@ -30,6 +30,7 @@ cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/lib.rs" "$PROJECT/src/lib.rs"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/race_session.rs" "$PROJECT/src/race_session.rs"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/kart_stream.rs" "$PROJECT/src/kart_stream.rs"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/game_bridge.rs" "$PROJECT/src/game_bridge.rs"
+cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/production.rs" "$PROJECT/src/production.rs"
 cat > "$PROJECT/Cargo.toml" <<EOF
 [workspace]
 resolver = "2"
@@ -52,6 +53,8 @@ sha2 = "0.10"
 tokio = { version = "1", features = ["rt-multi-thread", "time", "net", "sync"] }
 jni = "0.21"
 zeroize = "1"
+base64 = "0.22"
+turbo-kart-sidecar = { path = "$GAME/apps/turbo-kart-desktop/sidecar" }
 holochain-moq-kart-wire = { path = "$GAME/crates/kart-wire" }
 holochain-moq-mesh = { path = "$GAME/crates/mesh" }
 holochain-moq-mesh-iroh = { path = "$GAME/crates/mesh-iroh" }
@@ -64,6 +67,10 @@ EOF
 
 # Pin the isolated graph independently of the Wasmi workspace lockfile.
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/Cargo.lock" "$PROJECT/Cargo.lock"
+if [ "${2:-}" = "--prepare-only" ]; then
+  echo "Prepared isolated realtime manifest: $PROJECT/Cargo.toml"
+  exit 0
+fi
 echo "Building separate Android Iroh/MoQ JNI library (16 KiB aligned)..."
 cargo build --locked --release --target "$RUST_TARGET" \
   --lib --manifest-path "$PROJECT/Cargo.toml" \

@@ -1,0 +1,7 @@
+{
+  "state": "title",
+  "bridge": {
+    "error": "TypeError: this.api.onLobbyEvent is not a function"
+  },
+  "errors": []
+}

@@ -1,0 +1,11 @@
+
+running 6 tests
+test netmode::tests::endpoint_only_is_lan_mode ... ok
+test netmode::tests::lan_tier_equals_the_existing_fair_quality_gate ... ok
+test netmode::tests::malformed_arguments_are_refused ... ok
+test netmode::tests::only_clean_https_relay_urls_are_accepted ... ok
+test netmode::tests::relay_url_selects_internet_mode_in_either_order ... ok
+test netmode::tests::tiers_accept_exactly_up_to_their_ceiling ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 0.00s
+

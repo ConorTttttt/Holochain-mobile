@@ -83,7 +83,7 @@ def stage(source: Path, destination: Path, touch_source: Path) -> None:
     (dest / 'index.html').write_text(page, encoding='utf-8')
     shutil.copy2(touch_source, dest / 'mobile-touch.mjs')
     bridge = Path(__file__).resolve().parent.parent / 'mobile' / 'game-bridge'
-    for name in ('mobile-game.mjs', 'game-bridge-core.mjs'):
+    for name in ('mobile-game.mjs', 'game-bridge-core.mjs', 'online-game.mjs'):
         shutil.copy2(bridge / name, dest / name)
     page = (dest / 'index.html').read_text(encoding='utf-8')
     page = page.replace('</body>', '<script type="module" src="./mobile-game.mjs"></script>\n</body>')

@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "result": {
+    "endpoint_id": "53fdcfcfb33a25fab3f00464e4ee20c4f493a80127bc8b62e2ee26d9fc9b0d45",
+    "relay_urls": [],
+    "direct_addrs": [
+      "10.0.2.15:53996",
+      "10.0.2.16:53996",
+      "[fec0::4444:415:134c:4fad]:46931",
+      "[fec0::5054:ff:fe12:3456]:46931",
+      "[fec0::88a9:35bf:bd31:771c]:46931"
+    ],
+    "already_running": false,
+    "moq_transport": "original desktop mesh-iroh",
+    "kart_wire_bytes": 42,
+    "signed_presence_published": false,
+    "authenticated_race_session": false
+  }
+}

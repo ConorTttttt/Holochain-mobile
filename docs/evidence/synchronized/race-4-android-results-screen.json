@@ -1,0 +1,101 @@
+{
+  "state": "finished",
+  "progress": {
+    "status": 3,
+    "laps": 1,
+    "seq": 1270,
+    "raceMs": 124889,
+    "racers": [
+      {
+        "index": 0,
+        "kind": 0,
+        "laps": 1,
+        "checkpoint": 0,
+        "place": 1,
+        "state": 1,
+        "progress": 131072,
+        "lapMs": 58403,
+        "finishMs": 58403
+      },
+      {
+        "index": 1,
+        "kind": 0,
+        "laps": 1,
+        "checkpoint": 0,
+        "place": 8,
+        "state": 1,
+        "progress": 131072,
+        "lapMs": 64718,
+        "finishMs": 64718
+      },
+      {
+        "index": 2,
+        "kind": 1,
+        "laps": 1,
+        "checkpoint": 0,
+        "place": 4,
+        "state": 1,
+        "progress": 131072,
+        "lapMs": 58843,
+        "finishMs": 58843
+      },
+      {
+        "index": 3,
+        "kind": 1,
+        "laps": 1,
+        "checkpoint": 0,
+        "place": 3,
+        "state": 1,
+        "progress": 131072,
+        "lapMs": 58813,
+        "finishMs": 58813
+      },
+      {
+        "index": 4,
+        "kind": 1,
+        "laps": 1,
+        "checkpoint": 0,
+        "place": 5,
+        "state": 1,
+        "progress": 131072,
+        "lapMs": 59542,
+        "finishMs": 59542
+      },
+      {
+        "index": 5,
+        "kind": 1,
+        "laps": 1,
+        "checkpoint": 0,
+        "place": 6,
+        "state": 1,
+        "progress": 131072,
+        "lapMs": 59587,
+        "finishMs": 59587
+      },
+      {
+        "index": 6,
+        "kind": 1,
+        "laps": 1,
+        "checkpoint": 0,
+        "place": 2,
+        "state": 1,
+        "progress": 131072,
+        "lapMs": 58764,
+        "finishMs": 58764
+      },
+      {
+        "index": 7,
+        "kind": 1,
+        "laps": 1,
+        "checkpoint": 0,
+        "place": 7,
+        "state": 1,
+        "progress": 131072,
+        "lapMs": 60262,
+        "finishMs": 60262
+      }
+    ]
+  },
+  "results": "LAP\n1\n/1\n1:04.71\nL11:04.71\nE / SHIFT\n1\nMatthew\n2\nPaul\n3\nPaul\n4\nArt\n5\nArt\n6\nZippy\n7\nMatthew\n8\nZippy\n106\nkm/h\nDRIFT\n8\nth\nGO!\nFINISH!\n8th\nRACE COMPLETE\n1 LAP RACE \u00b7 PROVISIONAL FINISH ORDER \u00b7 NOT RECORDED\n1st\nMatthew\nBEST 0:58.40\n0:58.40\n2nd\nPaul\nBEST 0:58.76\n0:58.76\n3rd\nPaul\nBEST 0:58.81\n0:58.81\n4th\nArt\nBEST 0:58.84\n0:58.84\n5th\nArt\nBEST 0:59.54\n0:59.54\n6th\nZippy\nBEST 0:59.58\n0:59.58\n7th\nMatthew\nBEST 1:00.26\n1:00.26\n8th\nZippy YOU\nBEST 1:04.71\n1:04.71\nNEW LOBBY\nMAIN MENU\nNEW LOBBY closes this race and opens Multiplayer: the host creates a new lobby and the others join it.\nONLINE \u00b7 RACING \u00b7 clock \u00b11.3 ms \u00b7 INTERNET MODE \u00b7 clock tier \u226460 ms (experimental) \u00b7 path DIRECT \u00b7 Matthew (uhCAkPvBd\u2026rqKLh) LIVE \u00b7 YOU Zippy (uhCAka2YI\u20263yDa5) \u00b7 AI 6 (from host) \u00b7 STANDINGS #1267 COMPLETED\n50cc \u00b7 1 LAP\nPalm Cove Circuit\nWAITING FOR SHARED START",
+  "errors": []
+}
