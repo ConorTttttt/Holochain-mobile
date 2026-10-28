@@ -151,7 +151,7 @@ The direct-only transport test explicitly started the desktop binary channel and
 
 The reusable runtime launcher now selects the original desktop HTTPS Iroh relay instead of `--lan`. Android's matching public relay setting requires a data-preserving app restart and fresh presence/admission. Set it before starting the endpoint. In the first relay test, both sides authenticated their pinned peer and matching admission digest; Android reported `authenticated_moq`, and desktop reported `connected`, no setup failures, and one dial attempt. After relay rendezvous, Iroh upgraded to a direct path. This proves direct UDP can work after discovery; it does not prove the emulator is directly reachable from its private advertised address alone. `reduced-binding.json` records the signed relay and discovered public UDP address. No insecure transport or admission bypass was used.
 
-The bounded Android diagnostic completed 100 original 42-byte WP3 frames at nominal 20 Hz. Desktop received/decoded all 100 (`android-wp3-burst-complete.json`, `desktop-wp3-burst-complete.json`). Android also decoded original desktop WP3 states. The first real-motion run independently proved moving original local physics and admitted remote poses on both sides, with zero desktop malformed/stale states; one opponent was outside Android's camera view in that run. This evidence is preserved in `multiplayer-motion-first-run.json` and is distinct from the final camera check.
+The bounded Android diagnostic completed 100 original 42-byte WP3 frames at nominal 20 Hz. Desktop received/decoded all 100 (`android-wp3-burst-complete.json`, `desktop-wp3-burst-complete.json`). Android also decoded original desktop WP3 states. These diagnostic counters are separate from the final actual-physics and camera evidence below.
 
 The desktop motion harness (`scripts/emulator/desktop-motion-adapter.js`) runs in the unchanged source desktop page through its original API, physics, NetRace, codec and binary channel. It is explicitly a development test counterpart for the Android bridge, not the desktop's full online race controller. The host controller remains at clock synchronization: Android still needs the original readiness/clock, authoritative progress/items and full race lifecycle implementation. The live Android bridge targets at most 20 Hz; the first loaded dual-renderer run observed about 14–16 received frames/s, so its actual cadence is below the nominal target under this emulator workload. The standalone bounded diagnostic is separate from that render-dependent cadence.
 
@@ -174,6 +174,7 @@ The 14 single-player checks were run on the dual-ABI APK before the last bridge-
 | Requested result | Recorded status |
 | --- | --- |
 | Branch | `feat/turbo-kart-mobile-combined` |
+| Implementation commit | `5a5ea22f1407a62e657f817b919eef0b4007a0fc` |
 | Emulator installed/name | Official Google Emulator; `TurboKart_API35`, Pixel 8 profile |
 | Android/API/ABI/KVM | Android 15 / API 35 / native x86_64 / KVM enabled |
 | APK | `android/turbo-kart-mobile/app/build/outputs/apk/debug/app-debug.apk` |
