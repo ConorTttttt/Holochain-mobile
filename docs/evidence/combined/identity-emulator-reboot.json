@@ -1,0 +1,32 @@
+{
+  "holochain": {
+    "ok": true,
+    "result": {
+      "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+      "gaming_directory_dna": "uhC0kOLjJawOKwN_Ft8SfpgySiR2NnLRFqUfJ1zW2nnvGkvJHHT4H",
+      "turbo_kart_dna": "uhC0kEYk4opmHrNsBIrKUdo_hAgnUikh3ov_HGzH_PDsAn4KayQbT",
+      "both_enabled": true,
+      "resumed": true
+    }
+  },
+  "iroh": {
+    "ok": true,
+    "result": {
+      "endpoint_id": "53fdcfcfb33a25fab3f00464e4ee20c4f493a80127bc8b62e2ee26d9fc9b0d45",
+      "relay_urls": [],
+      "direct_addrs": [
+        "10.0.2.15:39549",
+        "10.0.2.16:39549",
+        "[fec0::5054:ff:fe12:3456]:47713",
+        "[fec0::88a9:35bf:bd31:771c]:47713",
+        "[fec0::bab8:e5cd:7e02:22a7]:47713"
+      ],
+      "already_running": false,
+      "moq_transport": "original desktop mesh-iroh",
+      "kart_wire_bytes": 42,
+      "signed_presence_published": false,
+      "authenticated_race_session": false
+    }
+  },
+  "boot_id": "71bd9f52-0bc9-47c6-99d8-642f835155b3"
+}

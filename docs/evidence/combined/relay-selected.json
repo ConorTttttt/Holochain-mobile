@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "result": {
+    "lobby": {
+      "id": "uhCkkr9AlxkUS2813n5GUhH28FxO9wce1sYLj4Zjc3cVJe8HlwVCL",
+      "lobby": {
+        "name": "AndroidRelayTest-20261028",
+        "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "max_players": 2,
+        "track_id": "palm-cove",
+        "class": "100cc",
+        "laps": 3,
+        "relay_urls": [
+          "https://dev-test-bootstrap2.holochain.org/"
+        ],
+        "access": "Public"
+      },
+      "created_at": 1793178399195,
+      "status": {
+        "status": {
+          "lobby": "uhCkkr9AlxkUS2813n5GUhH28FxO9wce1sYLj4Zjc3cVJe8HlwVCL",
+          "state": "Open",
+          "race_id": null
+        },
+        "author": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "at_ms": 1793178399205
+      },
+      "members": [
+        {
+          "player": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+          "character_id": "rex",
+          "joined_at": 1793178399202,
+          "join": "uhCkktmkSdfqTx9D4A0o1yZaShHfSM9g85nyFgBf52692JmtzExbb"
+        }
+      ],
+      "waitlist": []
+    }
+  }
+}

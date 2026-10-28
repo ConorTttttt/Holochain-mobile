@@ -6,6 +6,8 @@ Does not change the original game source, Holochain DNAs, or desktop app.
 from __future__ import annotations
 
 import argparse
+import json
+import re
 from pathlib import Path
 import shutil
 import sys
@@ -38,7 +40,29 @@ def stage(source: Path, destination: Path, touch_source: Path) -> None:
         else:
             shutil.copy2(original, target)
 
+    fonts = Path(__file__).resolve().parent.parent / 'mobile' / 'game-assets' / 'fonts'
+    manifest = json.loads((fonts / 'sources.json').read_text())
+    import hashlib
+    for name, info in manifest.items():
+        if hashlib.sha256((fonts / name).read_bytes()).hexdigest() != info['sha256']:
+            raise ValueError(f'Bundled font checksum mismatch: {name}')
+    shutil.copytree(fonts, dest / 'mobile-fonts')
+    (dest / 'local-fonts.css').write_text(
+        "@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:swap;src:url('./mobile-fonts/LilitaOne-Regular.ttf') format('truetype')}\n"
+        "@font-face{font-family:'Nunito';font-style:normal;font-weight:200 1000;font-display:swap;src:url('./mobile-fonts/Nunito.ttf') format('truetype')}\n", encoding='utf-8')
     page = (dest / 'index.html').read_text(encoding='utf-8')
+    page = re.sub(r'\s*<link[^>]+(?:fonts.googleapis.com|fonts.gstatic.com)[^>]*>', '', page)
+    page = page.replace('</head>', '<link rel="stylesheet" href="./local-fonts.css">\n</head>')
+    # Check static entrypoints and import-map targets before shipping an APK.
+    references = re.findall(r'(?:src|href)=["\']([^"\']+)["\']', page)
+    for block in re.findall(r'<script\s+type="importmap"[^>]*>(.*?)</script>', page, re.S):
+        references += list(json.loads(block).get('imports', {}).values())
+    for reference in references:
+        if reference.startswith(('https:', 'http:', 'data:', '#', '//')):
+            continue
+        relative = reference.split('?', 1)[0].split('#', 1)[0]
+        if not (dest / relative).exists():
+            raise ValueError(f'Required game entrypoint missing: {reference}')
     if page.count('</body>') != 1:
         raise ValueError('Game index.html must contain exactly one closing </body>')
     if 'tk-touch-controls' in page or 'mobile-touch.mjs' in page:
@@ -58,6 +82,12 @@ def stage(source: Path, destination: Path, touch_source: Path) -> None:
     page = page.replace('</body>', injected + '</body>')
     (dest / 'index.html').write_text(page, encoding='utf-8')
     shutil.copy2(touch_source, dest / 'mobile-touch.mjs')
+    bridge = Path(__file__).resolve().parent.parent / 'mobile' / 'game-bridge'
+    for name in ('mobile-game.mjs', 'game-bridge-core.mjs'):
+        shutil.copy2(bridge / name, dest / name)
+    page = (dest / 'index.html').read_text(encoding='utf-8')
+    page = page.replace('</body>', '<script type="module" src="./mobile-game.mjs"></script>\n</body>')
+    (dest / 'index.html').write_text(page, encoding='utf-8')
     print(f'Android touch game staged: {src} -> {dest}')
     print('Original game files and both Holochain DNAs were not modified.')
 

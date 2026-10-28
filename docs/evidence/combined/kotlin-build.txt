@@ -1,0 +1,27 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig
+> Task :app:checkDebugAarMetadata
+> Task :app:generateDebugResValues
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:mergeDebugResources
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:processDebugResources
+
+> Task :app:compileDebugKotlin
+w: file:///mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/src/main/java/dev/holochain/turbokart/mobile/MainActivity.kt:79:34 'val systemWindowInsetTop: Int' is deprecated. Deprecated in Java.
+w: file:///mnt/holochain/TurboMobile/Holochain-mobile-combined/android/turbo-kart-mobile/app/src/main/java/dev/holochain/turbokart/mobile/MainActivity.kt:80:37 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
+
+BUILD SUCCESSFUL in 45s
+15 actionable tasks: 15 executed

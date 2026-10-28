@@ -1,0 +1,68 @@
+{
+  "ok": true,
+  "result": {
+    "state": "connecting",
+    "race_id": "37ac84a4a8130f0b814e63aa3f2e6f53",
+    "local_agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+    "host_agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "admitted_players": 2,
+    "authenticated_peer_count": 0,
+    "expected_peer_count": 1,
+    "authenticated_moq_peer_session": false,
+    "race_control_active": false,
+    "authenticated_race_session": false,
+    "peers": [
+      {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "connected": false,
+        "link_established": false,
+        "rtt_ms": null,
+        "state": "Connecting",
+        "path": "None",
+        "we_dial": false,
+        "last_dial_error": null,
+        "dial_attempts": 0
+      }
+    ],
+    "setup_errors": [],
+    "kart_wire_bytes": 42,
+    "game_packets_sent": 0,
+    "last_game_tick": null,
+    "members": [
+      {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "character_id": "rex"
+      },
+      {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "character_id": "zippy"
+      }
+    ],
+    "config": {
+      "name": "AndroidFinalMotion-20261028",
+      "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+      "max_players": 2,
+      "track_id": "palm-cove",
+      "class": "100cc",
+      "laps": 3,
+      "relay_urls": [
+        "https://dev-test-bootstrap2.holochain.org/"
+      ],
+      "access": "Public"
+    },
+    "synthetic_kart_packets_sent": 0,
+    "remote_kart_packets_decoded": 0,
+    "diagnostic_wp3_stream": {
+      "test_only": true,
+      "requested": false,
+      "running": false,
+      "completed": false,
+      "nominal_hz": 20,
+      "target_frames": 100,
+      "sent": 0,
+      "elapsed_ms": null,
+      "error": null,
+      "desktop_receipt_confirmed": false
+    }
+  }
+}

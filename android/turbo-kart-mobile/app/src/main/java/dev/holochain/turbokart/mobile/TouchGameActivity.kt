@@ -3,6 +3,13 @@ package dev.holochain.turbokart.mobile
 import android.app.Activity
 import android.graphics.Color
 import android.os.Bundle
+import android.net.Uri
+import android.util.Log
+import android.webkit.ConsoleMessage
+import android.webkit.WebMessage
+import android.webkit.WebMessagePort
+import org.json.JSONObject
+import java.util.concurrent.Executors
 import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -21,6 +28,10 @@ import java.io.FileNotFoundException
  */
 class TouchGameActivity : Activity() {
     private var game: WebView? = null
+    private var port: WebMessagePort? = null
+    private val bridgeWorker = Executors.newSingleThreadExecutor()
+    private var paused = false
+    private var portGeneration = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,8 +66,56 @@ class TouchGameActivity : Activity() {
             setSupportMultipleWindows(false)
             mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         }
-        view.webChromeClient = WebChromeClient()
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+        view.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                Log.i("TurboKartWeb", "${message.messageLevel()}: ${message.message()} (${message.sourceId()}:${message.lineNumber()})")
+                return true
+            }
+        }
         view.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                portGeneration++
+                port?.close(); port = null
+            }
+            override fun onPageFinished(view: WebView, url: String) {
+                if (url != GAME_URL || !intent.getBooleanExtra("multiplayer", false)) return
+                val channels = view.createWebMessageChannel()
+                port = channels[0]
+                val generation = portGeneration
+                channels[0].setWebMessageCallback(object : WebMessagePort.WebMessageCallback() {
+                    override fun onMessage(channel: WebMessagePort, message: WebMessage) {
+                        val raw = message.data ?: return
+                        if (raw.length > 4096 || generation != portGeneration) return
+                        val request = try { JSONObject(raw) } catch (_: Exception) { return }
+                        val requestId = request.optLong("id", -1)
+                        if (requestId < 1) return
+                        if (paused) {
+                            channel.postMessage(WebMessage(JSONObject().put("id", requestId).put("ok", false).put("errorCode", "paused").toString()))
+                            return
+                        }
+                        bridgeWorker.execute {
+                            val result = try {
+                                when (request.getString("op")) {
+                                    "status" -> IrohBridge.raceStatus()
+                                    "frame" -> IrohBridge.exchangeGameState(request.getJSONObject("state").toString())
+                                    else -> "{\"ok\":false,\"error\":\"Unknown gameplay operation\"}"
+                                }
+                            } catch (_: Exception) { "{\"ok\":false,\"error\":\"Invalid gameplay request\"}" }
+                            runOnUiThread {
+                                if (generation == portGeneration && port === channel) channel.postMessage(WebMessage(JSONObject(result).put("id", requestId).toString()))
+                            }
+                        }
+                    }
+                })
+                // This capability is transferred only to our trusted main frame.
+                val token = java.util.UUID.randomUUID().toString()
+                view.evaluateJavascript("window.__turboKartGamePortToken = ${JSONObject.quote(token)};", {
+                    if (generation == portGeneration && view.url == GAME_URL) {
+                        view.postWebMessage(WebMessage("turbo-kart-game-port:$token", arrayOf(channels[1])), Uri.parse("https://$ASSET_HOST"))
+                    } else { channels[1].close() }
+                })
+            }
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 // Never navigate to arbitrary external pages from the game screen.
                 return request.url.scheme != "https" || request.url.host != ASSET_HOST
@@ -64,25 +123,39 @@ class TouchGameActivity : Activity() {
 
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                 val url = request?.url ?: return null
-                if (url.scheme != "https" || url.host != ASSET_HOST) return null
+                if (url.scheme != "https" || url.host != ASSET_HOST) return missing()
                 val path = url.path ?: return missing()
                 if (!path.startsWith("/game/")) return missing()
                 val relative = path.removePrefix("/game/")
                 if (relative.isEmpty() || relative.split('/').any { it == ".." || it == "." }) return missing()
                 return try {
                     WebResourceResponse(mime(relative), if (isText(relative)) "UTF-8" else null,
+                        200, "OK", mapOf("Content-Security-Policy" to
+                            "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'"),
                         assets.open("game/$relative"))
                 } catch (_: Exception) { missing() }
             }
         }
         game = view
         setContentView(view)
-        view.loadUrl("https://$ASSET_HOST/game/index.html")
+        view.loadUrl(GAME_URL)
     }
 
-    override fun onPause() { game?.onPause(); super.onPause() }
-    override fun onResume() { super.onResume(); game?.onResume() }
-    override fun onDestroy() { game?.destroy(); game = null; super.onDestroy() }
+    override fun onPause() {
+        paused = true
+        game?.evaluateJavascript("window.dispatchEvent(new Event('blur'));", null)
+        game?.onPause()
+        super.onPause()
+    }
+    override fun onResume() {
+        super.onResume(); paused = false; game?.onResume()
+        game?.evaluateJavascript("window.dispatchEvent(new Event('focus'));", null)
+    }
+    override fun onDestroy() {
+        portGeneration++; port?.close(); port = null
+        bridgeWorker.shutdownNow()
+        game?.destroy(); game = null; super.onDestroy()
+    }
 
     private fun missing(): WebResourceResponse =
         WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", emptyMap(),
@@ -112,5 +185,8 @@ class TouchGameActivity : Activity() {
         else -> "application/octet-stream"
     }
 
-    companion object { private const val ASSET_HOST = "appassets.androidplatform.net" }
+    companion object {
+        private const val ASSET_HOST = "appassets.androidplatform.net"
+        private const val GAME_URL = "https://$ASSET_HOST/game/index.html"
+    }
 }

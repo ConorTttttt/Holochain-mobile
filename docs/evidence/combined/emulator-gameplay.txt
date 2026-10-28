@@ -1,0 +1,15 @@
+PASS original title, track, karts and landscape WebGL
+PASS original single-player selection menu
+PASS no automatic acceleration before GO
+PASS manual countdown start boost and automatic handoff
+PASS actual original physics advances player
+PASS left and right touch steer original input
+PASS simultaneous steering and LOOK BACK pointers
+PASS LOOK BACK release restores forward input
+PASS FIRE invokes original item system exactly once
+PASS touch pause and resume
+PASS Android background clears all held inputs
+Warning: Activity not started, its current task has been brought to the front
+PASS Android task resumes with automatic throttle and released steering/camera
+PASS original pause menu returns to title
+PASS game error registry empty

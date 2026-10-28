@@ -14,3 +14,6 @@ prototypes/h2hc-linker/target
 /android/turbo-kart-mobile/build/
 /android/turbo-kart-mobile/app/src/main/assets/
 /android/turbo-kart-mobile/app/src/main/jniLibs/
+
+# Python validation caches.
+__pycache__/

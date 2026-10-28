@@ -1,0 +1,12 @@
+{
+  "agent": "uhCAkIIjxEWt8EqVWu3V5E2D4um6dkT22tMK7fFW-P9I0yKipvbE8",
+  "apps": [
+    "turbo-kart-authority",
+    "gaming-platform-authority"
+  ],
+  "dna_hashes": {
+    "turbo_kart": "uhC0kEYk4opmHrNsBIrKUdo_hAgnUikh3ov_HGzH_PDsAn4KayQbT",
+    "gaming_directory": "uhC0kOLjJawOKwN_Ft8SfpgySiR2NnLRFqUfJ1zW2nnvGkvJHHT4H"
+  },
+  "admin_port": 40094
+}

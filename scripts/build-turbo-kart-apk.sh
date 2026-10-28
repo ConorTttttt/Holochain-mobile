@@ -5,71 +5,26 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-NDK=${ANDROID_NDK_HOME:-$HOME/Android/Sdk/android-ndk-r27c}
-API=${ANDROID_API:-26}
-BIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin"
-if [ ! -x "$BIN/aarch64-linux-android$API-clang" ]; then
-  echo "Android NDK unavailable at $NDK (set ANDROID_NDK_HOME)" >&2
-  exit 1
-fi
+# Keep native compilation serial on shared development machines.
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
 
-export ANDROID_NDK_HOME="$NDK"
-export PATH="$BIN:$PATH"
-export CC_aarch64_linux_android="$BIN/aarch64-linux-android$API-clang"
-export CXX_aarch64_linux_android="$BIN/aarch64-linux-android$API-clang++"
-export AR_aarch64_linux_android="$BIN/llvm-ar"
-export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$CC_aarch64_linux_android"
-
-# NDK r27c defaults to 4 KiB ELF LOAD alignment. Android 15+ can use
-# 16 KiB pages; link Rust's JNI .so with both 16 KiB page-size settings.
-# Target-specific flags avoid changing the Linux build or CLI benchmarks.
-# A changed rustflags fingerprint can require Cargo to rebuild target deps.
-export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS="-C link-arg=-Wl,-z,max-page-size=16384 -C link-arg=-Wl,-z,common-page-size=16384"
-echo "Building 16 KiB-aligned Android JNI library (NDK r27 compatibility)."
-
+# Build ABIs serially; each target has its own Cargo artifact directory.
+ABIS=${ANDROID_ABIS:-arm64-v8a,x86_64}
+APP="$ROOT/android/turbo-kart-mobile/app"
 if [ ! -d vendor/holochain-0.7.1 ] || [ ! -d vendor/wasmer-7.1.0 ]; then
   ./scripts/vendor-holochain.sh
 fi
-
-cargo build --release --target aarch64-linux-android \
-  -p turbo-kart-android-native \
-  --target-dir target/wasmi
-
-LIB="$ROOT/target/wasmi/aarch64-linux-android/release/libturbo_kart_android_native.so"
-# Fail before APK packaging if a linker/toolchain change regresses alignment.
-# NDK llvm-readelf's "LOAD" segment Align column should be 0x4000 (16 KiB).
-if ! "$BIN/llvm-readelf" -lW "$LIB" | awk '
-  $1 == "LOAD" {
-    n++
-    if ($NF != "0x4000") {
-      print "ERROR: Android ELF LOAD segment is not 16 KiB aligned: " $0 > "/dev/stderr"
-      bad = 1
-    }
-  }
-  END {
-    if (n == 0) {
-      print "ERROR: no ELF LOAD segments found" > "/dev/stderr"
-      bad = 1
-    }
-    exit bad
-  }
-'; then
-  echo "Refusing to package a JNI library with incorrect ELF alignment." >&2
-  exit 1
-fi
-echo "Verified: all JNI library ELF LOAD segments use 16 KiB alignment."
-
-APP="$ROOT/android/turbo-kart-mobile/app"
-mkdir -p "$APP/src/main/jniLibs/arm64-v8a" "$APP/src/main/assets"
-
-cp target/wasmi/aarch64-linux-android/release/libturbo_kart_android_native.so \
-  "$APP/src/main/jniLibs/arm64-v8a/libturbo_kart_android_native.so"
-
-# Gate 2a: build the separate original-desktop Iroh/MoQ .so into the *same*
-# APK. It has an isolated Cargo dependency graph, its own JNI symbols and an
-# independently Keystore-protected endpoint seed, so the proven H2HC host
-# does not need to resolve the desktop game's Holochain dependency versions.
-bash "$ROOT/scripts/build-turbo-kart-realtime-jni.sh"
+IFS=',' read -ra BUILD_ABIS <<< "$ABIS"
+for abi in "${BUILD_ABIS[@]}"; do
+  source "$ROOT/scripts/android-abi-env.sh" "$abi"
+  cargo build --locked --release --target "$RUST_TARGET" \
+    -p turbo-kart-android-native --target-dir target/wasmi
+  LIB="$ROOT/target/wasmi/$RUST_TARGET/release/libturbo_kart_android_native.so"
+  verify_android_elf "$LIB"
+  mkdir -p "$APP/src/main/jniLibs/$ABI" "$APP/src/main/assets"
+  cp "$LIB" "$APP/src/main/jniLibs/$ABI/"
+  bash "$ROOT/scripts/build-turbo-kart-realtime-jni.sh" "$ABI"
+done
 
 BASE=${TURBO_KART_DESKTOP_BASE:-/mnt/holochain/offloaded/sf/Turbokart/turbo-kart/apps/turbo-kart-desktop}
 for file in \
@@ -103,8 +58,8 @@ if [ -n "$GAME_UI" ]; then
     --dest "$APP/src/main/assets/game" \
     --touch-script "$ROOT/mobile/touch-controls/mobile-touch.mjs"
 else
-  echo "Note: game UI not found. Touch Race Activity will display staging instructions." >&2
-  echo "Set TURBO_KART_GAME_UI_DIR to the unpacked Turbo Kart resources/ui directory." >&2
+  echo "Required original game missing; set TURBO_KART_GAME_UI_DIR to resources/ui." >&2
+  exit 1
 fi
 
 echo "Both 16 KiB-aligned JNI libraries and original Turbo Kart hApps staged into Android project."
@@ -134,10 +89,10 @@ if [ ! -e "$ANDROID_ROOT/local.properties" ]; then
 fi
 
 if [ -x "$ANDROID_ROOT/gradlew" ]; then
-  (cd "$ANDROID_ROOT" && ./gradlew assembleDebug)
+  (cd "$ANDROID_ROOT" && ./gradlew --no-daemon --max-workers="${GRADLE_WORKERS:-1}" assembleDebug -PandroidAbis="$ABIS")
 elif command -v gradle >/dev/null 2>&1; then
   echo "Using installed Gradle. AGP 8.7.3 needs Gradle 8.9 and JDK 17."
-  (cd "$ANDROID_ROOT" && gradle assembleDebug)
+  (cd "$ANDROID_ROOT" && gradle --no-daemon --max-workers="${GRADLE_WORKERS:-1}" assembleDebug -PandroidAbis="$ABIS")
 else
   echo "Native build succeeded; no Gradle executable or wrapper was found." >&2
   echo "Install Gradle 8.9 / use Android Studio, then run assembleDebug in:" >&2
@@ -153,6 +108,8 @@ if [ -x "$SDK/build-tools/35.0.0/zipalign" ]; then
 else
   echo "Warning: SDK Build-Tools 35.0.0 zipalign unavailable; verify APK ZIP alignment separately."
 fi
+
+python3 "$ROOT/scripts/verify-turbo-kart-apk.py" "$APK" --abis "$ABIS"
 
 echo "Debug APK:"
 echo "$APK"

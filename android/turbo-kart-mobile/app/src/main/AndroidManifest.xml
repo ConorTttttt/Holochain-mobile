@@ -2,21 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="Turbo Kart H2HC Test"
+        android:label="Turbo Kart Rally"
         android:allowBackup="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
-        <!-- Independent single-player playtest. The existing Holochain/Iroh
-             diagnostic Activity and its app-private identities are untouched. -->
+        <!-- MainActivity owns the menu and native sessions. Only local app
+             navigation can open the trusted game WebView. -->
         <activity
             android:name="dev.holochain.turbokart.mobile.TouchGameActivity"
-            android:exported="true"
+            android:exported="false"
             android:hardwareAccelerated="true"
             android:screenOrientation="landscape"
-            android:label="Turbo Kart Touch Race">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
+            android:label="Turbo Kart Rally">
         </activity>
         <activity
             android:name="dev.holochain.turbokart.mobile.MainActivity"

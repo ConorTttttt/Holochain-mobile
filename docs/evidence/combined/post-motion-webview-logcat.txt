@@ -1,0 +1,15 @@
+--------- beginning of main
+10-28 13:40:21.378  2911  2911 I TurboKartWeb: LOG: [quality] medium (59% of frames over 25.0 ms) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 13:40:23.415  2911  2911 I TurboKartWeb: LOG: [quality] low (82% of frames over 25.0 ms) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 13:40:25.452  2911  2911 I TurboKartWeb: LOG: [quality] lowest (93% of frames over 25.0 ms) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 13:40:59.778  2911  2911 I TurboKartWeb: LOG: [quality] low (10 s of clean frames) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 13:41:09.825  2911  2911 I TurboKartWeb: LOG: [quality] medium (10 s of clean frames) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 13:41:27.928  2911  2911 I TurboKartWeb: LOG: [quality] high (10 s of clean frames) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 15:00:02.460  2911  2911 I TurboKartWeb: LOG: [quality] medium (22% of frames over 25.0 ms) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 15:00:12.494  2911  2911 I TurboKartWeb: LOG: [quality] high (10 s of clean frames) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 15:00:44.721  2911  2911 I TurboKartWeb: LOG: [quality] medium (24% of frames over 25.0 ms) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 15:00:56.696  2911  2911 I TurboKartWeb: LOG: [quality] high (10 s of clean frames) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 15:01:06.805  2911  2911 I TurboKartWeb: LOG: [quality] medium (76% of frames over 25.0 ms) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 15:01:08.750  2911  2911 I TurboKartWeb: LOG: [quality] low (38% of frames over 25.0 ms) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 15:01:18.792  2911  2911 I TurboKartWeb: LOG: [quality] medium (10 s of clean frames) (https://appassets.androidplatform.net/game/src/main.js:94)
+10-28 15:02:54.935  2911  2911 E chromium: [ERROR:aw_browser_terminator.cc(154)] Renderer process (4306) crash detected (code -1).

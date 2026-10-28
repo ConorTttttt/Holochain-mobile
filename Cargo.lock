@@ -8230,6 +8230,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "turbo-kart-android-native"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "h2hc-conductor",
+ "h2hc-p2p",
+ "h2hc-protocol",
+ "holochain",
+ "holochain_conductor_api",
+ "jni 0.21.1",
+ "serde",
+ "serde_json",
+ "sodoken",
+ "tokio",
+]
+
+[[package]]
 name = "twox-hash"
 version = "2.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

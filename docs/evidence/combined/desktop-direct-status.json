@@ -1,0 +1,192 @@
+{
+  "state": "degraded",
+  "race_id": "f5d483d7f9f7c8969a66cbc34214d71c",
+  "lobby_id": "uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3",
+  "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+  "host_epoch": 1,
+  "generation": 1,
+  "local": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+  "members": [
+    {
+      "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+      "endpoint_id": [
+        54,
+        19,
+        222,
+        115,
+        56,
+        75,
+        178,
+        108,
+        148,
+        64,
+        193,
+        43,
+        79,
+        52,
+        68,
+        235,
+        201,
+        205,
+        43,
+        100,
+        193,
+        188,
+        199,
+        175,
+        17,
+        206,
+        41,
+        40,
+        238,
+        211,
+        101,
+        121
+      ],
+      "character_id": "rex"
+    },
+    {
+      "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+      "endpoint_id": [
+        83,
+        253,
+        207,
+        207,
+        179,
+        58,
+        37,
+        250,
+        179,
+        240,
+        4,
+        100,
+        228,
+        238,
+        32,
+        196,
+        244,
+        147,
+        168,
+        1,
+        39,
+        188,
+        139,
+        98,
+        226,
+        238,
+        38,
+        217,
+        252,
+        155,
+        13,
+        69
+      ],
+      "character_id": "zippy"
+    }
+  ],
+  "peers": [
+    {
+      "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+      "connected": false,
+      "state": "Unreachable",
+      "reconnects": 0,
+      "rtt_ms": null,
+      "path": "none",
+      "we_dial": true,
+      "dial": {
+        "attempts": 4,
+        "max_attempts": 16,
+        "finished": true,
+        "terminal": false,
+        "deadline_exceeded": true,
+        "last_error": "dial still pending at the dial deadline"
+      },
+      "link": null
+    }
+  ],
+  "network": {
+    "mode": "lan",
+    "relay": null,
+    "relay_connected": null,
+    "timing_tier": "lan",
+    "max_clock_uncertainty_ms": 15
+  },
+  "errors": [
+    "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5: could not reach uhCAka2YI…3yDa5 after 4 attempt(s) before the dial deadline (last error: dial still pending at the dial deadline). The other player may not have pressed Enter race yet, or no network path was found"
+  ],
+  "setup": {
+    "failures": [
+      {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "kind": "unreachable",
+        "reason": "could not reach uhCAka2YI…3yDa5 after 4 attempt(s) before the dial deadline (last error: dial still pending at the dial deadline). The other player may not have pressed Enter race yet, or no network path was found",
+        "retry": true
+      }
+    ],
+    "peer_deadline_s": 45,
+    "dial_attempts": 16,
+    "dial_retry_s": 2,
+    "dial_deadline_s": 42
+  },
+  "zome_calls": 439,
+  "dropped_latest": 0,
+  "realtime_active": true,
+  "race": {
+    "phase": "failed",
+    "reason": "not every admitted player connected",
+    "is_host": true,
+    "ai_slots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "schedule": null,
+    "start_in_ms": null,
+    "clock": null,
+    "renderer_ready": false,
+    "peers_ready": [],
+    "host_lost": null,
+    "host_session": null,
+    "counters": {
+      "duplicate_schedules": 0,
+      "conflicting_schedules": 0,
+      "invalid_schedules": 0,
+      "ai_published": 0,
+      "ai_received": 0,
+      "ai_malformed": 0,
+      "ai_stale": 0,
+      "ai_wrong_epoch": 0,
+      "ai_dropped": 0,
+      "progress": {
+        "published": 0,
+        "refused_local": 0,
+        "events_published": 0,
+        "received": 0,
+        "events_received": 0,
+        "malformed": 0,
+        "invalid": 0,
+        "stale": 0,
+        "duplicate_events": 0,
+        "event_gaps": 0,
+        "wrong_race": 0,
+        "wrong_epoch": 0,
+        "wrong_schedule": 0,
+        "no_schedule": 0,
+        "after_host_loss": 0,
+        "dropped": 0,
+        "last_error": null
+      }
+    },
+    "progress": null,
+    "last_event_id": 0
+  },
+  "kart": {
+    "published": 0,
+    "received": 0,
+    "malformed": 0,
+    "stale": 0
+  }
+}

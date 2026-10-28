@@ -1,0 +1,29 @@
+{
+  "lobby": {
+    "lobby_id": "uhCkkspL7xIp6tYMNWI4G5A8oLKlbebHxo6BdOOm0onK4pDATdKIz",
+    "game_id": "turbo-kart",
+    "name": "Android Emulator Test",
+    "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "capacity": 2,
+    "track_id": "palm-cove",
+    "class": "100cc",
+    "laps": 3,
+    "invite_only": false,
+    "status": "open",
+    "race_id": null,
+    "members": [
+      {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "character_id": "rex",
+        "joined_at_ms": 1793136320863
+      }
+    ],
+    "waitlist": [],
+    "created_at_ms": 1793136320856
+  },
+  "session": {
+    "state": "disconnected",
+    "realtime_active": false,
+    "zome_calls": 14
+  }
+}

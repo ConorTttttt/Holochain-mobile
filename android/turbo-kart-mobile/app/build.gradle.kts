@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "dev.holochain.turbokart.mobile"
     compileSdk = 35
+    buildFeatures { buildConfig = true }
 
     defaultConfig {
         applicationId = "dev.holochain.turbokart.mobile"
@@ -13,16 +14,13 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0-smoke"
-        ndk { abiFilters += listOf("arm64-v8a") }
+        ndk { abiFilters += (project.findProperty("androidAbis") as String? ?: "arm64-v8a,x86_64").split(",") }
     }
 
     buildTypes {
         debug {
             isMinifyEnabled = false
-            // Install touch playtest alongside the existing Holochain/Iroh
-            // debug APK. Separate app-private keys and conductor data.
-            applicationIdSuffix = ".touch"
-            versionNameSuffix = "-touch"
+            versionNameSuffix = "-combined"
         }
         release {
             isMinifyEnabled = false

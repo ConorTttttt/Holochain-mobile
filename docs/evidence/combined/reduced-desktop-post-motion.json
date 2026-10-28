@@ -1,0 +1,238 @@
+{
+  "session": {
+    "state": "connected",
+    "race_id": "37ac84a4a8130f0b814e63aa3f2e6f53",
+    "lobby_id": "uhCkkYPVzD9N_aT_piDB0HLo0bufpzTbzSOxFBJpWROh6UWGLWyFu",
+    "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "host_epoch": 1,
+    "generation": 1,
+    "local": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "members": [
+      {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "endpoint_id": [
+          54,
+          19,
+          222,
+          115,
+          56,
+          75,
+          178,
+          108,
+          148,
+          64,
+          193,
+          43,
+          79,
+          52,
+          68,
+          235,
+          201,
+          205,
+          43,
+          100,
+          193,
+          188,
+          199,
+          175,
+          17,
+          206,
+          41,
+          40,
+          238,
+          211,
+          101,
+          121
+        ],
+        "character_id": "rex"
+      },
+      {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "endpoint_id": [
+          83,
+          253,
+          207,
+          207,
+          179,
+          58,
+          37,
+          250,
+          179,
+          240,
+          4,
+          100,
+          228,
+          238,
+          32,
+          196,
+          244,
+          147,
+          168,
+          1,
+          39,
+          188,
+          139,
+          98,
+          226,
+          238,
+          38,
+          217,
+          252,
+          155,
+          13,
+          69
+        ],
+        "character_id": "zippy"
+      }
+    ],
+    "peers": [
+      {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "connected": true,
+        "state": "Connected",
+        "reconnects": 0,
+        "rtt_ms": 2.3587130000000003,
+        "path": "direct",
+        "we_dial": true,
+        "dial": {
+          "attempts": 1,
+          "max_attempts": 16,
+          "finished": true,
+          "terminal": false,
+          "deadline_exceeded": false,
+          "last_error": null
+        },
+        "link": {
+          "tx_bytes": 3501210,
+          "rx_bytes": 3526023,
+          "tx_packets": 59816,
+          "rx_packets": 58059,
+          "lost_packets": 40
+        }
+      }
+    ],
+    "network": {
+      "mode": "internet",
+      "relay": "https://dev-test-bootstrap2.holochain.org/",
+      "relay_connected": true,
+      "timing_tier": "internet",
+      "max_clock_uncertainty_ms": 60
+    },
+    "errors": [],
+    "setup": {
+      "failures": [],
+      "peer_deadline_s": 45,
+      "dial_attempts": 16,
+      "dial_retry_s": 2,
+      "dial_deadline_s": 42
+    },
+    "zome_calls": 143,
+    "dropped_latest": 0,
+    "realtime_active": true,
+    "race": {
+      "phase": "failed",
+      "reason": "the local race scene never became ready",
+      "is_host": true,
+      "ai_slots": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "schedule": null,
+      "start_in_ms": null,
+      "clock": {
+        "offset_ms": 0,
+        "error_bound_ms": 0,
+        "rtt_ms": 0,
+        "quality": "Good",
+        "samples": 0,
+        "attempts": 0,
+        "tier": "internet",
+        "max_error_bound_ms": 60
+      },
+      "renderer_ready": false,
+      "peers_ready": [],
+      "host_lost": null,
+      "host_session": {
+        "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "epoch": 1,
+        "role": "Host",
+        "ai_frames_sent": 0
+      },
+      "counters": {
+        "duplicate_schedules": 0,
+        "conflicting_schedules": 0,
+        "invalid_schedules": 0,
+        "ai_published": 0,
+        "ai_received": 0,
+        "ai_malformed": 0,
+        "ai_stale": 0,
+        "ai_wrong_epoch": 0,
+        "ai_dropped": 0,
+        "progress": {
+          "published": 0,
+          "refused_local": 0,
+          "events_published": 0,
+          "received": 0,
+          "events_received": 0,
+          "malformed": 0,
+          "invalid": 0,
+          "stale": 0,
+          "duplicate_events": 0,
+          "event_gaps": 0,
+          "wrong_race": 0,
+          "wrong_epoch": 0,
+          "wrong_schedule": 0,
+          "no_schedule": 0,
+          "after_host_loss": 0,
+          "dropped": 0,
+          "last_error": null
+        }
+      },
+      "progress": null,
+      "last_event_id": 0
+    },
+    "kart": {
+      "published": 22676,
+      "received": 26663,
+      "malformed": 0,
+      "stale": 0
+    }
+  },
+  "motion": {
+    "received": 26663,
+    "rendered": 25189,
+    "error": null,
+    "net": {
+      "sent": 22676,
+      "aiSent": 0,
+      "aiBundles": 0,
+      "stamped": 26663,
+      "acked": 22676,
+      "refused": 0,
+      "skipped": 0,
+      "received": 26663,
+      "aiReceived": 0,
+      "rejected": {
+        "race": 0,
+        "member": 0,
+        "lane": 0,
+        "malformed": 0,
+        "duplicate": 0,
+        "stale": 0,
+        "ai": 0
+      },
+      "progressSent": 0,
+      "progressAccepted": 0,
+      "progressRefused": 0,
+      "progressReceived": 0,
+      "progressEvents": 0,
+      "progressMalformed": 0,
+      "lastRefusal": null
+    }
+  },
+  "errors": []
+}

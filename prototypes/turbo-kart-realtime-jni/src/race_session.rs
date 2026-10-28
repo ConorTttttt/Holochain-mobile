@@ -7,7 +7,7 @@
 //! count a socket alone as authenticated: the remote's admission digest has
 //! to match before a peer is reported as authorized.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, BTreeMap, VecDeque};
 use std::sync::{
     atomic::{AtomicU64, Ordering},
     Arc, Mutex,
@@ -83,12 +83,19 @@ async fn read_track(
     mut sub: TrackSubscription,
     lane: u8,
     received: Arc<AtomicU64>,
+    remote: Arc<Mutex<BTreeMap<String, VecDeque<(KartState, Instant)>>>>,
+    peer: String,
 ) -> Result<()> {
     loop {
         let bytes = sub.recv().await.context("MoQ track receive")?
             .context("remote MoQ track closed")?;
         if lane == KART_LANE {
-            KartState::decode(&bytes).context("remote sent malformed WP3 KartState")?;
+            let state = KartState::decode(&bytes).context("remote sent malformed WP3 KartState")?;
+            let mut remotes = remote.lock().expect("remote kart lock");
+            let queue = remotes.entry(peer.clone()).or_default();
+            if queue.back().is_some_and(|(old, _)| state.tick <= old.tick) { continue; }
+            if queue.len() == 32 { queue.pop_front(); }
+            queue.push_back((state, Instant::now()));
             received.fetch_add(1, Ordering::Relaxed);
         }
         // Other control lanes are subscribed and drained for protocol
@@ -141,6 +148,10 @@ pub struct RunningRace {
     authenticated: Arc<Mutex<BTreeSet<String>>>,
     failures: Arc<Mutex<Vec<String>>>,
     received_kart: Arc<AtomicU64>,
+    remote_karts: Arc<Mutex<BTreeMap<String, VecDeque<(KartState, Instant)>>>>,
+    last_game_publish: Option<Instant>,
+    last_game_tick: Option<u32>,
+    game_packets: u64,
     burst_progress: Arc<Mutex<BurstProgress>>,
     burst_task: Option<JoinHandle<()>>,
     tasks: Vec<JoinHandle<()>>,
@@ -196,6 +207,7 @@ impl RunningRace {
         let authenticated = Arc::new(Mutex::new(BTreeSet::new()));
         let failures = Arc::new(Mutex::new(Vec::new()));
         let received_kart = Arc::new(AtomicU64::new(0));
+        let remote_karts = Arc::new(Mutex::new(BTreeMap::new()));
         let tasks = admission.peers().map(|m| {
             let peer = m.agent.clone();
             let local = admission.local.clone();
@@ -204,6 +216,7 @@ impl RunningRace {
             let verified = authenticated.clone();
             let diagnostics = failures.clone();
             let count = received_kart.clone();
+            let remote = remote_karts.clone();
             let expected_digest = digest.clone();
             tokio::spawn(async move {
                 let outcome = async {
@@ -251,7 +264,7 @@ impl RunningRace {
 
                     let mut readers = JoinSet::new();
                     for (lane, sub) in subscriptions {
-                        readers.spawn(read_track(sub, lane, count.clone()));
+                        readers.spawn(read_track(sub, lane, count.clone(), remote.clone(), peer.clone()));
                     }
                     // No peer is marked healthy if its reliable track fails.
                     if let Some(first) = readers.join_next().await {
@@ -278,6 +291,10 @@ impl RunningRace {
             authenticated,
             failures,
             received_kart,
+            remote_karts,
+            last_game_publish: None,
+            last_game_tick: None,
+            game_packets: 0,
             burst_progress: Arc::new(Mutex::new(BurstProgress::default())),
             burst_task: None,
             tasks,
@@ -342,6 +359,10 @@ impl RunningRace {
             })).collect::<Vec<_>>(),
             "setup_errors": *self.failures.lock().expect("mesh error lock"),
             "kart_wire_bytes": KART_STATE_LEN,
+            "game_packets_sent": self.game_packets,
+            "last_game_tick": self.last_game_tick,
+            "members": self.admission.members.iter().map(|m| json!({"agent": m.agent, "character_id": m.character_id})).collect::<Vec<_>>(),
+            "config": self.admission.config,
             "synthetic_kart_packets_sent": published,
             "remote_kart_packets_decoded": self.received_kart.load(Ordering::Relaxed),
             "diagnostic_wp3_stream": {
@@ -359,11 +380,45 @@ impl RunningRace {
         })
     }
 
+    /// Publish real physics at at most 20 Hz and return only authenticated
+    /// remote snapshots. The bounded queues are drained once per exchange.
+    pub fn exchange_game_state(&mut self, frame: crate::game_bridge::GameFrame) -> Result<Value> {
+        ensure!(Self::all_peers_authenticated(&self.mesh, &self.authenticated),
+            "gameplay requires pinned peers and matching admission digests");
+        ensure!(!self.burst_progress.lock().expect("burst lock").running,
+            "stop synthetic stream before gameplay");
+        ensure!(self.last_game_tick.is_none_or(|tick| frame.tick > tick), "game tick must advance");
+        let now = Instant::now();
+        let tick = frame.tick;
+        let bytes = frame.encode()?;
+        let sent = self.last_game_publish.is_none_or(|last| now.duration_since(last) >= Duration::from_millis(50));
+        if sent {
+            self.kart.lock().map_err(|_| anyhow::anyhow!("publisher lock poisoned"))?
+                .track.send(bytes.to_vec()).context("publish actual physics WP3")?;
+            self.last_game_publish = Some(now);
+            self.last_game_tick = Some(tick);
+            self.game_packets += 1;
+        }
+        let verified = self.authenticated.lock().expect("authenticated peer lock");
+        let mut remotes = self.remote_karts.lock().expect("remote kart lock");
+        let mut frames = Vec::new();
+        for (agent, queue) in remotes.iter_mut() {
+            for (state, arrival) in queue.drain(..) {
+                if verified.contains(agent) {
+                    frames.push(json!({"agent":agent,"state":crate::game_bridge::state_json(&state),
+                        "ageMs": now.saturating_duration_since(arrival).as_millis() as u64}));
+                }
+            }
+        }
+        Ok(json!({"sent": sent, "game_packets_sent": self.game_packets, "remotes": frames}))
+    }
+
     /// One explicit synthetic WP3 snapshot. The same serialized tick counter
     /// is shared with the bounded stream; no double publishing or replay.
     pub fn send_test_kart(&mut self) -> Result<Value> {
         ensure!(Self::all_peers_authenticated(&self.mesh, &self.authenticated),
             "cannot publish synthetic WP3 packet before ALL admitted peers authenticate");
+        ensure!(self.game_packets == 0, "synthetic diagnostics disabled after actual gameplay");
         ensure!(!self.burst_progress.lock().expect("burst lock").running,
             "single-frame probe cannot run during the 20 Hz diagnostic burst");
         let (tick, mesh_seq) = self.kart.lock()
@@ -389,6 +444,7 @@ impl RunningRace {
     pub fn start_test_stream(&mut self) -> Result<Value> {
         ensure!(Self::all_peers_authenticated(&self.mesh, &self.authenticated),
             "cannot start 20 Hz WP3 stream until ALL peers are authenticated");
+        ensure!(self.game_packets == 0, "synthetic diagnostics disabled after actual gameplay");
         {
             let mut progress = self.burst_progress.lock()
                 .map_err(|_| anyhow::anyhow!("diagnostic stream lock poisoned"))?;

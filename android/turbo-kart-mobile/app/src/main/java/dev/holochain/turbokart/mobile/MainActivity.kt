@@ -1,6 +1,7 @@
 package dev.holochain.turbokart.mobile
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowInsets
@@ -29,6 +30,7 @@ class MainActivity : Activity() {
     private val worker = Executors.newSingleThreadExecutor()
     private lateinit var linkerUrl: EditText
     private lateinit var linkerKey: EditText
+    private lateinit var gameRelayUrl: EditText
     private lateinit var startButton: Button
     private lateinit var listButton: Button
     private lateinit var irohButton: Button
@@ -85,25 +87,48 @@ class MainActivity : Activity() {
         setContentView(scroll)
 
         column.addView(TextView(this).apply {
-            text = "Turbo Kart • Android H2HC / Wasmi"
+            text = "Turbo Kart Rally"
             textSize = 22f
         })
-        column.addView(TextView(this).apply {
+        column.addView(Button(this).apply {
+            text = "Single Player"
+            setOnClickListener { startActivity(Intent(this@MainActivity, TouchGameActivity::class.java)) }
+        })
+        val diagnostics = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = android.view.View.GONE
+        }
+        column.addView(Button(this).apply {
+            text = "Multiplayer / Diagnostics"
+            setOnClickListener { diagnostics.visibility = android.view.View.VISIBLE; scroll.smoothScrollTo(0, 0) }
+        })
+        column.addView(diagnostics)
+        diagnostics.addView(Button(this).apply {
+            text = "Return to main menu"
+            setOnClickListener { diagnostics.visibility = android.view.View.GONE; scroll.smoothScrollTo(0, 0) }
+        })
+        diagnostics.addView(TextView(this).apply {
             text = "Public lobby test. Keep the desktop linker running and use adb reverse tcp:8090 tcp:8090."
         })
 
         linkerUrl = EditText(this).apply {
             setSingleLine(true)
             hint = "Linker WebSocket URL"
-            setText("ws://127.0.0.1:8090/conductor/v1")
+            setText(getPreferences(MODE_PRIVATE).getString("linker_url", "ws://127.0.0.1:8090/conductor/v1"))
         }
         linkerKey = EditText(this).apply {
             setSingleLine(true)
             hint = "Padded base64 linker public key"
-            setText("OC6JeMhmkekjeMjZZMpMzq2SVNUxkX/MSo2zWLIxufQ=")
+            setText(getPreferences(MODE_PRIVATE).getString("linker_key", "OC6JeMhmkekjeMjZZMpMzq2SVNUxkX/MSo2zWLIxufQ="))
         }
-        column.addView(linkerUrl)
-        column.addView(linkerKey)
+        diagnostics.addView(linkerUrl)
+        diagnostics.addView(linkerKey)
+        gameRelayUrl = EditText(this).apply {
+            setSingleLine(true)
+            hint = "Iroh HTTPS relay URL (empty = direct UDP only)"
+            setText(getPreferences(MODE_PRIVATE).getString("game_relay", ""))
+        }
+        diagnostics.addView(gameRelayUrl)
 
         startButton = Button(this).apply {
             text = "Start / Resume Holochain"
@@ -125,9 +150,9 @@ class MainActivity : Activity() {
             setOnClickListener { startIrohEndpoint() }
         }
         lobbySelector = Spinner(this)
-        column.addView(startButton)
-        column.addView(irohButton)
-        column.addView(TextView(this).apply {
+        diagnostics.addView(startButton)
+        diagnostics.addView(irohButton)
+        diagnostics.addView(TextView(this).apply {
             text = "Iroh identity persists across restarts. Next, publish a signed " +
                 "EndpointId-to-player binding through the existing Holochain directory. " +
                 "The manual binding expires after 120 seconds; publish again to refresh."
@@ -144,11 +169,11 @@ class MainActivity : Activity() {
                 }
             }
         }
-        column.addView(publishPresenceButton)
-        column.addView(verifyPresenceButton)
-        column.addView(listButton)
-        column.addView(TextView(this).apply { text = "Select a desktop lobby:" })
-        column.addView(lobbySelector)
+        diagnostics.addView(publishPresenceButton)
+        diagnostics.addView(verifyPresenceButton)
+        diagnostics.addView(listButton)
+        diagnostics.addView(TextView(this).apply { text = "Select a desktop lobby:" })
+        diagnostics.addView(lobbySelector)
         updateLobbiesAdapter()
 
         inspectButton = Button(this).apply {
@@ -284,22 +309,33 @@ class MainActivity : Activity() {
                 }
             }
         }
-        column.addView(inspectButton)
-        column.addView(inspectRaceButton)
-        column.addView(verifyRaceButton)
-        column.addView(connectRaceButton)
-        column.addView(raceStatusButton)
-        column.addView(sendTestKartButton)
-        column.addView(streamKartButton)
-        column.addView(disconnectRaceButton)
-        column.addView(joinButton)
-        column.addView(leaveButton)
+        diagnostics.addView(inspectButton)
+        diagnostics.addView(inspectRaceButton)
+        diagnostics.addView(verifyRaceButton)
+        diagnostics.addView(connectRaceButton)
+        diagnostics.addView(raceStatusButton)
+        diagnostics.addView(sendTestKartButton)
+        diagnostics.addView(streamKartButton)
+        diagnostics.addView(Button(this).apply {
+            text = "Drive admitted race (development bridge)"
+            setOnClickListener {
+                submit("Checking authenticated MoQ before opening gameplay…", onSuccess = {
+                    val status = it.optJSONObject("result")
+                    if (status?.optBoolean("authenticated_moq_peer_session") == true) {
+                        startActivity(Intent(this@MainActivity, TouchGameActivity::class.java).putExtra("multiplayer", true))
+                    } else { log.append("\nAll admitted peers must authenticate before gameplay.") }
+                }) { IrohBridge.raceStatus() }
+            }
+        })
+        diagnostics.addView(disconnectRaceButton)
+        diagnostics.addView(joinButton)
+        diagnostics.addView(leaveButton)
 
         log = TextView(this).apply {
             text = "Ready. Start Holochain, discover a desktop public lobby, select it, then join as Zippy."
             setTextIsSelectable(true)
         }
-        column.addView(log)
+        diagnostics.addView(log)
         updateButtons()
     }
 
@@ -396,6 +432,7 @@ class MainActivity : Activity() {
     private fun startConductor() {
         val url = linkerUrl.text.toString().trim()
         val key = linkerKey.text.toString().trim()
+        getPreferences(MODE_PRIVATE).edit().putString("linker_url", url).putString("linker_key", key).apply()
         submit(
             "Starting native Wasmi conductor…",
             onSuccess = { reply ->
@@ -425,13 +462,15 @@ class MainActivity : Activity() {
      * Android Keystore-protected app data. No signed directory advert yet.
      */
     private fun startIrohEndpoint() {
+        val relay = gameRelayUrl.text.toString().trim()
+        getPreferences(MODE_PRIVATE).edit().putString("game_relay", relay).apply()
         submit(
             "Starting original desktop Iroh/MoQ transport on Android…",
             onSuccess = { irohStarted = true }
         ) {
             val seed = IrohIdentityStore(applicationContext).getOrCreate()
             try {
-                IrohBridge.startEndpoint(seed)
+                IrohBridge.startEndpoint(seed, relay)
             } finally {
                 seed.fill(0)
             }

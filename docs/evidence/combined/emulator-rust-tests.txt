@@ -1,0 +1,9 @@
+
+running 4 tests
+test game_bridge::tests::actual_state_round_trips_original_42_byte_codec ... ok
+test game_bridge::tests::rejects_commands_wrong_shapes_and_bad_values ... ok
+test kart_stream::tests::bounded_duration_and_20hz_cadence ... ok
+test kart_stream::tests::desktop_codec_round_trip_and_monotonic_ticks ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

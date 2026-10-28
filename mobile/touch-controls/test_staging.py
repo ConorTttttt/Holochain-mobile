@@ -50,6 +50,16 @@ class StageGameTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("index.html and src/", result.stderr)
 
+    def test_reject_missing_runtime_vendor(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "game"
+            (source / "src").mkdir(parents=True)
+            (source / "index.html").write_text('<html><body><script src="vendor/three.module.js"></script></body></html>')
+            result = subprocess.run([sys.executable, str(SCRIPT), "--source", str(source), "--dest", str(root / "out")], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Required game entrypoint missing", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

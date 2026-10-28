@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "result": {
+    "race_disconnected": true,
+    "race_id": "f5d483d7f9f7c8969a66cbc34214d71c",
+    "persistent_iroh_endpoint_preserved": true
+  }
+}

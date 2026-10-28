@@ -15,7 +15,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{bail, ensure, Context, Result};
 use holochain_moq_kart_wire::{item, KartState, KART_STATE_LEN};
-use holochain_moq_mesh_iroh::{iroh_addr_for, iroh_endpoint, IrohConfig, IrohMeshTransport, Reach, SecretKey};
+use holochain_moq_mesh_iroh::{iroh_addr_for, iroh_endpoint, IrohConfig, IrohMeshTransport, Reach, RelayMap, RelayUrl, SecretKey};
 use holochain_moq_turbo_kart::race::RaceRecord;
 use holochain_moq_turbo_kart_client::race::RaceAdmission;
 use serde::Deserialize;
@@ -31,6 +31,7 @@ use tokio::runtime::{Builder, Runtime};
 use zeroize::Zeroize;
 
 mod kart_stream;
+mod game_bridge;
 mod race_session;
 use race_session::RunningRace;
 
@@ -39,6 +40,7 @@ struct LiveEndpoint {
     _runtime: Runtime,
     transport: IrohMeshTransport,
     race: Option<RunningRace>,
+    relay_url: String,
 }
 
 static LIVE: OnceLock<Mutex<Option<LiveEndpoint>>> = OnceLock::new();
@@ -78,6 +80,7 @@ fn endpoint_status(transport: &IrohMeshTransport, already_running: bool) -> Valu
     let endpoint = transport.endpoint();
     json!({
         "endpoint_id": endpoint.id().to_string(),
+        "relay_urls": endpoint.addr().relay_urls().map(|url| url.to_string()).collect::<Vec<_>>(),
         "direct_addrs": endpoint.addr().ip_addrs().map(|ip| ip.to_string()).collect::<Vec<_>>(),
         "already_running": already_running,
         "moq_transport": "original desktop mesh-iroh",
@@ -87,11 +90,12 @@ fn endpoint_status(transport: &IrohMeshTransport, already_running: bool) -> Valu
     })
 }
 
-fn start(key: SecretKey) -> Result<Value> {
+fn start(key: SecretKey, relay_url: String) -> Result<Value> {
     wire_check()?;
     let mut guard = live_slot().lock()
         .map_err(|_| anyhow::anyhow!("Iroh JNI endpoint lock poisoned"))?;
     if let Some(ref existing) = *guard {
+        ensure!(existing.relay_url == relay_url, "relay configuration changed; restart app without clearing data");
         ensure!(
             existing.transport.endpoint().id() == key.public(),
             "different Iroh endpoint key already running; refusing identity switch"
@@ -105,7 +109,13 @@ fn start(key: SecretKey) -> Result<Value> {
         .build()
         .context("create Android Iroh runtime")?;
 
-    let mut config = IrohConfig::new(Reach::DirectOnly);
+    let reach = if relay_url.is_empty() { Reach::DirectOnly } else {
+        let url: RelayUrl = relay_url.parse().context("invalid Iroh relay URL")?;
+        ensure!(url.scheme() == "https" && url.username().is_empty() && url.password().is_none()
+            && url.query().is_none() && url.fragment().is_none(), "relay must use HTTPS without credentials, query or fragment");
+        Reach::DirectAndRelay(RelayMap::from(url))
+    };
+    let mut config = IrohConfig::new(reach);
     config.secret_key = Some(key);
     let transport = runtime
         .block_on(IrohMeshTransport::bind(config, "android-realtime-probe"))
@@ -120,6 +130,7 @@ fn start(key: SecretKey) -> Result<Value> {
         _runtime: runtime,
         transport,
         race: None,
+        relay_url,
     });
     Ok(status)
 }
@@ -326,6 +337,7 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_startEndpo
     mut env: JNIEnv<'_>,
     _receiver: JObject<'_>,
     seed: JByteArray<'_>,
+    relay: JString<'_>,
 ) -> jstring {
     let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> Result<Value> {
         let mut input = env.convert_byte_array(seed)
@@ -339,7 +351,8 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_startEndpo
         input.zeroize();
         let secret = SecretKey::from_bytes(&raw);
         raw.zeroize();
-        start(secret)
+        let relay: String = env.get_string(&relay).context("read Iroh relay configuration")?.into();
+        start(secret, relay)
     }));
     response_to_jstring(
         &mut env,
@@ -461,4 +474,20 @@ pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_startTestS
         Ok(value) => value,
         Err(_) => Err(anyhow::anyhow!("native panic during bounded WP3 stream test")),
     })
+}
+
+/// Only a validated KartState DTO crosses this API. Authentication is checked
+/// again inside RunningRace at every publish; no per-frame Holochain calls.
+#[no_mangle]
+pub extern "system" fn Java_dev_holochain_turbokart_mobile_IrohBridge_exchangeGameState(
+    mut env: JNIEnv<'_>, _receiver: JObject<'_>, raw: JString<'_>,
+) -> jstring {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> Result<Value> {
+        let raw: String = env.get_string(&raw)?.into();
+        let frame = game_bridge::GameFrame::parse(&raw)?;
+        let mut guard = live_slot().lock().map_err(|_| anyhow::anyhow!("endpoint lock poisoned"))?;
+        let race = guard.as_mut().context("start Iroh first")?.race.as_mut().context("connect admitted race first")?;
+        race.exchange_game_state(frame)
+    })).unwrap_or_else(|_| Err(anyhow::anyhow!("native gameplay bridge panic")));
+    response_to_jstring(&mut env, result)
 }

@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "result": {
+    "lobbies": [
+      {
+        "id": "uhCkkYPVzD9N_aT_piDB0HLo0bufpzTbzSOxFBJpWROh6UWGLWyFu",
+        "lobby": {
+          "name": "AndroidFinalMotion-20261028",
+          "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+          "max_players": 2,
+          "track_id": "palm-cove",
+          "class": "100cc",
+          "laps": 3,
+          "relay_urls": [
+            "https://dev-test-bootstrap2.holochain.org/"
+          ],
+          "access": "Public"
+        },
+        "created_at": 1793179630439
+      },
+      {
+        "id": "uhCkkqDwUKyhh8rDlEIkijQ_sbG3AxmDTbfWXW-CYxdsw2XEoNb6i",
+        "lobby": {
+          "name": "AndroidEmulatorTest-20261028",
+          "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+          "max_players": 2,
+          "track_id": "palm-cove",
+          "class": "100cc",
+          "laps": 3,
+          "relay_urls": [],
+          "access": "Public"
+        },
+        "created_at": 1793177368777
+      }
+    ]
+  }
+}

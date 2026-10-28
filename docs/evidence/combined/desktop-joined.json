@@ -1,0 +1,30 @@
+{
+  "state": {
+    "lobby_id": "uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3",
+    "game_id": "turbo-kart",
+    "name": "AndroidEmulatorTest-0853",
+    "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "capacity": 2,
+    "track_id": "palm-cove",
+    "class": "100cc",
+    "laps": 3,
+    "invite_only": false,
+    "status": "open",
+    "race_id": null,
+    "members": [
+      {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "character_id": "rex",
+        "joined_at_ms": 1793177496439
+      },
+      {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "character_id": "zippy",
+        "joined_at_ms": 1793177827683
+      }
+    ],
+    "waitlist": [],
+    "created_at_ms": 1793177495956
+  },
+  "visibleText": "AndroidEmulatorTest-0853\nLeave lobby\n\nUpdated 8:57:58 AM · uhCAkPvBd…rqKLh (you)\n\nRefresh room\nAndroidEmulatorTest-0853\n\nHost uhCAkPvBd…rqKLh · You\n\nPalm Cove Circuit · 100cc · 3 laps · 2/2 active · open\n\nLobby ID: uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3\n\nYou are an active member.\n\nActive members\nuhCAkPvBd…rqKLh · You · HOST — Art\nuhCAka2YI…3yDa5 — Zippy\nWaitlisted members\nNone\nStart Race\n\nuhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5 has no live authenticated endpoint binding\n\nRace start locks admission. Each admitted player then enters the race."
+}

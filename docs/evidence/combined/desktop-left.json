@@ -1,0 +1,25 @@
+{
+  "state": {
+    "lobby_id": "uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3",
+    "game_id": "turbo-kart",
+    "name": "AndroidEmulatorTest-0853",
+    "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "capacity": 2,
+    "track_id": "palm-cove",
+    "class": "100cc",
+    "laps": 3,
+    "invite_only": false,
+    "status": "open",
+    "race_id": null,
+    "members": [
+      {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "character_id": "rex",
+        "joined_at_ms": 1793177496439
+      }
+    ],
+    "waitlist": [],
+    "created_at_ms": 1793177495956
+  },
+  "visibleText": "AndroidEmulatorTest-0853\nLeave lobby\n\nUpdated 8:58:25 AM · uhCAkPvBd…rqKLh (you)\n\nRefresh room\nAndroidEmulatorTest-0853\n\nHost uhCAkPvBd…rqKLh · You\n\nPalm Cove Circuit · 100cc · 3 laps · 1/2 active · open\n\nLobby ID: uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3\n\nYou are an active member.\n\nActive members\nuhCAkPvBd…rqKLh · You · HOST — Art\nWaitlisted members\nNone\nStart Race\n\nChecking endpoint readiness…\n\nRace start locks admission. Each admitted player then enters the race."
+}

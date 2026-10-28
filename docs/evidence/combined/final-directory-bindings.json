@@ -1,0 +1,51 @@
+{
+  "ok": true,
+  "result": {
+    "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+    "recent_bindings": [
+      {
+        "binding_action": "uhCkkh6FapKd6g9xWSOHn4a4QSp8Dg4F4a8PZxznPhNMtf20ql794",
+        "kind": "Iroh",
+        "transport_identity": {
+          "fingerprint": [
+            83,
+            253,
+            207,
+            207,
+            179,
+            58,
+            37,
+            250,
+            179,
+            240,
+            4,
+            100,
+            228,
+            238,
+            32,
+            196,
+            244,
+            147,
+            168,
+            1,
+            39,
+            188,
+            139,
+            98,
+            226,
+            238,
+            38,
+            217,
+            252,
+            155,
+            13,
+            69
+          ]
+        },
+        "address": "ip:10.0.2.15:51529 ip:10.0.2.16:51529 ip:[fec0::19e6:5d2c:a799:2fb9]:55279 ip:[fec0::5054:ff:fe12:3456]:55279 ip:[fec0::88a9:35bf:bd31:771c]:55279",
+        "published_at_ms": 1793177916287,
+        "expires_at_ms": 1793178036287
+      }
+    ]
+  }
+}

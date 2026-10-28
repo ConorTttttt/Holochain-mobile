@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "result": {
+    "lobbies": [
+      {
+        "id": "uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3",
+        "lobby": {
+          "name": "AndroidEmulatorTest-0853",
+          "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+          "max_players": 2,
+          "track_id": "palm-cove",
+          "class": "100cc",
+          "laps": 3,
+          "relay_urls": [],
+          "access": "Public"
+        },
+        "created_at": 1793177495956
+      },
+      {
+        "id": "uhCkkqDwUKyhh8rDlEIkijQ_sbG3AxmDTbfWXW-CYxdsw2XEoNb6i",
+        "lobby": {
+          "name": "AndroidEmulatorTest-20261028",
+          "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+          "max_players": 2,
+          "track_id": "palm-cove",
+          "class": "100cc",
+          "laps": 3,
+          "relay_urls": [],
+          "access": "Public"
+        },
+        "created_at": 1793177368777
+      }
+    ]
+  }
+}

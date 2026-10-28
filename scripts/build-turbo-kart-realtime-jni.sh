@@ -5,6 +5,7 @@
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}"
 
 GAME=${TURBO_KART_REPO:-/mnt/holochain/offloaded/sf/Turbokart/turbo-kart}
 if [ ! -f "$GAME/crates/mesh-iroh/Cargo.toml" ] || [ ! -f "$GAME/crates/kart-wire/Cargo.toml" ]; then
@@ -18,21 +19,7 @@ if command -v git >/dev/null 2>&1; then
   git -C "$GAME" rev-parse --short=12 HEAD || true
 fi
 
-NDK=${ANDROID_NDK_HOME:-$HOME/Android/Sdk/android-ndk-r27c}
-API=${ANDROID_API:-26}
-BIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin"
-if [ ! -x "$BIN/aarch64-linux-android$API-clang" ]; then
-  echo "Android NDK clang unavailable at $BIN" >&2
-  exit 1
-fi
-
-export ANDROID_NDK_HOME="$NDK"
-export PATH="$BIN:$PATH"
-export CC_aarch64_linux_android="$BIN/aarch64-linux-android$API-clang"
-export CXX_aarch64_linux_android="$BIN/aarch64-linux-android$API-clang++"
-export AR_aarch64_linux_android="$BIN/llvm-ar"
-export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$CC_aarch64_linux_android"
-export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS="-C link-arg=-Wl,-z,max-page-size=16384 -C link-arg=-Wl,-z,common-page-size=16384"
+source "$ROOT/scripts/android-abi-env.sh" "${1:-arm64-v8a}"
 
 # Isolate the desktop runtime's dependency graph from the patched Wasmi/Holochain
 # workspace. Reuse the successful standalone probe's Android build cache.
@@ -42,6 +29,7 @@ mkdir -p "$PROJECT/src" "$TARGET"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/lib.rs" "$PROJECT/src/lib.rs"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/race_session.rs" "$PROJECT/src/race_session.rs"
 cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/kart_stream.rs" "$PROJECT/src/kart_stream.rs"
+cp "$ROOT/prototypes/turbo-kart-realtime-jni/src/game_bridge.rs" "$PROJECT/src/game_bridge.rs"
 cat > "$PROJECT/Cargo.toml" <<EOF
 [workspace]
 resolver = "2"
@@ -74,37 +62,23 @@ holochain-moq-turbo-kart = { path = "$GAME/crates/turbo-kart" }
 holochain-moq-turbo-kart-client = { path = "$GAME/crates/turbo-kart-client" }
 EOF
 
+# Pin the isolated graph independently of the Wasmi workspace lockfile.
+cp "$ROOT/prototypes/turbo-kart-realtime-jni/Cargo.lock" "$PROJECT/Cargo.lock"
 echo "Building separate Android Iroh/MoQ JNI library (16 KiB aligned)..."
-cargo build --release --target aarch64-linux-android \
+cargo build --locked --release --target "$RUST_TARGET" \
   --lib --manifest-path "$PROJECT/Cargo.toml" \
   --target-dir "$TARGET"
 
-LIB="$TARGET/aarch64-linux-android/release/libturbo_kart_realtime_jni.so"
+LIB="$TARGET/$RUST_TARGET/release/libturbo_kart_realtime_jni.so"
 if [ ! -s "$LIB" ]; then
   echo "Android Iroh/MoQ JNI library missing: $LIB" >&2
   exit 1
 fi
 
-# All ELF LOAD segments must use 16 KiB alignment for Android 15+ devices.
-"$BIN/llvm-readelf" -lW "$LIB" | awk '
-  $1 == "LOAD" {
-    count++
-    if ($NF != "0x4000") {
-      print "ERROR: non-16 KiB ELF LOAD segment: " $0 > "/dev/stderr"
-      failed = 1
-    }
-  }
-  END {
-    if (count == 0) {
-      print "ERROR: no ELF LOAD segments found" > "/dev/stderr"
-      failed = 1
-    }
-    exit failed
-  }
-'
+verify_android_elf "$LIB"
 
 APP="$ROOT/android/turbo-kart-mobile/app"
-mkdir -p "$APP/src/main/jniLibs/arm64-v8a"
-cp "$LIB" "$APP/src/main/jniLibs/arm64-v8a/libturbo_kart_realtime_jni.so"
+mkdir -p "$APP/src/main/jniLibs/$ABI"
+cp "$LIB" "$APP/src/main/jniLibs/$ABI/libturbo_kart_realtime_jni.so"
 echo "16 KiB-aligned Iroh/MoQ JNI staged into Android APK project."
-echo "$APP/src/main/jniLibs/arm64-v8a/libturbo_kart_realtime_jni.so"
+echo "$APP/src/main/jniLibs/$ABI/libturbo_kart_realtime_jni.so"

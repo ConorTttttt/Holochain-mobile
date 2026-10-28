@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "result": {
+    "synthetic_test_only": true,
+    "diagnostic_stream_started": true,
+    "race_id": "53f675db687a8a47889a904a53159e7b",
+    "rate_hz": 20,
+    "duration_seconds": 5,
+    "max_frames": 100,
+    "wp3_bytes_each": 42,
+    "requires_matching_peer_admission": true,
+    "desktop_receipt_not_yet_verified": true,
+    "race_control_active": false
+  }
+}

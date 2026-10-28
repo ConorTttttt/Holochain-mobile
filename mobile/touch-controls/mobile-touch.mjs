@@ -30,6 +30,12 @@ export class RaceStartGate {
   }
 
   update(phase, now, visible = true) {
+    // A pause belongs to the same race. Preserve an already-observed GO,
+    // but never let time spent paused finish a pending countdown gate.
+    if (phase === 'paused') {
+      this.raceEnteredAt = null;
+      return false;
+    }
     if (!['intro', 'countdown', 'race', 'racing'].includes(phase)) {
       this.reset();
       return false;
@@ -208,6 +214,12 @@ export function attachTurboKartTouchControls(win = window, doc = document) {
       padding:7px; box-sizing:border-box;
       -webkit-user-select:none; user-select:none;
     }
+    #tk-touch-pause {
+      position:absolute; top:max(8px,env(safe-area-inset-top)); left:calc(50% + 75px);
+      z-index:2; pointer-events:auto; touch-action:none; padding:8px 14px;
+      color:white; background:rgba(15,33,53,.85); border:1px solid white;
+      border-radius:8px; font-weight:900;
+    }
     #tk-touch-fire { background:rgba(169,52,29,.91); }
     #tk-touch-look { background:rgba(24,68,118,.91); }
     /* The action buttons stay the same colour while touched. */
@@ -339,6 +351,22 @@ export function attachTurboKartTouchControls(win = window, doc = document) {
   listen(lookButton, 'blur', () => state.releaseLook('keyboard'));
   listen(lookButton, 'contextmenu', e => e.preventDefault());
   actions.append(lookButton);
+
+  const pauseButton = doc.createElement('button');
+  pauseButton.type = 'button';
+  pauseButton.id = 'tk-touch-pause';
+  pauseButton.textContent = 'PAUSE';
+  listen(pauseButton, 'pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
+  listen(pauseButton, 'click', e => {
+    e.preventDefault(); e.stopPropagation();
+    if (!state.active) return;
+    state.setActive(false);
+    stopFire();
+    sendKey('Escape', true);
+    sendKey('Escape', false);
+    refresh();
+  });
+  overlay.append(pauseButton);
 
   overlay.append(actions);
   doc.body.append(overlay);

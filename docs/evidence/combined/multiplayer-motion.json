@@ -1,0 +1,500 @@
+{
+  "developmentOnly": true,
+  "sharedRaceTimingAndScoring": false,
+  "initial": {
+    "android": {
+      "phase": "racing",
+      "local": [
+        4.710230112484665,
+        -0.0963759029087353,
+        -90.41432728657384
+      ],
+      "remote": {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "pos": [
+          4.961910744048533,
+          -0.15531914914507977,
+          -102.7414669881477
+        ],
+        "visible": true,
+        "inScene": true,
+        "meshes": 106,
+        "projected": [
+          0.000005434639442879009,
+          0.8793152027327193,
+          1.039197979698886
+        ]
+      },
+      "touch": {
+        "left": false,
+        "right": false,
+        "accelerate": true,
+        "lookBack": false
+      },
+      "bridge": {
+        "sent": 52,
+        "received": 127,
+        "rendered": 164,
+        "error": null
+      },
+      "errors": []
+    },
+    "desktop": {
+      "phase": "racing",
+      "local": [
+        4.936378227421317,
+        -0.14967050100610016,
+        -101.49067783806355
+      ],
+      "remote": {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "pos": [
+          4.743936311728316,
+          -0.10451498185391228,
+          -92.06553164052636
+        ],
+        "visible": true,
+        "inScene": true,
+        "meshes": 102,
+        "projected": [
+          0.0000024890356285659572,
+          0.11002544619337225,
+          0.987672163701273
+        ]
+      },
+      "bridge": null,
+      "motion": {
+        "received": 52,
+        "rendered": 194,
+        "error": null,
+        "net": {
+          "sent": 281,
+          "aiSent": 0,
+          "aiBundles": 0,
+          "stamped": 52,
+          "acked": 281,
+          "refused": 0,
+          "skipped": 0,
+          "received": 52,
+          "aiReceived": 0,
+          "rejected": {
+            "race": 0,
+            "member": 0,
+            "lane": 0,
+            "malformed": 0,
+            "duplicate": 0,
+            "stale": 0,
+            "ai": 0
+          },
+          "progressSent": 0,
+          "progressAccepted": 0,
+          "progressRefused": 0,
+          "progressReceived": 0,
+          "progressEvents": 0,
+          "progressMalformed": 0,
+          "lastRefusal": null
+        }
+      },
+      "errors": []
+    }
+  },
+  "moved": {
+    "android": {
+      "phase": "racing",
+      "local": [
+        3.747633387775554,
+        0.1120181178047721,
+        -43.25875358521734
+      ],
+      "remote": {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "pos": [
+          4.251869558772714,
+          0.004155229049453387,
+          -67.95804262521756
+        ],
+        "visible": true,
+        "inScene": true,
+        "meshes": 106,
+        "projected": [
+          0.000001457902870632595,
+          0.3845400197428487,
+          1.011938589989211
+        ]
+      },
+      "touch": {
+        "left": false,
+        "right": false,
+        "accelerate": true,
+        "lookBack": false
+      },
+      "bridge": {
+        "sent": 75,
+        "received": 155,
+        "rendered": 241,
+        "error": null
+      },
+      "errors": []
+    },
+    "desktop": {
+      "phase": "racing",
+      "local": [
+        4.092125613800924,
+        0.034441590481986785,
+        -60.13253135551669
+      ],
+      "remote": {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "pos": [
+          3.9411569080200324,
+          0.06714947062256445,
+          -52.73906180650686
+        ],
+        "visible": true,
+        "inScene": true,
+        "meshes": 102,
+        "projected": [
+          0.000002422032342455461,
+          0.05499862970876379,
+          0.9864113193882892
+        ]
+      },
+      "bridge": null,
+      "motion": {
+        "received": 75,
+        "rendered": 248,
+        "error": null,
+        "net": {
+          "sent": 308,
+          "aiSent": 0,
+          "aiBundles": 0,
+          "stamped": 75,
+          "acked": 308,
+          "refused": 0,
+          "skipped": 0,
+          "received": 75,
+          "aiReceived": 0,
+          "rejected": {
+            "race": 0,
+            "member": 0,
+            "lane": 0,
+            "malformed": 0,
+            "duplicate": 0,
+            "stale": 0,
+            "ai": 0
+          },
+          "progressSent": 0,
+          "progressAccepted": 0,
+          "progressRefused": 0,
+          "progressReceived": 0,
+          "progressEvents": 0,
+          "progressMalformed": 0,
+          "lastRefusal": null
+        }
+      },
+      "errors": []
+    }
+  },
+  "rendered": {
+    "android": {
+      "phase": "racing",
+      "local": [
+        3.3359470072885493,
+        0.22387765990416245,
+        -23.091110211232063
+      ],
+      "remote": {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "pos": [
+          3.808317773795162,
+          0.09657697319088476,
+          -46.229383833554934
+        ],
+        "visible": true,
+        "inScene": true,
+        "meshes": 106,
+        "projected": [
+          8.316505859047981e-7,
+          0.07159431035417745,
+          0.9932036033314556
+        ]
+      },
+      "touch": {
+        "left": false,
+        "right": false,
+        "accelerate": true,
+        "lookBack": true
+      },
+      "bridge": {
+        "sent": 82,
+        "received": 164,
+        "rendered": 269,
+        "error": null
+      },
+      "errors": []
+    },
+    "desktop": {
+      "phase": "racing",
+      "local": [
+        3.6202989921338005,
+        0.14446367379005565,
+        -37.01874500951635
+      ],
+      "remote": {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "pos": [
+          3.524849096359746,
+          0.16568712093931778,
+          -32.345017861145855
+        ],
+        "visible": true,
+        "inScene": true,
+        "meshes": 102,
+        "projected": [
+          0.000002864351763996428,
+          0.01163452166676079,
+          0.9834813307283937
+        ]
+      },
+      "bridge": null,
+      "motion": {
+        "received": 82,
+        "rendered": 267,
+        "error": null,
+        "net": {
+          "sent": 318,
+          "aiSent": 0,
+          "aiBundles": 0,
+          "stamped": 82,
+          "acked": 318,
+          "refused": 0,
+          "skipped": 0,
+          "received": 82,
+          "aiReceived": 0,
+          "rejected": {
+            "race": 0,
+            "member": 0,
+            "lane": 0,
+            "malformed": 0,
+            "duplicate": 0,
+            "stale": 0,
+            "ai": 0
+          },
+          "progressSent": 0,
+          "progressAccepted": 0,
+          "progressRefused": 0,
+          "progressReceived": 0,
+          "progressEvents": 0,
+          "progressMalformed": 0,
+          "lastRefusal": null
+        }
+      },
+      "errors": []
+    }
+  },
+  "desktopSession": {
+    "state": "connected",
+    "race_id": "37ac84a4a8130f0b814e63aa3f2e6f53",
+    "lobby_id": "uhCkkYPVzD9N_aT_piDB0HLo0bufpzTbzSOxFBJpWROh6UWGLWyFu",
+    "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "host_epoch": 1,
+    "generation": 1,
+    "local": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "members": [
+      {
+        "agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "endpoint_id": [
+          54,
+          19,
+          222,
+          115,
+          56,
+          75,
+          178,
+          108,
+          148,
+          64,
+          193,
+          43,
+          79,
+          52,
+          68,
+          235,
+          201,
+          205,
+          43,
+          100,
+          193,
+          188,
+          199,
+          175,
+          17,
+          206,
+          41,
+          40,
+          238,
+          211,
+          101,
+          121
+        ],
+        "character_id": "rex"
+      },
+      {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "endpoint_id": [
+          83,
+          253,
+          207,
+          207,
+          179,
+          58,
+          37,
+          250,
+          179,
+          240,
+          4,
+          100,
+          228,
+          238,
+          32,
+          196,
+          244,
+          147,
+          168,
+          1,
+          39,
+          188,
+          139,
+          98,
+          226,
+          238,
+          38,
+          217,
+          252,
+          155,
+          13,
+          69
+        ],
+        "character_id": "zippy"
+      }
+    ],
+    "peers": [
+      {
+        "agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+        "connected": true,
+        "state": "Connected",
+        "reconnects": 0,
+        "rtt_ms": 4.155439,
+        "path": "direct",
+        "we_dial": true,
+        "dial": {
+          "attempts": 1,
+          "max_attempts": 16,
+          "finished": true,
+          "terminal": false,
+          "deadline_exceeded": false,
+          "last_error": null
+        },
+        "link": {
+          "tx_bytes": 99398,
+          "rx_bytes": 62077,
+          "tx_packets": 743,
+          "rx_packets": 595,
+          "lost_packets": 0
+        }
+      }
+    ],
+    "network": {
+      "mode": "internet",
+      "relay": "https://dev-test-bootstrap2.holochain.org/",
+      "relay_connected": true,
+      "timing_tier": "internet",
+      "max_clock_uncertainty_ms": 60
+    },
+    "errors": [],
+    "setup": {
+      "failures": [],
+      "peer_deadline_s": 45,
+      "dial_attempts": 16,
+      "dial_retry_s": 2,
+      "dial_deadline_s": 42
+    },
+    "zome_calls": 143,
+    "dropped_latest": 0,
+    "realtime_active": true,
+    "race": {
+      "phase": "clock_sync",
+      "reason": null,
+      "is_host": true,
+      "ai_slots": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "schedule": null,
+      "start_in_ms": null,
+      "clock": {
+        "offset_ms": 0,
+        "error_bound_ms": 0,
+        "rtt_ms": 0,
+        "quality": "Good",
+        "samples": 0,
+        "attempts": 0,
+        "tier": "internet",
+        "max_error_bound_ms": 60
+      },
+      "renderer_ready": false,
+      "peers_ready": [],
+      "host_lost": null,
+      "host_session": {
+        "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "epoch": 1,
+        "role": "Host",
+        "ai_frames_sent": 0
+      },
+      "counters": {
+        "duplicate_schedules": 0,
+        "conflicting_schedules": 0,
+        "invalid_schedules": 0,
+        "ai_published": 0,
+        "ai_received": 0,
+        "ai_malformed": 0,
+        "ai_stale": 0,
+        "ai_wrong_epoch": 0,
+        "ai_dropped": 0,
+        "progress": {
+          "published": 0,
+          "refused_local": 0,
+          "events_published": 0,
+          "received": 0,
+          "events_received": 0,
+          "malformed": 0,
+          "invalid": 0,
+          "stale": 0,
+          "duplicate_events": 0,
+          "event_gaps": 0,
+          "wrong_race": 0,
+          "wrong_epoch": 0,
+          "wrong_schedule": 0,
+          "no_schedule": 0,
+          "after_host_loss": 0,
+          "dropped": 0,
+          "last_error": null
+        }
+      },
+      "progress": null,
+      "last_event_id": 0
+    },
+    "kart": {
+      "published": 333,
+      "received": 97,
+      "malformed": 0,
+      "stale": 0
+    }
+  },
+  "passed": false,
+  "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(result.desktopSession.kart.published>0&&result.desktopSession.kart.received>100)\n"
+}

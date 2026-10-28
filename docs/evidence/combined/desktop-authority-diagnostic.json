@@ -1,0 +1,42 @@
+{
+  "agentInfo": [
+    {
+      "agent": "a2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s",
+      "space": "EYk4opmHrNsBIrKUdo_hAgnUikh3ov_HGzH_PDsAn4I",
+      "createdAt": "1793175760343133",
+      "expiresAt": "1793176960343133",
+      "isTombstone": false,
+      "url": "https://dev-test-bootstrap2.holochain.org:443/3a154a5f3a045572c8c4609f3e2bf0a36025368590506bd1da92be3bfb52a077",
+      "storageArc": null
+    },
+    {
+      "agent": "PvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf8",
+      "space": "EYk4opmHrNsBIrKUdo_hAgnUikh3ov_HGzH_PDsAn4I",
+      "createdAt": "1793176222447427",
+      "expiresAt": "1793177422447427",
+      "isTombstone": false,
+      "url": "https://dev-test-bootstrap2.holochain.org:443/2b56c7319812c0701ace5bf887b4b311af7baa14ec7a39e4ceec839e3c795516",
+      "storageArc": null
+    }
+  ],
+  "network": {
+    "transport_stats": {
+      "backend": "iroh",
+      "peer_urls": [
+        "https://dev-test-bootstrap2.holochain.org:443/2b56c7319812c0701ace5bf887b4b311af7baa14ec7a39e4ceec839e3c795516"
+      ],
+      "connections": [
+        {
+          "pub_key": "3a154a5f3a045572c8c4609f3e2bf0a36025368590506bd1da92be3bfb52a077",
+          "send_message_count": 8474,
+          "send_bytes": 1496266,
+          "recv_message_count": 5073,
+          "recv_bytes": 619877,
+          "opened_at_s": 1793141255,
+          "is_direct": true
+        }
+      ]
+    },
+    "blocked_message_counts": {}
+  }
+}

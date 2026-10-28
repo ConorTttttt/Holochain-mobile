@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "checks": 19,
+  "results": [
+    "desktop session authenticated",
+    "android: original local physics moved",
+    "android: received remote pose moved",
+    "android: original remote mesh in scene",
+    "android: opponent inside original camera",
+    "android: game error registry empty",
+    "desktop: original local physics moved",
+    "desktop: received remote pose moved",
+    "desktop: original remote mesh in scene",
+    "desktop: opponent inside original camera",
+    "desktop: game error registry empty",
+    "Android opponent is admitted desktop agent",
+    "desktop opponent is admitted Android agent",
+    "Android actual physics publication advanced",
+    "Android decoded and interpolated desktop motion",
+    "desktop decoded and interpolated Android motion",
+    "desktop Rust received the renderer-attributed frames",
+    "desktop Rust published original WP3 frames",
+    "desktop Rust reports no malformed or stale WP3"
+  ],
+  "developmentOnly": true,
+  "sharedRaceTimingAndScoring": false,
+  "recording": "docs/evidence/combined/multiplayer-motion.json",
+  "note": "Revalidation of captured live data after correcting the unrelated 100-frame diagnostic threshold; original harness result retained."
+}

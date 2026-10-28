@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "result": {
+    "race_id": "f5d483d7f9f7c8969a66cbc34214d71c",
+    "lobby_id": "uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3",
+    "host_agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "local_agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+    "endpoint_id": "53fdcfcfb33a25fab3f00464e4ee20c4f493a80127bc8b62e2ee26d9fc9b0d45",
+    "admitted_agents": [
+      "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+      "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5"
+    ],
+    "admitted_human_count": 2,
+    "locked_roster_verified": true,
+    "local_endpoint_matches_locked_binding": true,
+    "peer_address_hints_verified": true,
+    "authenticated_race_session": false,
+    "next": "Opt in to Connect Iroh/MoQ (test), then check the admission digest status"
+  }
+}

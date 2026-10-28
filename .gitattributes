@@ -1,0 +1,4 @@
+# Preserve verbatim upstream font licences and captured tool output.
+mobile/game-assets/fonts/*-OFL.txt -whitespace
+docs/evidence/combined/*.txt -whitespace
+docs/evidence/combined/*.log -whitespace

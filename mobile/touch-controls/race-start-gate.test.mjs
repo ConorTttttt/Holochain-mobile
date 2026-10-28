@@ -95,3 +95,17 @@ test('steering, fire, and look back remain usable before automatic GO', () => {
   assert.equal(fired, 1);
   assert.equal(keys.some(([code]) => code === CONTROL_KEYS.accelerate), false);
 });
+
+
+test('explicit pause preserves GO but cannot advance a pending start', () => {
+  const gate = new RaceStartGate();
+  gate.update('countdown', 0);
+  gate.update('racing', 100);
+  assert.equal(gate.update('racing', 300), true);
+  assert.equal(gate.update('paused', 400), false);
+  assert.equal(gate.update('racing', 500), true);
+  gate.update('title', 600);
+  gate.update('race', 700);
+  gate.update('paused', 800);
+  assert.equal(gate.update('race', 50000), false);
+});

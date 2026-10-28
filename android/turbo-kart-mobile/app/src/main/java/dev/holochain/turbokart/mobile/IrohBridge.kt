@@ -12,7 +12,7 @@ internal object IrohBridge {
         System.loadLibrary("turbo_kart_realtime_jni")
     }
 
-    external fun startEndpoint(seed: ByteArray): String
+    external fun startEndpoint(seed: ByteArray, relayUrl: String): String
 
     /** Signs the desktop domain-separated EndpointId -> agent binding. No zome write. */
     external fun signPresence(agent: String): String
@@ -34,4 +34,7 @@ internal object IrohBridge {
 
     /** Stop this race mesh without closing or regenerating the persistent endpoint. */
     external fun disconnectRace(): String
+
+    /** Restricted physics DTO; authentication and codec validation stay native. */
+    external fun exchangeGameState(frameJson: String): String
 }

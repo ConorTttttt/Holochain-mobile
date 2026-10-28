@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "result": {
+    "lobby_id": "uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3",
+    "locked_race_exists": true,
+    "race_id": "f5d483d7f9f7c8969a66cbc34214d71c",
+    "host_agent": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+    "local_agent": "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5",
+    "local_agent_in_locked_roster": true,
+    "roster_agents": [
+      "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+      "uhCAka2YIOVv2ENJLBgQTEuk7i5m_NwYfBVCwv7yTXjXYB9s3yDa5"
+    ],
+    "roster_size": 2,
+    "authenticated_race_session": false,
+    "next": "Validate signed participant bindings using desktop RaceAdmission::from_locked in realtime JNI before connecting"
+  }
+}

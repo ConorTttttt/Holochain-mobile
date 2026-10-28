@@ -1,0 +1,9 @@
+Native build completed under user cgroup turbo-kart-native-build.scope.
+MemoryHigh: 3221225472 bytes (3 GiB)
+MemoryMax: 4294967296 bytes (4 GiB)
+MemorySwapMax: 0 bytes
+Cargo jobs: 1
+Observed peak near end of native compilation: 3076308992 bytes (about 2.9 GiB).
+Host MemAvailable after packaging: about 12 GiB.
+Emulator and desktop stopped throughout compilation.
+Gradle heap: 768 MiB; one worker; in-process Kotlin; no persistent daemon.

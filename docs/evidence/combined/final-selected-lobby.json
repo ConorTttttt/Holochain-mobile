@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "result": {
+    "lobby": {
+      "id": "uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3",
+      "lobby": {
+        "name": "AndroidEmulatorTest-0853",
+        "host": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "max_players": 2,
+        "track_id": "palm-cove",
+        "class": "100cc",
+        "laps": 3,
+        "relay_urls": [],
+        "access": "Public"
+      },
+      "created_at": 1793177495956,
+      "status": {
+        "status": {
+          "lobby": "uhCkkMpJikdgrLXpTHOOgM84_cQVQntw73eVFjY94UR7Us3XB-pe3",
+          "state": "Open",
+          "race_id": null
+        },
+        "author": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+        "at_ms": 1793177496443
+      },
+      "members": [
+        {
+          "player": "uhCAkPvBdObX-XDcrQJ6Pf17h4IlFpRRrHq-RR0Tv7HIWIf_rqKLh",
+          "character_id": "rex",
+          "joined_at": 1793177496439,
+          "join": "uhCkkzgklIyexE7cInZVLmd2iTPLRppVg_TEzXMdVpv22kGvWWNV0"
+        }
+      ],
+      "waitlist": []
+    }
+  }
+}

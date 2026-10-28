@@ -1,0 +1,12 @@
+MemoryCurrent=5667594240
+MemoryPeak=6442459136
+MemoryMax=6442450944
+MemorySwapMax=0
+
+MemoryCurrent=241942528
+MemoryPeak=331411456
+MemoryMax=1073741824
+MemorySwapMax=0
+               total        used        free      shared  buff/cache   available
+Mem:            30Gi        23Gi       2.3Gi       7.2Gi        11Gi       6.9Gi
+Swap:          4.0Gi       4.0Gi       116Ki

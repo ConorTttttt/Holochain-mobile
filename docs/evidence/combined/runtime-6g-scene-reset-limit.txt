@@ -1,0 +1,13 @@
+× turbo-kart-test-services.scope - [systemd-run] /usr/bin/bash /mnt/holochain/TurboMobile/Holochain-mobile-combined/scripts/emulator/start-test-services.sh
+     Loaded: loaded (/run/user/1000/systemd/transient/turbo-kart-test-services.scope; transient)
+  Transient: yes
+     Active: failed (Result: oom-kill) since Wed 2026-10-28 09:22:15 GMT; 2min 7s ago
+   Duration: 16min 25.519s
+ Invocation: c9a298fcd0ba429d8e7697d1962b5c41
+   Mem peak: 6G
+        CPU: 23min 23.731s
+
+Oct 28 09:05:49 sf-HP-Pro-Mini-400-G9-Desktop-PC systemd[12726]: Started turbo-kart-test-services.scope - [systemd-run] /usr/bin/bash /mnt/holochain/TurboMobile/Holochain-mobile-combined/scripts/emulator/start-test-services.sh.
+Oct 28 09:22:14 sf-HP-Pro-Mini-400-G9-Desktop-PC systemd[12726]: turbo-kart-test-services.scope: The kernel OOM killer killed some processes in this unit.
+Oct 28 09:22:15 sf-HP-Pro-Mini-400-G9-Desktop-PC systemd[12726]: turbo-kart-test-services.scope: Failed with result 'oom-kill'.
+Oct 28 09:22:15 sf-HP-Pro-Mini-400-G9-Desktop-PC systemd[12726]: turbo-kart-test-services.scope: Consumed 23min 23.731s CPU time over 16min 25.685s wall clock time, 6G memory peak.

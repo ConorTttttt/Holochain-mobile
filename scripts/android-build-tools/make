@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Opt-in workaround for nested OpenSSL Make/Cargo jobserver stalls.
+unset CARGO_MAKEFLAGS MAKEFLAGS MFLAGS
+exec /usr/bin/make -j1 "$@"

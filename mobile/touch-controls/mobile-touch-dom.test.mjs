@@ -243,3 +243,23 @@ test('pointercancel and lost capture cannot leave boost stuck', () => {
     assert.equal(keys().filter(k => k === 'keyup:ArrowUp').length, 1);
   } finally { h.detach(); }
 });
+
+test('touch pause remains reachable above steering and sends the original pause key', () => {
+  const h = harness();
+  try {
+    const pause = h.overlay.children.find(node => node.id === 'tk-touch-pause');
+    assert.ok(pause);
+    h.doc.dispatchEvent = event => {
+      h.doc.inputEvents.push([event.type, event.key, event.code]);
+      if (event.type === 'keydown' && event.code === 'Escape') h.doc.body.dataset.state = 'paused';
+    };
+    h.right.fire('pointerdown', { pointerId: 12, clientX: 900 });
+    h.look.fire('pointerdown', { pointerId: 13 });
+    pause.fire('click');
+    assert.equal(h.doc.body.dataset.state, 'paused');
+    assert.equal(h.win.__turboKartTouchState.accelerate, false);
+    assert.equal(h.win.__turboKartTouchState.right, false);
+    assert.equal(h.win.__turboKartTouchState.lookBack, false);
+    assert.ok(h.doc.inputEvents.some(([type,,code]) => type === 'keyup' && code === 'Escape'));
+  } finally { h.detach(); }
+});
