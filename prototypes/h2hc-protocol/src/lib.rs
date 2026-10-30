@@ -17,6 +17,7 @@
 //! ids belong to the phone, `Call`/`Reply` ids belong to the linker.
 
 pub mod codec;
+pub mod transport;
 mod error;
 mod receipt;
 
