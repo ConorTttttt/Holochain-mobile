@@ -1,7 +1,8 @@
 //! Conductor-facing protocol (`/conductor/v1`).
 //!
 //! Serves a full Holochain conductor (typically a zero-arc phone) whose
-//! `HcP2p` is the linker, using `h2hc_protocol` frames over a WebSocket. Unlike
+//! `HcP2p` is the linker, using transport-independent `h2hc_protocol` frames.
+//! The existing WebSocket route is only one adapter. Unlike
 //! the browser API, it carries Holochain's wire types unflattened, labels
 //! every answer's source, takes durable custody of published ops, and keeps
 //! validation receipts in an inbox until the phone acknowledges them.
@@ -18,6 +19,7 @@ use axum::extract::State;
 use axum::response::{IntoResponse, Response as HttpResponse};
 use bytes::Bytes;
 use futures::{SinkExt, StreamExt};
+use h2hc_protocol::transport::FrameChannel;
 use h2hc_protocol::Call;
 use h2hc_protocol::*;
 use holochain_p2p::WireMessage;
@@ -252,23 +254,22 @@ impl ConductorLinks {
 
     // ---- connection lifecycle ----
 
+    /// Existing WebSocket endpoint, now an adapter rather than the protocol
+    /// implementation. BLE L2CAP will call `serve_channel` with its own
+    /// authenticated frame transport.
     async fn serve(self, socket: WebSocket) {
-        let (mut sink, mut stream) = socket.split();
-        let (tx, mut rx) = mpsc::channel::<Frame>(256);
-        tokio::spawn(async move {
-            while let Some(frame) = rx.recv().await {
-                match codec::encode(&frame) {
-                    Ok(bytes) => {
-                        if sink.send(Message::Binary(bytes.into())).await.is_err() {
-                            break;
-                        }
-                    }
-                    Err(err) => warn!(?err, "dropping frame that cannot be encoded"),
-                }
-            }
-        });
+        self.serve_channel(websocket_channel(socket)).await;
+    }
 
-        let hello = tokio::time::timeout(HANDSHAKE_TIMEOUT, next_frame(&mut stream)).await;
+    /// Serve one already-established H2HC transport connection.
+    ///
+    /// The adapter is responsible for authentication, frame boundaries and
+    /// closing its receive channel when the underlying link is lost. In
+    /// particular, BLE callers must pin/verify peer identities before
+    /// invoking this method: a H2HC Hello is not authentication.
+    pub(crate) async fn serve_channel(self, channel: FrameChannel) {
+        let FrameChannel { tx, mut rx } = channel;
+        let hello = tokio::time::timeout(HANDSHAKE_TIMEOUT, rx.recv()).await;
         let Ok(Some(Frame::Hello(hello))) = hello else {
             debug!("conductor connection closed before Hello");
             return;
@@ -300,7 +301,7 @@ impl ConductorLinks {
             .await;
         info!(conn = conn.id, "conductor connected");
 
-        while let Some(frame) = next_frame(&mut stream).await {
+        while let Some(frame) = rx.recv().await {
             match frame {
                 Frame::Request { id, body } => {
                     count(&self.inner.from_phone, request_kind(&body));
@@ -901,18 +902,53 @@ impl ConductorLinks {
     }
 }
 
-async fn next_frame(stream: &mut futures::stream::SplitStream<WebSocket>) -> Option<Frame> {
-    while let Some(msg) = stream.next().await {
-        match msg {
-            Ok(Message::Binary(bytes)) => match codec::decode(&bytes) {
-                Ok(frame) => return Some(frame),
-                Err(err) => warn!(?err, "undecodable frame from conductor"),
-            },
-            Ok(Message::Close(_)) | Err(_) => return None,
-            Ok(_) => {}
+/// Bridge an Axum WebSocket to the same FrameChannel used by BLE streams.
+/// One I/O task owns both halves and drops the inbound sender on any socket
+/// failure, so the common H2HC session always sees the disconnect.
+fn websocket_channel(socket: WebSocket) -> FrameChannel {
+    let (to_socket_tx, mut to_socket_rx) = mpsc::channel::<Frame>(256);
+    let (from_socket_tx, from_socket_rx) = mpsc::channel::<Frame>(256);
+    tokio::spawn(async move {
+        let (mut sink, mut stream) = socket.split();
+        loop {
+            tokio::select! {
+                outbound = to_socket_rx.recv() => {
+                    let Some(frame) = outbound else { break };
+                    match codec::encode(&frame) {
+                        Ok(bytes) => {
+                            if sink.send(Message::Binary(bytes.into())).await.is_err() {
+                                break;
+                            }
+                        }
+                        Err(err) => {
+                            warn!(?err, "cannot encode frame to conductor");
+                            break;
+                        }
+                    }
+                }
+                inbound = stream.next() => {
+                    match inbound {
+                        Some(Ok(Message::Binary(bytes))) => {
+                            match codec::decode(&bytes) {
+                                Ok(frame) => {
+                                    if from_socket_tx.send(frame).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                Err(err) => warn!(?err, "undecodable frame from conductor"),
+                            }
+                        }
+                        Some(Ok(Message::Close(_))) | Some(Err(_)) | None => break,
+                        Some(Ok(_)) => {}
+                    }
+                }
+            }
         }
+    });
+    FrameChannel {
+        tx: to_socket_tx,
+        rx: from_socket_rx,
     }
-    None
 }
 
 /// `GET /conductor/v1`
