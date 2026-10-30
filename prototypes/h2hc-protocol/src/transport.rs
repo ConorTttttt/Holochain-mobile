@@ -63,53 +63,65 @@ where
     let (from_wire_tx, from_wire_rx) = mpsc::channel::<Frame>(buffer);
     tokio::spawn(async move {
         let (mut reader, mut writer) = tokio::io::split(io);
-        loop {
-            tokio::select! {
-                outbound = to_wire_rx.recv() => {
-                    let Some(frame) = outbound else { break };
-                    let bytes = match codec::encode(&frame) {
-                        Ok(bytes) if bytes.len() <= max_frame_bytes => bytes,
-                        Ok(bytes) => {
-                            tracing::warn!(length = bytes.len(), max_frame_bytes,
-                                "outgoing H2HC frame exceeds BLE stream limit");
-                            break;
-                        }
-                        Err(err) => {
-                            tracing::warn!(?err, "cannot encode H2HC stream frame");
-                            break;
-                        }
-                    };
-                    if writer.write_u32(bytes.len() as u32).await.is_err()
-                        || writer.write_all(&bytes).await.is_err()
-                        || writer.flush().await.is_err()
-                    {
-                        break;
-                    }
+        // Keep both futures alive across wakeups. Re-creating a pending
+        // read_u32/read_exact future after every outgoing send could discard
+        // a partially read header or payload (Tokio's read_exact is not
+        // cancellation-safe).
+        let read_frames = async {
+            loop {
+                let incoming_len = match reader.read_u32().await {
+                    Ok(len) => len,
+                    Err(_) => break,
+                };
+                let len = incoming_len as usize;
+                if len == 0 || len > max_frame_bytes {
+                    tracing::warn!(len, max_frame_bytes,
+                        "invalid incoming H2HC stream frame length");
+                    break;
                 }
-                incoming_len = reader.read_u32() => {
-                    let Ok(incoming_len) = incoming_len else { break };
-                    let len = incoming_len as usize;
-                    if len == 0 || len > max_frame_bytes {
-                        tracing::warn!(len, max_frame_bytes,
-                            "invalid incoming H2HC stream frame length");
+                let mut bytes = vec![0_u8; len];
+                if reader.read_exact(&mut bytes).await.is_err() {
+                    break;
+                }
+                let frame = match codec::decode(&bytes) {
+                    Ok(frame) => frame,
+                    Err(err) => {
+                        tracing::warn!(?err, "invalid incoming H2HC stream frame");
                         break;
                     }
-                    let mut bytes = vec![0_u8; len];
-                    if reader.read_exact(&mut bytes).await.is_err() {
-                        break;
-                    }
-                    let frame = match codec::decode(&bytes) {
-                        Ok(frame) => frame,
-                        Err(err) => {
-                            tracing::warn!(?err, "invalid incoming H2HC stream frame");
-                            break;
-                        }
-                    };
-                    if from_wire_tx.send(frame).await.is_err() {
-                        break;
-                    }
+                };
+                if from_wire_tx.send(frame).await.is_err() {
+                    break;
                 }
             }
+        };
+        let write_frames = async {
+            while let Some(frame) = to_wire_rx.recv().await {
+                let bytes = match codec::encode(&frame) {
+                    Ok(bytes) if bytes.len() <= max_frame_bytes => bytes,
+                    Ok(bytes) => {
+                        tracing::warn!(length = bytes.len(), max_frame_bytes,
+                            "outgoing H2HC frame exceeds BLE stream limit");
+                        break;
+                    }
+                    Err(err) => {
+                        tracing::warn!(?err, "cannot encode H2HC stream frame");
+                        break;
+                    }
+                };
+                if writer.write_u32(bytes.len() as u32).await.is_err()
+                    || writer.write_all(&bytes).await.is_err()
+                    || writer.flush().await.is_err()
+                {
+                    break;
+                }
+            }
+        };
+        // If either side closes, terminate the other and drop the receive
+        // sender, waking the H2HC session even when only writing failed.
+        tokio::select! {
+            _ = read_frames => {},
+            _ = write_frames => {},
         }
         // Dropping from_wire_tx makes the receiving LinkerSession / linker
         // session detect the disconnect, including failures during writes.
