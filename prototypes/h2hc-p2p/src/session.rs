@@ -17,23 +17,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::{mpsc, oneshot, watch};
 
-/// The two directions of a connection.
-pub struct FrameChannel {
-    pub tx: mpsc::Sender<Frame>,
-    pub rx: mpsc::Receiver<Frame>,
-}
-
-impl FrameChannel {
-    /// Two connected ends, for tests and in-process linkers.
-    pub fn pair(buffer: usize) -> (FrameChannel, FrameChannel) {
-        let (a_tx, b_rx) = mpsc::channel(buffer);
-        let (b_tx, a_rx) = mpsc::channel(buffer);
-        (
-            FrameChannel { tx: a_tx, rx: a_rx },
-            FrameChannel { tx: b_tx, rx: b_rx },
-        )
-    }
-}
+// Keep the existing client API, but use the exact same type as the linker.
+pub use h2hc_protocol::transport::FrameChannel;
 
 /// Handles frames the linker starts.
 pub trait InboundHandler: 'static + Send + Sync {
