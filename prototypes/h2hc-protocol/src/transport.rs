@@ -176,6 +176,28 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn partial_length_header_survives_concurrent_outgoing_frame() {
+        // A BLE byte stream can receive a header in multiple chunks.
+        // Sending in the other direction must not cancel the partial read.
+        let (mut raw, io) = tokio::io::duplex(4096);
+        let mut framed = channel_over_io(io, 4, 1024);
+        let bytes = codec::encode(&Frame::Ack { seq: 99 }).unwrap();
+        let length = (bytes.len() as u32).to_be_bytes();
+
+        raw.write_all(&length[..2]).await.unwrap();
+        tokio::task::yield_now().await;
+        framed.tx.send(Frame::Ack { seq: 5 }).await.unwrap();
+        tokio::task::yield_now().await;
+        raw.write_all(&length[2..]).await.unwrap();
+        raw.write_all(&bytes).await.unwrap();
+
+        let incoming = tokio::time::timeout(Duration::from_secs(2), framed.rx.recv())
+            .await
+            .expect("partial-length frame stuck");
+        assert!(matches!(incoming, Some(Frame::Ack { seq: 99 })));
+    }
+
+    #[tokio::test]
     async fn oversized_length_closes_without_allocating_payload() {
         let (mut raw, io) = tokio::io::duplex(64);
         let mut framed = channel_over_io(io, 2, 32);
