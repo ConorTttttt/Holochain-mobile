@@ -12,6 +12,7 @@ mod inbound;
 mod link;
 mod peer_store;
 pub mod session;
+pub mod stream;
 pub mod ws;
 
 pub use link::{once, Connector};
