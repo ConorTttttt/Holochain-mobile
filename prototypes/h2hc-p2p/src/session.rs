@@ -221,3 +221,104 @@ fn frame_name(frame: &Frame) -> &'static str {
         Frame::Ack { .. } => "Ack",
     }
 }
+
+#[cfg(test)]
+mod stream_tests {
+    use super::*;
+    use ed25519_dalek::SigningKey;
+    use h2hc_protocol::transport::channel_over_io;
+    use holochain_types::prelude::{AgentPubKey, DnaHash};
+
+    struct TestInbound;
+
+    impl InboundHandler for TestInbound {
+        fn call(&self, _body: Call) -> BoxFuture<'_, Result<Reply, ProtocolError>> {
+            Box::pin(async {
+                Err(ProtocolError::new(
+                    ErrorKind::Internal,
+                    "unexpected call in transport test",
+                ))
+            })
+        }
+
+        fn notify(&self, _body: Notification) -> BoxFuture<'_, ()> {
+            Box::pin(async {})
+        }
+
+        fn deliver(&self, _item: InboxItem) -> BoxFuture<'_, Result<(), ProtocolError>> {
+            Box::pin(async { Ok(()) })
+        }
+    }
+
+    #[tokio::test]
+    async fn linker_session_works_over_framed_stream() {
+        // Exercise the real client handshake and request/response loop over
+        // framed byte I/O; only the gateway's application handler is mocked.
+        let linker = LinkerId::from_signing_key(&SigningKey::from_bytes(&[42_u8; 32]));
+        let (client_stream, gateway_stream) = tokio::io::duplex(4096);
+        let client = channel_over_io(client_stream, 8, 4096);
+        let mut gateway = channel_over_io(gateway_stream, 8, 4096);
+
+        let server = tokio::spawn(async move {
+            let Some(Frame::Hello(hello)) = gateway.rx.recv().await else {
+                panic!("gateway expected Hello");
+            };
+            assert_eq!(hello.versions, vec![PROTOCOL_VERSION]);
+
+            gateway
+                .tx
+                .send(Frame::Welcome(Welcome {
+                    version: PROTOCOL_VERSION,
+                    linker,
+                }))
+                .await
+                .unwrap();
+
+            let Some(Frame::Request {
+                id,
+                body: Request::Leave { .. },
+            }) = gateway.rx.recv().await
+            else {
+                panic!("gateway expected Leave");
+            };
+            gateway
+                .tx
+                .send(Frame::Response {
+                    id,
+                    body: Ok(Response::Done),
+                })
+                .await
+                .unwrap();
+        });
+
+        let session = LinkerSession::connect(
+            client,
+            Hello {
+                versions: vec![PROTOCOL_VERSION],
+                session_token: None,
+            },
+            Some(linker),
+            Duration::from_secs(2),
+            Arc::new(TestInbound),
+        )
+        .await
+        .expect("stream transport Hello/Welcome");
+
+        let response = session
+            .request(
+                Request::Leave {
+                    dna_hash: DnaHash::from_raw_32(vec![1; 32]),
+                    agent: AgentPubKey::from_raw_32(vec![2; 32]),
+                },
+                Duration::from_secs(2),
+            )
+            .await
+            .expect("request over framed stream");
+        assert!(matches!(response, Response::Done));
+
+        server.await.unwrap();
+        tokio::time::timeout(Duration::from_secs(2), session.wait_closed())
+            .await
+            .expect("stream disconnect did not reach LinkerSession");
+    }
+}
