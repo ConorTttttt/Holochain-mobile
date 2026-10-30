@@ -1,6 +1,20 @@
 # Holochain BLE Edge — IoT architecture (proposed)
 
-Status: design only. No BLE integration or hardware validation is claimed by this document.
+Status: transport-boundary implementation committed on this branch (2026-10-30); physical BLE radio integration and hardware validation still pending.
+
+### Implementation progress
+
+- **Implemented:** `h2hc_protocol::transport::FrameChannel` shared by phone and linker, plus `channel_over_io` for bounded length-prefixed MessagePack over any reliable async byte stream. This is the L2CAP-facing framing layer, **not a BLE device connection**.
+- **Implemented:** `ConductorLinks::serve_channel` handles the existing Hello/Welcome, requests, calls, receipts and disconnect logic independently from WebSocket.
+- **Implemented:** WebSocket endpoint preserved as an adapter to `FrameChannel`.
+- **Implemented:** `h2hc_p2p::stream::connector_from_stream` adapts a future authenticated BLE dialer to the existing Link supervisor and reconnect loop.
+- **Tests added (not run here):** duplex in-memory stream frames, split length headers with simultaneous writes, rejection of oversized/truncated frames, complete H2HC client handshake/request/response over the framed stream.
+- **Pending:** Linux BLE acceptor, Android BLE dialer/JNI bootstrap, hardware authentication/pairing, bounded BLE transfer benchmarks, GATT fragmentation fallback, and real Holochain zome calls over BLE.
+- **No compilation or real-radio tests have been performed** in this environment. Run the repository's vendoring/preparation steps and `cargo test -p h2hc-protocol -p h2hc-p2p`, plus the separate linker tests, before treating this as validated.
+
+#### Integration seam for the next patch
+
+The Android BLE central will obtain an authenticated, ordered, reliable BLE L2CAP stream and hand it to `h2hc_p2p::stream::connector_from_stream` (which invokes `channel_over_io`). The Linux gateway BLE listener will obtain a matching accepted stream and invoke `ConductorLinks::serve_channel(channel_over_io(stream, queue, limit))`. Provisioning, key pinning, agent authorization and BLE device-advertisement handling are separate concerns; **do not** expose the new session entry point to unauthenticated peers.
 
 ## Decision
 
